@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Sistem tepsisi simgesi (NotifyIcon) için WinForms da kullanılıyor -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>CpuGpuOverlay</AssemblyName>
+    <RootNamespace>CpuGpuOverlay</RootNamespace>
+    <Product>dHud</Product>
+    <Version>1.0.0</Version>
+    <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <!-- Release: `dotnet publish -c Release` tek başına tek dosyalık .exe üretir → bin\Release\publish\
+       (.NET 10 Desktop Runtime gerektirir). Normal Release derlemesi bin\Release\net10.0-windows\ altında kalır. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- RID klasörü eklenmesin; mevcut başlangıç kayıtlarındaki yollar bozulmasın. -->
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishDir>$(MSBuildProjectDirectory)\bin\Release\publish\</PublishDir>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+  </ItemGroup>
+
+  <!-- LibreHardwareMonitorLib'in bir bağımlılığı Linux için Mono yardımcı DLL'leri getiriyor; Windows'ta kullanılmıyor. -->
+  <Target Name="RemoveUnusedNativeFiles" AfterTargets="Publish">
+    <Delete Files="$(PublishDir)libMonoPosixHelper.dll;$(PublishDir)MonoPosixHelper.dll" />
+  </Target>
+
+  <!-- WPF ve WinForms tipleri (Application, Point, Color...) çakışmasın diye
+       WinForms isim alanları global olarak eklenmiyor; gereken yerde takma adla kullanılıyor. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

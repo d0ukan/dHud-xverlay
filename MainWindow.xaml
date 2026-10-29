@@ -1,0 +1,258 @@
+<Window x:Class="CpuGpuOverlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="dHud"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Segoe UI"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Window.Resources>
+        <!-- Ölçüler: kompakt mod ve boyut ayarına göre koddan (ApplyMetrics) güncellenir.
+             Boyut, ScaleTransform yerine doğrudan bu değerlerle uygulanır; böylece yazılar
+             her boyutta yeniden çizilir ve büyütünce bulanıklaşmaz. -->
+        <sys:Double x:Key="LabelFontSize">12</sys:Double>
+        <sys:Double x:Key="ValueFontSize">18</sys:Double>
+        <sys:Double x:Key="SmallFontSize">13</sys:Double>
+        <sys:Double x:Key="TempMinWidth">58</sys:Double>
+        <sys:Double x:Key="NetMinWidth">78</sys:Double>
+        <sys:Double x:Key="SparkWidth">40</sys:Double>
+        <sys:Double x:Key="SparkHeight">14</sys:Double>
+        <sys:Double x:Key="SparkStroke">1.3</sys:Double>
+        <!-- Yazı gölgesi de boyuta göre değişir (bkz. ApplyMetrics) -->
+        <DropShadowEffect x:Key="OverlayTextShadow" Color="Black" ShadowDepth="1" Direction="315" BlurRadius="4" Opacity="0.9" />
+        <Thickness x:Key="LabelMargin">0,0,12,0</Thickness>
+        <Thickness x:Key="CellMargin">10,0,0,0</Thickness>
+        <Thickness x:Key="SeparatorMargin">12,3,12,3</Thickness>
+
+        <Style x:Key="LabelText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFB4BAC6" />
+            <Setter Property="FontSize" Value="{DynamicResource LabelFontSize}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="{DynamicResource LabelMargin}" />
+            <Setter Property="Effect" Value="{DynamicResource OverlayTextShadow}" />
+        </Style>
+
+        <Style x:Key="ValueText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="FontSize" Value="{DynamicResource ValueFontSize}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="MinWidth" Value="{DynamicResource TempMinWidth}" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Effect" Value="{DynamicResource OverlayTextShadow}" />
+        </Style>
+
+        <Style x:Key="SmallText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFD1D5DB" />
+            <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="{DynamicResource CellMargin}" />
+            <Setter Property="Effect" Value="{DynamicResource OverlayTextShadow}" />
+        </Style>
+
+        <!-- Son değerlerin mini sıcaklık grafiği -->
+        <Style x:Key="Sparkline" TargetType="Polyline">
+            <Setter Property="Width" Value="{DynamicResource SparkWidth}" />
+            <Setter Property="Height" Value="{DynamicResource SparkHeight}" />
+            <Setter Property="Margin" Value="{DynamicResource CellMargin}" />
+            <Setter Property="StrokeThickness" Value="{DynamicResource SparkStroke}" />
+            <Setter Property="StrokeLineJoin" Value="Round" />
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <Style x:Key="GroupSeparator" TargetType="Rectangle">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Fill" Value="#33FFFFFF" />
+            <Setter Property="Margin" Value="{DynamicResource SeparatorMargin}" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+
+        <!-- Fare overlay üzerine gelince panelin köşesinde yumuşakça beliren dişli rozeti.
+             Değerlerin üzerine taşar, böylece panelde ona ayrılmış boş alan olmaz. -->
+        <Style x:Key="GearButton" TargetType="Button">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="#FFE5E7EB" />
+            <Setter Property="ToolTip" Value="Ayarlar" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse x:Name="Bg" Fill="#F0202228" Stroke="#40FFFFFF" StrokeThickness="1" />
+                            <TextBlock Text="&#x2699;" FontFamily="Segoe UI Symbol" FontSize="12"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Fill" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <!-- Dış kenar boşluğu panelin gölgesine ve dişli rozetine yer açar -->
+    <Grid x:Name="Root" Margin="10">
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Ayarlar..." Click="SettingsMenu_Click" FontWeight="SemiBold" />
+                <MenuItem x:Name="LayoutMenuItem" Header="Yatay düzene geç" Click="LayoutMenu_Click" />
+                <MenuItem x:Name="CompactMenuItem" Header="Kompakt görünüm" IsCheckable="True" Click="CompactMenu_Click" />
+                <MenuItem x:Name="LockMenuItem" Header="Konumu kilitle" IsCheckable="True" Click="LockMenu_Click" />
+                <MenuItem Header="Tıklama geçirmeyi aç" Click="ClickThroughMenu_Click" InputGestureText="Ctrl+Shift+F10" />
+                <MenuItem Header="Konumu sıfırla" Click="ResetPositionMenu_Click" />
+                <MenuItem Header="Overlay'i gizle" Click="HideMenu_Click" InputGestureText="Ctrl+Shift+F9" />
+                <Separator />
+                <MenuItem Header="Çıkış" Click="ExitMenu_Click" />
+            </ContextMenu>
+        </Grid.ContextMenu>
+
+        <!-- Cam efekti: yarı saydam koyu zemin + gölge -->
+        <Border x:Name="GlassBackground" CornerRadius="12" Background="#B3141418">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" BlurRadius="16" ShadowDepth="0" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
+
+        <!-- Cam efekti: üstten parlama + ince ışık kenarı -->
+        <Border x:Name="GlassHighlight" CornerRadius="12" BorderThickness="1">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#40FFFFFF" Offset="0" />
+                    <GradientStop Color="#0DFFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1AFFFFFF" Offset="0" />
+                    <GradientStop Color="#05FFFFFF" Offset="0.5" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+
+        <!-- Değer grupları: dikey düzende alt alta (sütunlar hizalı), yatay düzende yan yana -->
+        <StackPanel x:Name="GroupsPanel" Margin="14,9" Orientation="Vertical" Grid.IsSharedSizeScope="True">
+
+            <!-- CPU -->
+            <Grid x:Name="CpuGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="CPU" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="1" x:Name="CpuTempText" Text="--°C" Style="{StaticResource ValueText}" />
+                <Polyline Grid.Column="2" x:Name="CpuSpark" Style="{StaticResource Sparkline}" />
+                <TextBlock Grid.Column="3" x:Name="CpuLoadText" Text="--%" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="4" x:Name="CpuClockText" Text="--" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="5" x:Name="CpuPowerText" Text="--W" Style="{StaticResource SmallText}" />
+            </Grid>
+
+            <Rectangle x:Name="CpuGpuSeparator" Style="{StaticResource GroupSeparator}" />
+
+            <!-- GPU -->
+            <Grid x:Name="GpuGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="GPU" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="1" x:Name="GpuTempText" Text="--°C" Style="{StaticResource ValueText}" />
+                <Polyline Grid.Column="2" x:Name="GpuSpark" Style="{StaticResource Sparkline}" />
+                <TextBlock Grid.Column="3" x:Name="GpuLoadText" Text="--%" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="4" x:Name="GpuClockText" Text="--" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="5" x:Name="GpuPowerText" Text="--W" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="6" x:Name="GpuMemText" Text="--" Style="{StaticResource SmallText}" />
+            </Grid>
+
+            <Rectangle x:Name="GpuRamSeparator" Style="{StaticResource GroupSeparator}" />
+
+            <!-- RAM -->
+            <Grid x:Name="RamGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="RAM" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="3" x:Name="RamLoadText" Text="--%" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="6" x:Name="RamMemText" Text="--" Style="{StaticResource SmallText}" />
+            </Grid>
+
+            <Rectangle x:Name="RamNetSeparator" Style="{StaticResource GroupSeparator}" />
+
+            <!-- Ağ: yalnızca etiket sütunu diğer satırlarla hizalanır; hız metinleri
+                 diğer sütunların genişliğini etkilemesin diye kendi sütunlarında durur. -->
+            <Grid x:Name="NetGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="NET" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="1" x:Name="NetDownText" Text="↓ --" Style="{StaticResource SmallText}"
+                           Margin="0" MinWidth="{DynamicResource NetMinWidth}" ToolTip="İndirme" />
+                <TextBlock Grid.Column="2" x:Name="NetUpText" Text="↑ --" Style="{StaticResource SmallText}"
+                           MinWidth="{DynamicResource NetMinWidth}" ToolTip="Yükleme" />
+                <TextBlock Grid.Column="3" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
+            </Grid>
+        </StackPanel>
+
+        <Button x:Name="GearButton" Style="{StaticResource GearButton}"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-7,-7,0"
+                Click="GearButton_Click" />
+    </Grid>
+</Window>
