@@ -66,3 +66,7 @@ confirmation, downloads it, replaces itself and restarts.
 > The overlay is not visible in exclusive fullscreen games; use borderless windowed mode.
 
 Sensors are read with [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor).
+
+## License
+
+[MIT](LICENSE) © 2026 d0ukan. Sensor reading uses LibreHardwareMonitorLib (MPL-2.0).

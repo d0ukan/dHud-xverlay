@@ -65,3 +65,7 @@ Etiket push'lanınca GitHub Actions (`.github/workflows/release.yml`) tek dosyal
 > Özel tam ekran (exclusive fullscreen) oyunlarda overlay görünmez; kenarlıksız pencere modunu kullanın.
 
 Sensörler [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) ile okunur.
+
+## Lisans
+
+[MIT](LICENSE) © 2026 d0ukan. Sensör okuma LibreHardwareMonitorLib (MPL-2.0) ile yapılır.
