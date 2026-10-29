@@ -184,7 +184,6 @@
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
                     <TextBlock Text="SÜRÜM" Style="{StaticResource SectionHeader}" />
-                    <TextBlock x:Name="VersionText" Margin="0,0,0,4" />
                     <CheckBox x:Name="AutoUpdateCheckBox" Content="Açılışta güncellemeleri denetle"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <Button Content="Şimdi denetle" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
@@ -242,6 +241,7 @@
             <!-- Durum (her sekmede görünür) -->
             <Border CornerRadius="8" Background="#14FFFFFF" Padding="10,8" Margin="16,14,16,0">
                 <StackPanel>
+                    <TextBlock x:Name="VersionText" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,3" />
                     <TextBlock x:Name="ElevationStatusText" TextWrapping="Wrap" FontSize="12" />
                     <TextBlock x:Name="DriverStatusText" TextWrapping="Wrap" FontSize="12" Margin="0,3,0,0" />
                     <TextBlock x:Name="CpuNameText" TextWrapping="Wrap" FontSize="12" Margin="0,3,0,0" Foreground="{StaticResource SubtleTextBrush}" />
