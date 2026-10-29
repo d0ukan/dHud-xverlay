@@ -17,14 +17,17 @@
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
 
-  <!-- Release: `dotnet publish -c Release` tek başına tek dosyalık .exe üretir → bin\Release\publish\
-       (.NET 10 Desktop Runtime gerektirir). Normal Release derlemesi bin\Release\net10.0-windows\ altında kalır. -->
+  <!-- Release: `dotnet publish -c Release` tek başına tek dosyalık, self-contained .exe üretir → bin\Release\publish\. Normal Release derlemesi bin\Release\net10.0-windows\ altında kalır. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- RID klasörü eklenmesin; mevcut başlangıç kayıtlarındaki yollar bozulmasın. -->
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <SelfContained>false</SelfContained>
+    <!-- .NET Runtime exe'nin içine gömülür: hedef bilgisayarda .NET kurulu olması gerekmez (~150 MB). -->
+    <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- exe boyutunu yaklaşık yarıya indirir; ilk açılış biraz yavaşlar. -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishDir>$(MSBuildProjectDirectory)\bin\Release\publish\</PublishDir>
     <DebugType>none</DebugType>
   </PropertyGroup>

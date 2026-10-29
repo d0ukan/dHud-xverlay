@@ -4,53 +4,57 @@
 
 <h1 align="center">dHud</h1>
 
-<p align="center">Windows için hafif, şeffaf ve her zaman üstte duran donanım overlay'i.</p>
+<p align="center">A lightweight, transparent, always-on-top hardware overlay for Windows.</p>
+
+<p align="center"><b>English</b> · <a href="README.tr.md">Türkçe</a></p>
 
 ---
 
-## Özellikler
+## Features
 
-- CPU / GPU sıcaklığı, kullanım, frekans, güç, VRAM ve RAM
-- Ağ indirme / yükleme hızı ve ping
-- Dikey veya tek satır yatay düzen, kompakt görünüm, mini sıcaklık grafiği
-- Sıcaklığa göre renk ve kritik sıcaklık bildirimi
-- Tıklama geçirme, konum kilidi, kenara yapışma, kısayol tuşları
-- Sistem tepsisi ve Windows başlangıcında çalıştırma
+- CPU / GPU temperature, usage, clock, power, VRAM and RAM
+- Network download / upload speed and ping
+- Vertical or single-row horizontal layout, compact mode, mini temperature graph
+- Temperature-based colors and critical temperature notifications
+- Click-through, position lock, edge snapping, hotkeys
+- Dark-themed system tray menu and run at Windows startup
+- Automatic updates via GitHub Releases
 
-## Gereksinimler
+## Requirements
 
-- Windows 10 / 11, [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
-- CPU sıcaklığı için yönetici yetkisi ve [PawnIO](https://pawnio.eu) sürücüsü
+- Windows 10 / 11 (no .NET install needed, the release exe bundles .NET)
+- Administrator rights and the [PawnIO](https://pawnio.eu) driver for CPU temperature
 
-## Derleme
+## Building
 
 ```bash
-dotnet run                 # geliştirme
-dotnet publish -c Release  # bin\Release\publish\CpuGpuOverlay.exe
+dotnet run                 # development
+dotnet publish -c Release  # bin\Release\publish\CpuGpuOverlay.exe (single file, .NET included)
 ```
 
-## Sürüm yayınlama ve güncelleme
+## Releasing and updates
 
-Sürüm numarası `CpuGpuOverlay.csproj` içindeki `Version` değeridir (ilk sürüm: `1.0.0`). Yayın için:
+The version number is the `Version` value in `CpuGpuOverlay.csproj` (first release: `1.0.0`). To publish:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Etiket push'lanınca GitHub Actions (`.github/workflows/release.yml`) tek dosyalık `CpuGpuOverlay.exe` dosyasını
-derleyip Release olarak yayınlar. Uygulama açılışta (ayarlardan kapatılabilir) ve tepsi menüsünden
-**Güncellemeleri denetle** ile en son Release'e bakar; yeni sürüm varsa onay alıp indirir, kendini değiştirir ve yeniden başlar.
+Pushing the tag triggers GitHub Actions (`.github/workflows/release.yml`), which builds the single-file
+`CpuGpuOverlay.exe` and publishes it as a Release. On startup (can be disabled in settings) and via the tray menu
+item **Check for updates**, the app looks at the latest Release; if a newer version exists it asks for
+confirmation, downloads it, replaces itself and restarts.
 
-## Kullanım
+## Usage
 
 | | |
 | --- | --- |
-| Taşı | Sol tıkla sürükle |
-| Ayarlar | ⚙ simgesi, sağ tık veya tepsi simgesine çift tık |
-| `Ctrl+Shift+F9` | Overlay'i gizle / göster |
-| `Ctrl+Shift+F10` | Tıklama geçirmeyi aç / kapat |
+| Move | Left-click and drag |
+| Settings | ⚙ icon, right-click, or double-click the tray icon |
+| `Ctrl+Shift+F9` | Hide / show the overlay |
+| `Ctrl+Shift+F10` | Toggle click-through |
 
-> Özel tam ekran (exclusive fullscreen) oyunlarda overlay görünmez; kenarlıksız pencere modunu kullanın.
+> The overlay is not visible in exclusive fullscreen games; use borderless windowed mode.
 
-Sensörler [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) ile okunur.
+Sensors are read with [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor).

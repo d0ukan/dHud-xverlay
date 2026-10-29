@@ -30,7 +30,7 @@ public sealed class TrayIconService : IDisposable
 
         var settingsItem = new Forms.ToolStripMenuItem("Ayarlar...", null, (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty))
         {
-            Font = new Drawing.Font(Forms.Control.DefaultFont, Drawing.FontStyle.Bold)
+            Font = new Drawing.Font("Segoe UI", 9.5f, Drawing.FontStyle.Bold)
         };
         _toggleItem = new Forms.ToolStripMenuItem("Overlay'i gizle", null, (_, _) => ToggleOverlayRequested?.Invoke(this, EventArgs.Empty))
         {
@@ -45,7 +45,16 @@ public sealed class TrayIconService : IDisposable
             (_, _) => UpdateCheckRequested?.Invoke(this, EventArgs.Empty));
         var exitItem = new Forms.ToolStripMenuItem("Çıkış", null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
 
-        var menu = new Forms.ContextMenuStrip();
+        var menu = new Forms.ContextMenuStrip
+        {
+            Renderer = new DarkMenuRenderer(),
+            Font = new Drawing.Font("Segoe UI", 9.5f),
+            BackColor = Drawing.Color.FromArgb(255, 26, 27, 34),
+            ForeColor = Drawing.Color.FromArgb(255, 241, 242, 246),
+            Padding = new Forms.Padding(0, 4, 0, 4),
+            ShowImageMargin = false,
+            ShowCheckMargin = true
+        };
         menu.Items.AddRange([
             settingsItem,
             _toggleItem,
