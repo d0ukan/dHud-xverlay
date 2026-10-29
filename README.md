@@ -33,27 +33,6 @@ Download from the [latest release](https://github.com/d0ukan/dHud-xverlay/releas
 - **`dHud-Setup-<version>.exe`**: installer. Installs per-user to `%LocalAppData%\Programs\dHud` (no admin rights needed), adds a Start menu entry and an uninstaller.
 - **`dHud-<version>.exe`**: portable single file, just run it anywhere.
 
-## Building
-
-```bash
-dotnet run                 # development
-dotnet publish -c Release  # bin\Release\publish\CpuGpuOverlay.exe (single file, .NET included)
-```
-
-## Releasing and updates
-
-The version number is the `Version` value in `CpuGpuOverlay.csproj` (first release: `1.0.0`). To publish:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Pushing the tag triggers GitHub Actions (`.github/workflows/release.yml`), which builds the single-file
-`dHud-<version>.exe` and the `dHud-Setup-<version>.exe` installer (Inno Setup, `installer/dHud.iss`) and publishes them as a Release. On startup (can be disabled in settings) and via the tray menu
-item **Check for updates**, the app looks at the latest Release; if a newer version exists it asks for
-confirmation, downloads it, replaces itself and restarts.
-
 ## Usage
 
 | | |

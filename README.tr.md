@@ -33,26 +33,6 @@
 - **`dHud-Setup-<sürüm>.exe`**: kurulum dosyası. Kullanıcı klasörüne (`%LocalAppData%\Programs\dHud`) kurulur, yönetici yetkisi gerekmez; Başlat menüsü kısayolu ve kaldırıcı ekler.
 - **`dHud-<sürüm>.exe`**: taşınabilir tek dosya, istediğin yerden çalıştır.
 
-## Derleme
-
-```bash
-dotnet run                 # geliştirme
-dotnet publish -c Release  # bin\Release\publish\CpuGpuOverlay.exe (tek dosya, .NET dahil)
-```
-
-## Sürüm yayınlama ve güncelleme
-
-Sürüm numarası `CpuGpuOverlay.csproj` içindeki `Version` değeridir (ilk sürüm: `1.0.0`). Yayın için:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Etiket push'lanınca GitHub Actions (`.github/workflows/release.yml`) tek dosyalık `dHud-<sürüm>.exe` dosyasını ve
-`dHud-Setup-<sürüm>.exe` kurulum dosyasını (Inno Setup, `installer/dHud.iss`) derleyip Release olarak yayınlar. Uygulama açılışta (ayarlardan kapatılabilir) ve tepsi menüsünden
-**Güncellemeleri denetle** ile en son Release'e bakar; yeni sürüm varsa onay alıp indirir, kendini değiştirir ve yeniden başlar.
-
 ## Kullanım
 
 | | |
