@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 public sealed record NetworkReading(
     string? AdapterName,

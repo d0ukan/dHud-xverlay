@@ -1,7 +1,7 @@
 using System.Windows.Markup;
-using CpuGpuOverlay.Services;
+using DHud.Services;
 
-namespace CpuGpuOverlay.Helpers;
+namespace DHud.Helpers;
 
 /// <summary>XAML'de çevrilmiş metin: <c>Text="{h:Loc S.Close}"</c>. Pencere açılırken seçili dile göre çözülür.</summary>
 [MarkupExtensionReturnType(typeof(string))]

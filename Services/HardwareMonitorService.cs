@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using LibreHardwareMonitor.Hardware;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>Tek bir donanımın (CPU, GPU veya RAM) okunan değerleri. Okunamayan değerler null'dır.</summary>
 public sealed record HardwareReading(

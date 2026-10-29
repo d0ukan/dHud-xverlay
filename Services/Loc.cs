@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 public enum AppLanguage
 {
@@ -81,7 +81,7 @@ public static class Loc
         ["S.Registry"] = ("Registry (HKCU\\...\\Run)", "Registry (HKCU\\...\\Run)"),
         ["S.Registry.Hint"] = ("Classic method. A UAC prompt appears at every startup for CPU temperature.",
             "Klasik yöntem. CPU sıcaklığı için her açılışta UAC onayı istenir."),
-        ["S.Startup.Task"] = ("✓ Active: Task Scheduler (\"CpuGpuOverlay\" task)", "✓ Etkin: Görev Zamanlayıcı (\"CpuGpuOverlay\" görevi)"),
+        ["S.Startup.Task"] = ("✓ Active: Task Scheduler (\"dHud\" task)", "✓ Etkin: Görev Zamanlayıcı (\"dHud\" görevi)"),
         ["S.Startup.Registry"] = ("✓ Active: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
             "✓ Etkin: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
         ["S.Startup.Off"] = ("Run at startup is off.", "Başlangıçta çalıştırma kapalı."),

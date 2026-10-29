@@ -6,10 +6,10 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
-using CpuGpuOverlay.Helpers;
-using CpuGpuOverlay.Services;
+using DHud.Helpers;
+using DHud.Services;
 
-namespace CpuGpuOverlay;
+namespace DHud;
 
 public partial class MainWindow : Window
 {

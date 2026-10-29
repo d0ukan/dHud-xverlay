@@ -1,7 +1,7 @@
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
 
-namespace CpuGpuOverlay.Helpers;
+namespace DHud.Helpers;
 
 /// <summary>
 /// Tepsi menüsünü uygulamanın koyu temasına uydurur (arka plan, vurgu rengi, ayraç, onay işareti).

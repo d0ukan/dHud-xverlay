@@ -3,9 +3,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Markup;
 using System.Windows.Threading;
-using CpuGpuOverlay.Services;
+using DHud.Services;
 
-namespace CpuGpuOverlay;
+namespace DHud;
 
 public partial class SettingsWindow : Window
 {

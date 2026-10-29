@@ -4,10 +4,10 @@ using System.IO;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
-using CpuGpuOverlay.Helpers;
+using DHud.Helpers;
 using Microsoft.Win32;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>
 /// "Windows başlangıcında çalıştır" ayarını yönetir. İki yöntem desteklenir:
@@ -20,9 +20,10 @@ namespace CpuGpuOverlay.Services;
 /// </summary>
 public static class StartupManager
 {
-    private const string TaskName = "CpuGpuOverlay";
+    private const string TaskName = "dHud";
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string RunValueName = "CpuGpuOverlay";
+    private const string RunValueName = "dHud";
+    private const string LegacyName = "CpuGpuOverlay"; // eski görev / Registry adı
 
     static StartupManager()
     {
@@ -68,6 +69,35 @@ public static class StartupManager
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
             key.SetValue(RunValueName, $"\"{ExePath}\"", RegistryValueKind.String);
+        }
+    }
+
+    /// <summary>
+    /// Eski adla (CpuGpuOverlay) kayıtlı başlangıç girdisini yeni ada ve çalışan exe yoluna taşır.
+    /// Görev Zamanlayıcı için yönetici yetkisi gerekir; yoksa sonraki açılışta tekrar denenir.
+    /// </summary>
+    public static void MigrateLegacy()
+    {
+        try
+        {
+            using (var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true))
+            {
+                if (key?.GetValue(LegacyName) is not null)
+                {
+                    key.DeleteValue(LegacyName, throwOnMissingValue: false);
+                    key.SetValue(RunValueName, $"\"{ExePath}\"", RegistryValueKind.String);
+                }
+            }
+
+            if (AdminHelper.IsElevated() && RunSchtasks($"/Query /TN \"{LegacyName}\"").ExitCode == 0)
+            {
+                RunSchtasks($"/Delete /TN \"{LegacyName}\" /F");
+                CreateTask();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Eski başlangıç kaydı taşınamadı: {ex}");
         }
     }
 
@@ -157,7 +187,7 @@ public static class StartupManager
             </Task>
             """;
 
-        var xmlPath = Path.Combine(Path.GetTempPath(), $"CpuGpuOverlay_{Guid.NewGuid():N}.xml");
+        var xmlPath = Path.Combine(Path.GetTempPath(), $"dHud_{Guid.NewGuid():N}.xml");
         try
         {
             // schtasks XML'i UTF-16 bekler.

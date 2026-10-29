@@ -11,10 +11,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- assets/logo.svg logosundan üretilmiş exe simgesi (Gezgin, görev çubuğu, kısayollar). -->
     <ApplicationIcon>assets\app.ico</ApplicationIcon>
-    <AssemblyName>CpuGpuOverlay</AssemblyName>
-    <RootNamespace>CpuGpuOverlay</RootNamespace>
+    <AssemblyName>dHud</AssemblyName>
+    <RootNamespace>DHud</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>

@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>Bulunan yeni sürümün bilgileri.</summary>
 public sealed record UpdateInfo(Version Version, string Tag, string PageUrl, string? DownloadUrl, string Notes);
@@ -42,11 +42,11 @@ public sealed class UpdateService
 
     /// <summary>
     /// Yalnızca release'in tek dosyalık exe'si kendini değiştirebilir. Geliştirme derlemesinde
-    /// (yanında CpuGpuOverlay.dll olan) kullanıcı yalnızca bilgilendirilir.
+    /// (yanında dHud.dll olan) kullanıcı yalnızca bilgilendirilir.
     /// </summary>
     public static bool CanSelfUpdate =>
         Environment.ProcessPath is not null &&
-        !File.Exists(Path.Combine(AppContext.BaseDirectory, "CpuGpuOverlay.dll"));
+        !File.Exists(Path.Combine(AppContext.BaseDirectory, "dHud.dll"));
 
     /// <summary>Daha yeni bir sürüm varsa bilgisini döner; yoksa veya ağ hatasında null.</summary>
     public async Task<UpdateInfo?> CheckAsync(CancellationToken ct = default)

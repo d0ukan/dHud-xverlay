@@ -1,4 +1,4 @@
-namespace CpuGpuOverlay.Helpers;
+namespace DHud.Helpers;
 
 /// <summary>Overlay ve tepsi için değer biçimlendirme. Kompakt modda birimler kısaltılır.</summary>
 public static class Format

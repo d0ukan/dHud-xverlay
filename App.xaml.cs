@@ -2,14 +2,15 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
-using CpuGpuOverlay.Helpers;
-using CpuGpuOverlay.Services;
+using DHud.Helpers;
+using DHud.Services;
 using Forms = System.Windows.Forms;
 
-namespace CpuGpuOverlay;
+namespace DHud;
 
 public partial class App : Application
 {
+    // Ad bilerek eski haliyle (CpuGpuOverlay) bırakıldı: güncelleme sırasında eski sürümle aynı kilidi paylaşsın.
     private const string MutexName = @"Local\CpuGpuOverlay_SingleInstance";
 
     // Sabit kısayollar. F tuşları seçildi: Ctrl+Shift+harf kombinasyonları tarayıcı/editörlerle sık çakışıyor.
@@ -89,6 +90,7 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
 
         Settings.Load();
+        StartupManager.MigrateLegacy();
 
         _overlay = new MainWindow();
         _overlay.Show();

@@ -1,8 +1,8 @@
-using CpuGpuOverlay.Helpers;
+using DHud.Helpers;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>
 /// Sistem tepsisi simgesi. Overlay görev çubuğunda görünmediği için uygulamayı

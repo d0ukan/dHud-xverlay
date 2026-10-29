@@ -25,7 +25,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           dotnet publish -c Release -p:Version="$VERSION"
           # Release dosyasında sürüm görünsün (uygulama içi güncelleme dHud-<sürüm>.exe adını arar).
-          cp bin/Release/publish/CpuGpuOverlay.exe "bin/Release/publish/dHud-$VERSION.exe"
+          cp bin/Release/publish/dHud.exe "bin/Release/publish/dHud-$VERSION.exe"
 
       - name: Inno Setup kur
         shell: pwsh

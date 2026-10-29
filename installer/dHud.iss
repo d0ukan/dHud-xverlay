@@ -1,12 +1,12 @@
 ; dHud kurulum betiği (Inno Setup 6). Kullanıcı klasörüne kurulur, yönetici yetkisi istemez; böylece
 ; uygulama içi güncelleme (exe'yi kendi kendine değiştirme) yönetici olmadan da çalışır.
-; Derleme: iscc /DAppVersion=1.0.0 /DSourceExe=..\bin\Release\publish\CpuGpuOverlay.exe installer\dHud.iss
+; Derleme: iscc /DAppVersion=1.0.3 /DSourceExe=..\bin\Release\publish\dHud.exe installer\dHud.iss
 
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
 #ifndef SourceExe
-  #define SourceExe "..\bin\Release\publish\CpuGpuOverlay.exe"
+  #define SourceExe "..\bin\Release\publish\dHud.exe"
 #endif
 
 [Setup]
@@ -22,7 +22,7 @@ PrivilegesRequired=lowest
 OutputDir=..\bin\Release\installer
 OutputBaseFilename=dHud-Setup-{#AppVersion}
 SetupIconFile=..\assets\app.ico
-UninstallDisplayIcon={app}\CpuGpuOverlay.exe
+UninstallDisplayIcon={app}\dHud.exe
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -43,20 +43,26 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#SourceExe}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\dHud"; Filename: "{app}\CpuGpuOverlay.exe"
+Name: "{group}\dHud"; Filename: "{app}\dHud.exe"
 Name: "{group}\{cm:UninstallProgram,dHud}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\dHud"; Filename: "{app}\CpuGpuOverlay.exe"; Tasks: desktopicon
+Name: "{autodesktop}\dHud"; Filename: "{app}\dHud.exe"; Tasks: desktopicon
 
 [Registry]
 ; Uygulama ayarlardan başlangıç kaydı oluşturduysa kaldırırken temizle (Registry yöntemi).
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "dHud"; Flags: dontcreatekey uninsdeletevalue
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "CpuGpuOverlay"; Flags: dontcreatekey uninsdeletevalue
 
 [Run]
-Filename: "{app}\CpuGpuOverlay.exe"; Description: "{cm:LaunchProgram,dHud}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\dHud.exe"; Description: "{cm:LaunchProgram,dHud}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 ; Görev Zamanlayıcı başlangıç görevi yönetici yetkisiyle oluşturulduysa bu komut yetkisiz çalışınca sessizce başarısız olur.
-Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""CpuGpuOverlay"" /F"; Flags: runhidden; RunOnceId: "DeleteStartupTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""dHud"" /F"; Flags: runhidden; RunOnceId: "DeleteStartupTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""CpuGpuOverlay"" /F"; Flags: runhidden; RunOnceId: "DeleteLegacyStartupTask"
+
+[InstallDelete]
+; Eski adla (CpuGpuOverlay.exe) kurulmuş sürümün exe'si: yeni dHud.exe ile değiştirilir.
+Type: files; Name: "{app}\CpuGpuOverlay.exe"
 
 [UninstallDelete]
 ; Uygulama içi güncellemeden kalan geçici dosyalar.

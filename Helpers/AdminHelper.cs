@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace CpuGpuOverlay.Helpers;
+namespace DHud.Helpers;
 
 public static class AdminHelper
 {

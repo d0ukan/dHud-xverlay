@@ -1,4 +1,4 @@
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>
 /// Sıcaklık belirli bir süre kritik eşiğin üstünde kalırsa bir kez uyarı üretir.

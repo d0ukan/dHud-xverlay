@@ -1,8 +1,8 @@
 using System.Windows.Input;
 using System.Windows.Interop;
-using CpuGpuOverlay.Helpers;
+using DHud.Helpers;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 /// <summary>
 /// Sistem genelinde çalışan kısayol tuşları (RegisterHotKey). Mesajları görünmez,
@@ -18,7 +18,7 @@ public sealed class HotkeyService : IDisposable
 
     public HotkeyService()
     {
-        _source = new HwndSource(new HwndSourceParameters("CpuGpuOverlayHotkeys")
+        _source = new HwndSource(new HwndSourceParameters("dHudHotkeys")
         {
             Width = 0,
             Height = 0,

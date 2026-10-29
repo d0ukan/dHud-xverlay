@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CpuGpuOverlay.Services;
+namespace DHud.Services;
 
 public enum StartupMethod
 {
@@ -87,7 +87,7 @@ public sealed class AppSettings
 }
 
 /// <summary>
-/// Ayarları %AppData%\CpuGpuOverlay\settings.json dosyasında saklar.
+/// Ayarları %AppData%\dHud\settings.json dosyasında saklar. Eski adla (CpuGpuOverlay) kaydedilmiş ayarlar ilk açılışta taşınır.
 /// </summary>
 public sealed class SettingsService
 {
@@ -99,7 +99,7 @@ public sealed class SettingsService
 
     private readonly string _filePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "CpuGpuOverlay",
+        "dHud",
         "settings.json");
 
     public AppSettings Current { get; private set; } = new();
@@ -109,6 +109,8 @@ public sealed class SettingsService
 
     public void Load()
     {
+        MigrateLegacySettings();
+
         try
         {
             if (File.Exists(_filePath))
@@ -125,6 +127,25 @@ public sealed class SettingsService
 
         Normalize(Current);
         Loc.Current = Current.Language;
+    }
+
+    /// <summary>Eski ad (CpuGpuOverlay) klasöründeki ayarları, yeni dosya yoksa kopyalar.</summary>
+    private void MigrateLegacySettings()
+    {
+        try
+        {
+            var legacy = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CpuGpuOverlay", "settings.json");
+            if (!File.Exists(_filePath) && File.Exists(legacy))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
+                File.Copy(legacy, _filePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Eski ayarlar taşınamadı: {ex}");
+        }
     }
 
     public void Save()

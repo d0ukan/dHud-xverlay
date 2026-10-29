@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace CpuGpuOverlay.Helpers;
+namespace DHud.Helpers;
 
 internal static class NativeMethods
 {
