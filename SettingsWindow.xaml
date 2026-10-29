@@ -182,6 +182,13 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="Tıklama geçirmeyi aç / kapat" Foreground="{StaticResource SubtleTextBrush}" />
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
+
+                    <TextBlock Text="SÜRÜM" Style="{StaticResource SectionHeader}" />
+                    <TextBlock x:Name="VersionText" Margin="0,0,0,4" />
+                    <CheckBox x:Name="AutoUpdateCheckBox" Content="Açılışta güncellemeleri denetle"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <Button Content="Şimdi denetle" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
                 </StackPanel>
 
                 <!-- ============ UYARILAR ============ -->

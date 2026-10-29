@@ -82,6 +82,8 @@ public partial class SettingsWindow : Window
         LockPositionCheckBox.IsChecked = s.LockPosition;
         SnapCheckBox.IsChecked = s.SnapToEdges;
         HotkeysCheckBox.IsChecked = s.HotkeysEnabled;
+        AutoUpdateCheckBox.IsChecked = s.AutoUpdateCheck;
+        VersionText.Text = $"dHud {UpdateService.CurrentVersionText}";
 
         ColorCheckBox.IsChecked = s.ColorByTemperature;
         WarnSlider.Value = s.WarnTemperature;
@@ -125,6 +127,7 @@ public partial class SettingsWindow : Window
         s.LockPosition = LockPositionCheckBox.IsChecked == true;
         s.SnapToEdges = SnapCheckBox.IsChecked == true;
         s.HotkeysEnabled = HotkeysCheckBox.IsChecked == true;
+        s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
 
         s.ColorByTemperature = ColorCheckBox.IsChecked == true;
         s.WarnTemperature = (int)WarnSlider.Value;
@@ -136,6 +139,9 @@ public partial class SettingsWindow : Window
     }
 
     private void Option_Click(object sender, RoutedEventArgs e) => SaveValues();
+
+    private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e) =>
+        await App.Current.CheckForUpdatesAsync(manual: true);
 
     private void PingHostTextBox_LostFocus(object sender, RoutedEventArgs e)
     {

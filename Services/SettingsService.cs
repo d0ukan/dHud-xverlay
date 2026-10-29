@@ -77,6 +77,9 @@ public sealed class AppSettings
     public bool AlertEnabled { get; set; } = true;
     public int AlertSeconds { get; set; } = 10;
 
+    /// <summary>Açılışta GitHub Releases'te yeni sürüm var mı diye bak.</summary>
+    public bool AutoUpdateCheck { get; set; } = true;
+
     public StartupMethod PreferredStartupMethod { get; set; } = StartupMethod.TaskScheduler;
 }
 

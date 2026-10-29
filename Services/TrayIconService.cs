@@ -21,6 +21,8 @@ public sealed class TrayIconService : IDisposable
     public event EventHandler? ClickThroughToggleRequested;
     public event EventHandler? LockToggleRequested;
     public event EventHandler? ExitRequested;
+    public event EventHandler? UpdateCheckRequested;
+    public event EventHandler? BalloonClicked;
 
     public TrayIconService(string toggleOverlayShortcut, string clickThroughShortcut)
     {
@@ -39,6 +41,8 @@ public sealed class TrayIconService : IDisposable
             ShortcutKeyDisplayString = clickThroughShortcut
         };
         _lockItem = new Forms.ToolStripMenuItem("Konumu kilitle", null, (_, _) => LockToggleRequested?.Invoke(this, EventArgs.Empty));
+        var updateItem = new Forms.ToolStripMenuItem($"Güncellemeleri denetle ({UpdateService.CurrentVersionText})", null,
+            (_, _) => UpdateCheckRequested?.Invoke(this, EventArgs.Empty));
         var exitItem = new Forms.ToolStripMenuItem("Çıkış", null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
 
         var menu = new Forms.ContextMenuStrip();
@@ -49,6 +53,7 @@ public sealed class TrayIconService : IDisposable
             _clickThroughItem,
             _lockItem,
             new Forms.ToolStripSeparator(),
+            updateItem,
             exitItem
         ]);
 
@@ -60,6 +65,7 @@ public sealed class TrayIconService : IDisposable
             Visible = true
         };
         _notifyIcon.DoubleClick += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
+        _notifyIcon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke(this, EventArgs.Empty);
     }
 
     public void SetStates(bool overlayVisible, bool clickThrough, bool locked)
@@ -75,8 +81,14 @@ public sealed class TrayIconService : IDisposable
         _notifyIcon.Text = text.Length > 127 ? text[..127] : text;
     }
 
-    public void ShowBalloon(string title, string text, Forms.ToolTipIcon icon = Forms.ToolTipIcon.Info) =>
+    /// <summary>En son gösterilen balonun türü; tıklamanın hangi balona ait olduğunu ayırt etmek için.</summary>
+    public string? BalloonKind { get; private set; }
+
+    public void ShowBalloon(string title, string text, Forms.ToolTipIcon icon = Forms.ToolTipIcon.Info, string? kind = null)
+    {
+        BalloonKind = kind;
         _notifyIcon.ShowBalloonTip(5000, title, text, icon);
+    }
 
     /// <summary>
     /// Harici bir .ico dosyasına ihtiyaç duymamak için dHud logosunu (assets/logo.svg) çizer:

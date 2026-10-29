@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -18,6 +19,10 @@ public partial class App : Application
     public const string ToggleOverlayShortcut = "Ctrl+Shift+F9";
     public const string ToggleClickThroughShortcut = "Ctrl+Shift+F10";
 
+    private const string UpdateBalloonKind = "update";
+
+    private readonly UpdateService _updates = new();
+    private UpdateInfo? _pendingUpdate;
     private Mutex? _singleInstanceMutex;
     private TrayIconService? _tray;
     private HotkeyService? _hotkeys;
@@ -41,7 +46,18 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        if (!TryAcquireSingleInstance())
+        UpdateService.CleanupOldFiles();
+
+        // Güncelleme sonrası yeniden başlatıldıysak eski örneğin kapanıp mutex'i bırakmasını bekle.
+        var restarted = e.Args.Contains(UpdateService.RestartedArgument);
+        var acquired = TryAcquireSingleInstance();
+        for (var i = 0; restarted && !acquired && i < 20; i++)
+        {
+            Thread.Sleep(500);
+            acquired = TryAcquireSingleInstance();
+        }
+
+        if (!acquired)
         {
             Shutdown();
             return;
@@ -82,6 +98,14 @@ public partial class App : Application
         _tray.ClickThroughToggleRequested += (_, _) => ToggleClickThrough();
         _tray.LockToggleRequested += (_, _) => ToggleLock();
         _tray.ExitRequested += (_, _) => ExitApplication();
+        _tray.UpdateCheckRequested += (_, _) => _ = CheckForUpdatesAsync(manual: true);
+        _tray.BalloonClicked += (_, _) =>
+        {
+            if (_tray.BalloonKind == UpdateBalloonKind && _pendingUpdate is not null)
+            {
+                _ = PromptAndInstallAsync(_pendingUpdate);
+            }
+        };
 
         _hotkeys = new HotkeyService();
 
@@ -108,6 +132,97 @@ public partial class App : Application
             _tray.ShowBalloon("Tıklama geçirme açık",
                 $"Overlay fareye tepki vermez. Kapatmak için {ToggleClickThroughShortcut} veya tepsi menüsü.");
         }
+
+        if (Settings.Current.AutoUpdateCheck)
+        {
+            // Açılışı yavaşlatmamak ve ağın hazır olması için kısa bir gecikmeyle.
+            _ = Task.Delay(TimeSpan.FromSeconds(15)).ContinueWith(
+                _ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(manual: false)),
+                TaskScheduler.Default);
+        }
+    }
+
+    /// <summary>
+    /// GitHub Releases'te yeni sürüm arar. manual=true ise sonuç (güncel/hata dahil) kullanıcıya gösterilir;
+    /// otomatik denetimde yalnızca yeni sürüm varsa tepsi bildirimi çıkar.
+    /// </summary>
+    public async Task CheckForUpdatesAsync(bool manual)
+    {
+        UpdateInfo? update;
+        try
+        {
+            update = await _updates.CheckAsync();
+        }
+        catch (Exception ex)
+        {
+            if (manual)
+            {
+                MessageBox.Show($"Güncelleme denetlenemedi:\n\n{ex.Message}", "dHud",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            return;
+        }
+
+        if (update is null)
+        {
+            if (manual)
+            {
+                MessageBox.Show($"dHud güncel ({UpdateService.CurrentVersionText}).", "dHud",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            return;
+        }
+
+        _pendingUpdate = update;
+        if (manual)
+        {
+            await PromptAndInstallAsync(update);
+        }
+        else
+        {
+            _tray?.ShowBalloon($"dHud {update.Tag} yayında",
+                "Güncellemek için tıklayın.", Forms.ToolTipIcon.Info, UpdateBalloonKind);
+        }
+    }
+
+    private async Task PromptAndInstallAsync(UpdateInfo update)
+    {
+        if (!UpdateService.CanSelfUpdate || update.DownloadUrl is null)
+        {
+            // Geliştirme derlemesi kendini değiştiremez; sürüm sayfasını aç.
+            if (MessageBox.Show($"Yeni sürüm: {update.Tag} (şu an {UpdateService.CurrentVersionText}).\n\nSürüm sayfası açılsın mı?",
+                    "dHud", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+            {
+                Process.Start(new ProcessStartInfo(update.PageUrl) { UseShellExecute = true });
+            }
+
+            return;
+        }
+
+        if (MessageBox.Show($"Yeni sürüm: {update.Tag} (şu an {UpdateService.CurrentVersionText}).\n\nİndirilip kurulsun ve dHud yeniden başlatılsın mı?",
+                "dHud", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            await _updates.InstallAsync(update);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Güncelleme kurulamadı:\n\n{ex.Message}", "dHud",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var args = IsElevated
+            ? $"{AdminHelper.ElevatedArgument} {UpdateService.RestartedArgument}"
+            : UpdateService.RestartedArgument;
+        Process.Start(new ProcessStartInfo(Environment.ProcessPath!, args) { UseShellExecute = true });
+        ExitApplication();
     }
 
     private void OnSettingsChanged()

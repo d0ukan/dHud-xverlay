@@ -29,6 +29,19 @@ dotnet run                 # geliştirme
 dotnet publish -c Release  # bin\Release\publish\CpuGpuOverlay.exe
 ```
 
+## Sürüm yayınlama ve güncelleme
+
+Sürüm numarası `CpuGpuOverlay.csproj` içindeki `Version` değeridir (ilk sürüm: `1.0.0`). Yayın için:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Etiket push'lanınca GitHub Actions (`.github/workflows/release.yml`) tek dosyalık `CpuGpuOverlay.exe` dosyasını
+derleyip Release olarak yayınlar. Uygulama açılışta (ayarlardan kapatılabilir) ve tepsi menüsünden
+**Güncellemeleri denetle** ile en son Release'e bakar; yeni sürüm varsa onay alıp indirir, kendini değiştirir ve yeniden başlar.
+
 ## Kullanım
 
 | | |
