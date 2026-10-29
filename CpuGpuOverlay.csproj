@@ -9,6 +9,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- assets/logo.svg logosundan üretilmiş exe simgesi (Gezgin, görev çubuğu, kısayollar). -->
+    <ApplicationIcon>assets\app.ico</ApplicationIcon>
     <AssemblyName>CpuGpuOverlay</AssemblyName>
     <RootNamespace>CpuGpuOverlay</RootNamespace>
     <Product>dHud</Product>
