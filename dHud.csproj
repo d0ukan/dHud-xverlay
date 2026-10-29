@@ -14,9 +14,15 @@
     <AssemblyName>dHud</AssemblyName>
     <RootNamespace>DHud</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
+
+    <!-- Bellek/CPU: arka plan GC iş parçacığı ve dinamik PGO kapalı; küçük bir tepsi uygulamasına gerekmez. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+    <!-- Yalnızca kullanılan arayüz dillerinin kaynak klasörleri çıktıya girsin (cs, de, fr... klasörleri gelmesin). -->
+    <SatelliteResourceLanguages>en;tr</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <!-- Release: `dotnet publish -c Release` tek başına tek dosyalık, self-contained .exe üretir → bin\Release\publish\. Normal Release derlemesi bin\Release\net10.0-windows\ altında kalır. -->
@@ -32,7 +38,14 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishDir>$(MSBuildProjectDirectory)\bin\Release\publish\</PublishDir>
     <DebugType>none</DebugType>
+    <!-- Önceden derlenmiş kod: açılışta daha az JIT, daha az bellek ve CPU. Exe birkaç MB büyür. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- GC, yığın parçalanmasını azaltmak için daha sık sıkıştırır (daha az bellek, çok az CPU). -->
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="5" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />

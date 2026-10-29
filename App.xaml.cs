@@ -52,7 +52,8 @@ public partial class App : Application
 
         // Güncelleme sonrası yeniden başlatıldıysak eski örneğin kapanıp mutex'i bırakmasını bekle.
         var restarted = e.Args.Contains(UpdateService.RestartedArgument);
-        var acquired = TryAcquireSingleInstance();
+        // Geliştirme/ölçüm kolaylığı: --allow-multiple ile aynı anda birden fazla örnek açılabilir.
+        var acquired = e.Args.Contains("--allow-multiple") || TryAcquireSingleInstance();
         for (var i = 0; restarted && !acquired && i < 20; i++)
         {
             Thread.Sleep(500);
@@ -117,6 +118,7 @@ public partial class App : Application
 
         Monitor.SnapshotUpdated += snapshot => Dispatcher.BeginInvoke(() => OnSnapshot(snapshot));
         Monitor.Start(TimeSpan.FromMilliseconds(Settings.Current.UpdateIntervalMs));
+        StartMemoryTrimTimer();
 
         if (!IsElevated)
         {
@@ -234,6 +236,22 @@ public partial class App : Application
         ExitApplication();
     }
 
+    /// <summary>
+    /// Açılıştaki donanım taramasından kalan çöpü toplar ve kullanılmayan çalışma kümesini Windows'a iade eder.
+    /// Sonrasında seyrek aralıklarla tekrarlanır; sayfalar gerektiğinde geri yüklenir.
+    /// </summary>
+    private void StartMemoryTrimTimer()
+    {
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Interval = TimeSpan.FromMinutes(3);
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+            NativeMethods.EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+        };
+        timer.Start();
+    }
+
     private void OnSettingsChanged()
     {
         var s = Settings.Current;
@@ -241,6 +259,7 @@ public partial class App : Application
         ApplyLanguageChange(s.Language);
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
+        Monitor.Network.Enabled = s.ShowNetwork;
         Monitor.Network.PingEnabled = s.ShowNetwork && s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
 

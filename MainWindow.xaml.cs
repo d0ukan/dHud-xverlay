@@ -48,7 +48,12 @@ public partial class MainWindow : Window
         _lastSnapshot = snapshot;
         AddHistory(_cpuHistory, snapshot.Cpu?.Temperature);
         AddHistory(_gpuHistory, snapshot.Gpu?.Temperature);
-        Render(snapshot);
+
+        // Gizliyken çizim yapma (CPU tasarrufu); tekrar gösterilince bir sonraki ölçümde güncellenir.
+        if (IsVisible)
+        {
+            Render(snapshot);
+        }
     }
 
     private void Render(SensorSnapshot snapshot)

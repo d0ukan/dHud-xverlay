@@ -29,6 +29,9 @@ public sealed class NetworkMonitor : IDisposable
 
     public bool PingEnabled { get; set; } = true;
 
+    /// <summary>Kapalıyken arabirimler taranmaz (ağ göstergesi kapalıyken CPU/bellek tasarrufu).</summary>
+    public bool Enabled { get; set; } = true;
+
     public void Start()
     {
         _pingLoop ??= Task.Run(() => PingLoopAsync(_cts.Token));
@@ -37,6 +40,13 @@ public sealed class NetworkMonitor : IDisposable
     /// <summary>Son çağrıdan bu yana geçen sürede aktarılan veriyi hıza çevirir.</summary>
     public NetworkReading Sample()
     {
+        if (!Enabled)
+        {
+            _previous.Clear();
+            _clock.Restart();
+            return new NetworkReading(null, null, null, null);
+        }
+
         var elapsed = _clock.Elapsed.TotalSeconds;
         _clock.Restart();
 
