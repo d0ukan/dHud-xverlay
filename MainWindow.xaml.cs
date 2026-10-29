@@ -379,6 +379,8 @@ public partial class MainWindow : Window
 
         if (Left + ActualWidth > work.Right) Left = Math.Max(work.Left, work.Right - ActualWidth);
         if (Top + ActualHeight > work.Bottom) Top = Math.Max(work.Top, work.Bottom - ActualHeight);
+        if (Left < work.Left) Left = work.Left;
+        if (Top < work.Top) Top = work.Top;
     }
 
     public void SavePosition()
@@ -404,7 +406,41 @@ public partial class MainWindow : Window
         exStyle = (exStyle | NativeMethods.WS_EX_TOOLWINDOW) & ~NativeMethods.WS_EX_APPWINDOW;
         NativeMethods.SetWindowLong(_hwnd, NativeMethods.GWL_EXSTYLE, exStyle);
 
+        HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
+
         ApplyClickThrough(_settings.Current.ClickThrough);
+    }
+
+    /// <summary>
+    /// Sürüklenirken (WM_MOVING) önerilen konumu, pencerenin en yakın monitörünün çalışma alanı içinde tutar;
+    /// overlay ekranın dışına çıkarılamaz. Monitörler arası geçiş (kenarı aşan taraf diğer monitöre değince) serbesttir.
+    /// </summary>
+    private static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg != NativeMethods.WM_MOVING)
+        {
+            return IntPtr.Zero;
+        }
+
+        var rect = Marshal.PtrToStructure<NativeMethods.RECT>(lParam);
+        var monitor = NativeMethods.MonitorFromRect(ref rect, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        var info = new NativeMethods.MONITORINFO { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+        if (!NativeMethods.GetMonitorInfo(monitor, ref info))
+        {
+            return IntPtr.Zero;
+        }
+
+        var work = info.rcWork;
+        var width = rect.Right - rect.Left;
+        var height = rect.Bottom - rect.Top;
+        rect.Left = Math.Max(work.Left, Math.Min(rect.Left, work.Right - width));
+        rect.Top = Math.Max(work.Top, Math.Min(rect.Top, work.Bottom - height));
+        rect.Right = rect.Left + width;
+        rect.Bottom = rect.Top + height;
+        Marshal.StructureToPtr(rect, lParam, false);
+
+        handled = true;
+        return (IntPtr)1;
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

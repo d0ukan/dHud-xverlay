@@ -87,7 +87,7 @@ public partial class SettingsWindow : Window
         SnapCheckBox.IsChecked = s.SnapToEdges;
         HotkeysCheckBox.IsChecked = s.HotkeysEnabled;
         AutoUpdateCheckBox.IsChecked = s.AutoUpdateCheck;
-        VersionText.Text = $"dHud {UpdateService.CurrentVersionText}";
+        VersionText.Text = UpdateService.CurrentVersionText;
 
         ColorCheckBox.IsChecked = s.ColorByTemperature;
         WarnSlider.Value = s.WarnTemperature;

@@ -14,7 +14,7 @@
     <AssemblyName>CpuGpuOverlay</AssemblyName>
     <RootNamespace>CpuGpuOverlay</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
