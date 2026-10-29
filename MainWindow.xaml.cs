@@ -89,26 +89,28 @@ public partial class MainWindow : Window
         };
 
         CpuGroup.ToolTip = cpu is null
-            ? "CPU bulunamadı"
+            ? Loc.T("Tip.CpuNotFound")
             : cpu.Temperature is null ? $"{cpu.Name}\n{CpuUnavailableReason()}" : cpu.Name;
-        GpuGroup.ToolTip = gpu?.Name ?? "GPU bulunamadı";
-        GpuMemText.ToolTip = "GPU belleği (VRAM)";
-        RamGroup.ToolTip = "Sistem belleği";
+        GpuGroup.ToolTip = gpu?.Name ?? Loc.T("Tip.GpuNotFound");
+        GpuMemText.ToolTip = Loc.T("Tip.Vram");
+        NetDownText.ToolTip = Loc.T("Tip.Download");
+        NetUpText.ToolTip = Loc.T("Tip.Upload");
+        RamGroup.ToolTip = Loc.T("Tip.Ram");
         NetGroup.ToolTip = net?.AdapterName is { } adapter
             ? $"{adapter}\nPing: {_settings.Current.PingHost}"
-            : "Etkin ağ bağlantısı bulunamadı";
+            : Loc.T("Tip.NoNetwork");
     }
 
     private static string CpuUnavailableReason()
     {
         if (!App.Current.IsElevated)
         {
-            return "CPU sıcaklığı için uygulamayı yönetici olarak çalıştırın.";
+            return Loc.T("Tip.CpuNeedsAdmin");
         }
 
         return App.Current.IsPawnIoInstalled
-            ? "CPU sıcaklık sensörü okunamadı."
-            : "CPU sıcaklığı için PawnIO sürücüsü gerekli (https://pawnio.eu).";
+            ? Loc.T("Tip.CpuNoSensor")
+            : Loc.T("Tip.CpuNeedsPawnIo");
     }
 
     private Brush BrushFor(float? temperature)
@@ -211,7 +213,14 @@ public partial class MainWindow : Window
         SetVisible(horizontal && s.ShowRam, GpuRamSeparator);
         SetVisible(horizontal && s.ShowNetwork, RamNetSeparator);
 
-        LayoutMenuItem.Header = horizontal ? "Dikey düzene geç" : "Yatay düzene geç";
+        SettingsMenuItem.Header = Loc.T("M.Settings");
+        LayoutMenuItem.Header = Loc.T(horizontal ? "M.ToVertical" : "M.ToHorizontal");
+        CompactMenuItem.Header = Loc.T("M.Compact");
+        LockMenuItem.Header = Loc.T("M.Lock");
+        ClickThroughMenuItem.Header = Loc.T("M.ClickThrough");
+        ResetPositionMenuItem.Header = Loc.T("M.ResetPosition");
+        HideMenuItem.Header = Loc.T("M.Hide");
+        ExitMenuItem.Header = Loc.T("M.Exit");
         CompactMenuItem.IsChecked = s.Compact;
         LockMenuItem.IsChecked = s.LockPosition;
         Cursor = s.LockPosition ? null : Cursors.SizeAll;

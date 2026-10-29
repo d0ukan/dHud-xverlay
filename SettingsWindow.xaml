@@ -1,8 +1,8 @@
 <Window x:Class="CpuGpuOverlay.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="dHud - Ayarlar"
-        Language="tr-TR"
+        xmlns:h="clr-namespace:CpuGpuOverlay.Helpers"
+        Title="{h:Loc S.Title}"
         Width="400"
         SizeToContent="Height"
         WindowStyle="None"
@@ -32,18 +32,18 @@
             <Grid Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <StackPanel Orientation="Horizontal" Margin="16,12,0,4">
                     <TextBlock Text="&#x2699;" FontFamily="Segoe UI Symbol" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
-                    <TextBlock Text="Ayarlar" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{h:Loc S.Settings}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
                 <Button Content="&#x2715;" Style="{StaticResource TitleCloseButton}" HorizontalAlignment="Right"
-                        VerticalAlignment="Top" Margin="0,8,8,0" Click="CloseButton_Click" ToolTip="Kapat" />
+                        VerticalAlignment="Top" Margin="0,8,8,0" Click="CloseButton_Click" ToolTip="{h:Loc S.Close}" />
             </Grid>
 
             <!-- Sekmeler -->
             <UniformGrid Columns="4" Margin="12,0">
-                <RadioButton x:Name="AppearanceTab" Content="Görünüm" GroupName="Tabs" Style="{StaticResource TabHeader}" IsChecked="True" />
-                <RadioButton x:Name="MetricsTab" Content="Göstergeler" GroupName="Tabs" Style="{StaticResource TabHeader}" />
-                <RadioButton x:Name="BehaviorTab" Content="Davranış" GroupName="Tabs" Style="{StaticResource TabHeader}" />
-                <RadioButton x:Name="AlertsTab" Content="Uyarılar" GroupName="Tabs" Style="{StaticResource TabHeader}" />
+                <RadioButton x:Name="AppearanceTab" Content="{h:Loc S.Tab.Appearance}" GroupName="Tabs" Style="{StaticResource TabHeader}" IsChecked="True" />
+                <RadioButton x:Name="MetricsTab" Content="{h:Loc S.Tab.Metrics}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
+                <RadioButton x:Name="BehaviorTab" Content="{h:Loc S.Tab.Behavior}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
+                <RadioButton x:Name="AlertsTab" Content="{h:Loc S.Tab.Alerts}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
             </UniformGrid>
             <Rectangle Height="1" Fill="{StaticResource DividerBrush}" />
 
@@ -51,28 +51,28 @@
 
                 <!-- ============ GÖRÜNÜM ============ -->
                 <StackPanel Visibility="{Binding IsChecked, ElementName=AppearanceTab, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="DÜZEN" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="{h:Loc S.Layout}" Style="{StaticResource SectionHeader}" />
                     <UniformGrid Columns="2">
-                        <RadioButton x:Name="VerticalLayoutRadio" GroupName="Layout" Content="Dikey"
+                        <RadioButton x:Name="VerticalLayoutRadio" GroupName="Layout" Content="{h:Loc S.Layout.Vertical}"
                                      Style="{StaticResource DarkRadioButton}" Checked="AppearanceRadio_Checked" />
-                        <RadioButton x:Name="HorizontalLayoutRadio" GroupName="Layout" Content="Yatay (tek satır)"
+                        <RadioButton x:Name="HorizontalLayoutRadio" GroupName="Layout" Content="{h:Loc S.Layout.Horizontal}"
                                      Style="{StaticResource DarkRadioButton}" Checked="AppearanceRadio_Checked" />
                     </UniformGrid>
-                    <CheckBox x:Name="CompactCheckBox" Content="Kompakt görünüm" Margin="0,8,0,0"
+                    <CheckBox x:Name="CompactCheckBox" Content="{h:Loc S.Compact}" Margin="0,8,0,0"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <TextBlock Style="{StaticResource HintText}"
-                               Text="Daha küçük yazı, dar boşluklar ve kısa birimler (52° gibi)." />
+                               Text="{h:Loc S.Compact.Hint}" />
 
-                    <CheckBox x:Name="AlwaysOnTopCheckBox" Content="Her zaman en üstte göster"
+                    <CheckBox x:Name="AlwaysOnTopCheckBox" Content="{h:Loc S.AlwaysOnTop}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <TextBlock Style="{StaticResource HintText}"
-                               Text="Kapalıyken overlay diğer pencerelerin arkasında kalabilir." />
+                               Text="{h:Loc S.AlwaysOnTop.Hint}" />
 
-                    <TextBlock Text="BOYUT VE SAYDAMLIK" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="{h:Loc S.SizeOpacity}" Style="{StaticResource SectionHeader}" />
                     <DockPanel Margin="0,2">
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right"
                                    Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
-                        <TextBlock Text="Arka plan opaklığı" />
+                        <TextBlock Text="{h:Loc S.Opacity}" />
                     </DockPanel>
                     <Slider x:Name="OpacitySlider" Minimum="0.2" Maximum="1" SmallChange="0.05" LargeChange="0.1"
                             TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,4,0,8"
@@ -81,41 +81,49 @@
                     <DockPanel Margin="0,2">
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right"
                                    Text="{Binding Value, ElementName=ScaleSlider, StringFormat={}{0:P0}}" />
-                        <TextBlock Text="Boyut" />
+                        <TextBlock Text="{h:Loc S.Size}" />
                     </DockPanel>
                     <Slider x:Name="ScaleSlider" Minimum="0.7" Maximum="2" SmallChange="0.05" LargeChange="0.1"
                             TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,4,0,4"
                             ValueChanged="Slider_ValueChanged" />
+
+                    <TextBlock Text="{h:Loc S.Language}" Style="{StaticResource SectionHeader}" />
+                    <UniformGrid Columns="2">
+                        <RadioButton x:Name="EnglishRadio" GroupName="Language" Content="English"
+                                     Style="{StaticResource DarkRadioButton}" Checked="LanguageRadio_Checked" />
+                        <RadioButton x:Name="TurkishRadio" GroupName="Language" Content="Türkçe"
+                                     Style="{StaticResource DarkRadioButton}" Checked="LanguageRadio_Checked" />
+                    </UniformGrid>
                 </StackPanel>
 
                 <!-- ============ GÖSTERGELER ============ -->
                 <StackPanel Visibility="{Binding IsChecked, ElementName=MetricsTab, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="CPU VE GPU" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="ShowUsageCheckBox" Content="Kullanım yüzdesi (%)"
+                    <TextBlock Text="{h:Loc S.CpuGpu}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ShowUsageCheckBox" Content="{h:Loc S.Usage}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="ShowSparklineCheckBox" Content="Mini sıcaklık grafiği (son 60 ölçüm)"
+                    <CheckBox x:Name="ShowSparklineCheckBox" Content="{h:Loc S.Sparkline}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="ShowClockCheckBox" Content="Frekans (GHz / MHz)"
+                    <CheckBox x:Name="ShowClockCheckBox" Content="{h:Loc S.Clock}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="ShowPowerCheckBox" Content="Güç tüketimi (W)"
+                    <CheckBox x:Name="ShowPowerCheckBox" Content="{h:Loc S.Power}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="ShowVramCheckBox" Content="GPU bellek kullanımı (VRAM)"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-
-                    <TextBlock Text="SİSTEM" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="ShowRamCheckBox" Content="RAM kullanımı"
+                    <CheckBox x:Name="ShowVramCheckBox" Content="{h:Loc S.Vram}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 
-                    <TextBlock Text="AĞ / İNTERNET" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="ShowNetworkCheckBox" Content="İndirme / yükleme hızı"
+                    <TextBlock Text="{h:Loc S.System}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ShowRamCheckBox" Content="{h:Loc S.Ram}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+
+                    <TextBlock Text="{h:Loc S.Network}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ShowNetworkCheckBox" Content="{h:Loc S.NetSpeed}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <StackPanel x:Name="NetworkOptionsPanel" Margin="28,0,0,0">
-                        <CheckBox x:Name="NetworkInBitsCheckBox" Content="Hızı Mbps olarak göster (yerine MB/s)"
+                        <CheckBox x:Name="NetworkInBitsCheckBox" Content="{h:Loc S.NetBits}"
                                   Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                        <CheckBox x:Name="ShowPingCheckBox" Content="Ping (gecikme)"
+                        <CheckBox x:Name="ShowPingCheckBox" Content="{h:Loc S.Ping}"
                                   Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                         <DockPanel Margin="28,4,0,0">
-                            <TextBlock Text="Adres" VerticalAlignment="Center" Margin="0,0,10,0"
+                            <TextBlock Text="{h:Loc S.Address}" VerticalAlignment="Center" Margin="0,0,10,0"
                                        Foreground="{StaticResource SubtleTextBrush}" />
                             <TextBox x:Name="PingHostTextBox" Padding="6,3" Background="#1AFFFFFF"
                                      Foreground="{StaticResource TextBrush}" CaretBrush="White"
@@ -124,48 +132,49 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <TextBlock Text="GÜNCELLEME" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="{h:Loc S.Refresh}" Style="{StaticResource SectionHeader}" />
                     <DockPanel Margin="0,2">
+                        <TextBlock DockPanel.Dock="Right" Text="{h:Loc S.Unit.Sec}" />
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right"
-                                   Text="{Binding Value, ElementName=IntervalSlider, StringFormat={}{0:0.0} sn}" />
-                        <TextBlock Text="Okuma aralığı" />
+                                   Text="{Binding Value, ElementName=IntervalSlider, StringFormat={}{0:0.0}}" />
+                        <TextBlock Text="{h:Loc S.Interval}" />
                     </DockPanel>
                     <Slider x:Name="IntervalSlider" Minimum="0.5" Maximum="5" SmallChange="0.5" LargeChange="1"
                             TickFrequency="0.5" IsSnapToTickEnabled="True" Margin="0,4,0,4"
                             ValueChanged="Slider_ValueChanged" />
                     <TextBlock Style="{StaticResource HintText}" Margin="0,0,0,4"
-                               Text="Kısa aralık daha akıcı, uzun aralık daha az işlemci kullanır." />
+                               Text="{h:Loc S.Interval.Hint}" />
                 </StackPanel>
 
                 <!-- ============ DAVRANIŞ ============ -->
                 <StackPanel Visibility="{Binding IsChecked, ElementName=BehaviorTab, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="BAŞLANGIÇ" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="StartupCheckBox" Content="Windows başlangıcında çalıştır"
+                    <TextBlock Text="{h:Loc S.Startup}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="StartupCheckBox" Content="{h:Loc S.RunAtStartup}"
                               Style="{StaticResource DarkCheckBox}" Click="StartupCheckBox_Click" />
                     <StackPanel Margin="0,4,0,0">
                         <RadioButton x:Name="TaskSchedulerRadio" GroupName="StartupMethod" Style="{StaticResource DarkRadioButton}"
-                                     Content="Görev Zamanlayıcı (önerilen)" Checked="StartupMethod_Checked" />
+                                     Content="{h:Loc S.TaskScheduler}" Checked="StartupMethod_Checked" />
                         <TextBlock Style="{StaticResource HintText}"
-                                   Text="Oturum açılışında UAC sormadan yönetici olarak başlar. Kaydetmek için yönetici yetkisi gerekir." />
+                                   Text="{h:Loc S.TaskScheduler.Hint}" />
                         <RadioButton x:Name="RegistryRadio" GroupName="StartupMethod" Style="{StaticResource DarkRadioButton}"
                                      Content="Registry (HKCU\...\Run)" Checked="StartupMethod_Checked" />
                         <TextBlock Style="{StaticResource HintText}"
-                                   Text="Klasik yöntem. CPU sıcaklığı için her açılışta UAC onayı istenir." />
+                                   Text="{h:Loc S.Registry.Hint}" />
                     </StackPanel>
                     <TextBlock x:Name="StartupStatusText" Style="{StaticResource HintText}" Margin="0,4,0,0" />
 
-                    <TextBlock Text="FARE VE KONUM" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="ClickThroughCheckBox" Content="Tıklama geçirme"
+                    <TextBlock Text="{h:Loc S.MouseAndPosition}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ClickThroughCheckBox" Content="{h:Loc S.ClickThrough}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <TextBlock Style="{StaticResource HintText}"
-                               Text="Tıklamalar overlay'den geçip alttaki pencereye (ör. oyuna) gider. Kapatmak için Ctrl+Shift+F10 veya tepsi menüsü." />
-                    <CheckBox x:Name="LockPositionCheckBox" Content="Konumu kilitle"
+                               Text="{h:Loc S.ClickThrough.Hint}" />
+                    <CheckBox x:Name="LockPositionCheckBox" Content="{h:Loc S.Lock}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="SnapCheckBox" Content="Ekran kenarlarına yapıştır"
+                    <CheckBox x:Name="SnapCheckBox" Content="{h:Loc S.Snap}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 
-                    <TextBlock Text="KISAYOL TUŞLARI" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="HotkeysCheckBox" Content="Kısayol tuşlarını etkinleştir"
+                    <TextBlock Text="{h:Loc S.Hotkeys}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="HotkeysCheckBox" Content="{h:Loc S.Hotkeys.Enable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <Grid Margin="28,2,0,0">
                         <Grid.ColumnDefinitions>
@@ -177,23 +186,23 @@
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="Ctrl+Shift+F9" FontFamily="Consolas" Margin="0,0,12,2" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Overlay'i gizle / göster" Foreground="{StaticResource SubtleTextBrush}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{h:Loc S.Hotkeys.Toggle}" Foreground="{StaticResource SubtleTextBrush}" />
                         <TextBlock Grid.Row="1" Text="Ctrl+Shift+F10" FontFamily="Consolas" Margin="0,0,12,0" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Tıklama geçirmeyi aç / kapat" Foreground="{StaticResource SubtleTextBrush}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{h:Loc S.Hotkeys.ClickThrough}" Foreground="{StaticResource SubtleTextBrush}" />
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
-                    <TextBlock Text="SÜRÜM" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="AutoUpdateCheckBox" Content="Açılışta güncellemeleri denetle"
+                    <TextBlock Text="{h:Loc S.Version}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="AutoUpdateCheckBox" Content="{h:Loc S.AutoUpdate}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <Button Content="Şimdi denetle" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
+                    <Button Content="{h:Loc S.CheckNow}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
                             Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
                 </StackPanel>
 
                 <!-- ============ UYARILAR ============ -->
                 <StackPanel Visibility="{Binding IsChecked, ElementName=AlertsTab, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="SICAKLIK RENKLERİ" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="ColorCheckBox" Content="Sıcaklığa göre renklendir"
+                    <TextBlock Text="{h:Loc S.TempColors}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ColorCheckBox" Content="{h:Loc S.ColorByTemp}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 
                     <DockPanel Margin="0,8,0,2">
@@ -201,7 +210,7 @@
                                    Text="{Binding Value, ElementName=WarnSlider, StringFormat={}{0:0}°C}" />
                         <TextBlock>
                             <Run Text="●" Foreground="{StaticResource WarnBrush}" />
-                            <Run Text="Uyarı eşiği" />
+                            <Run Text="{h:Loc S.WarnThreshold}" />
                         </TextBlock>
                     </DockPanel>
                     <Slider x:Name="WarnSlider" Minimum="30" Maximum="100" SmallChange="1" LargeChange="5"
@@ -213,7 +222,7 @@
                                    Text="{Binding Value, ElementName=HotSlider, StringFormat={}{0:0}°C}" />
                         <TextBlock>
                             <Run Text="●" Foreground="{StaticResource HotBrush}" />
-                            <Run Text="Kritik eşik" />
+                            <Run Text="{h:Loc S.HotThreshold}" />
                         </TextBlock>
                     </DockPanel>
                     <Slider x:Name="HotSlider" Minimum="31" Maximum="110" SmallChange="1" LargeChange="5"
@@ -221,16 +230,17 @@
                             ValueChanged="ThresholdSlider_ValueChanged" />
                     <TextBlock Style="{StaticResource HintText}" Margin="0">
                         <Run Text="●" Foreground="{StaticResource GoodBrush}" />
-                        <Run Text="Uyarı eşiğinin altı yeşil gösterilir." />
+                        <Run Text="{h:Loc S.GreenHint}" />
                     </TextBlock>
 
-                    <TextBlock Text="BİLDİRİM" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="AlertCheckBox" Content="Kritik sıcaklıkta bildirim göster"
+                    <TextBlock Text="{h:Loc S.Notification}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="AlertCheckBox" Content="{h:Loc S.AlertEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <DockPanel Margin="0,8,0,2">
+                        <TextBlock DockPanel.Dock="Right" Text="{h:Loc S.Unit.Sec}" />
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right"
-                                   Text="{Binding Value, ElementName=AlertSecondsSlider, StringFormat={}{0:0} sn}" />
-                        <TextBlock Text="Kritik eşiğin üstünde kalma süresi" />
+                                   Text="{Binding Value, ElementName=AlertSecondsSlider, StringFormat={}{0:0}}" />
+                        <TextBlock Text="{h:Loc S.AlertSeconds}" />
                     </DockPanel>
                     <Slider x:Name="AlertSecondsSlider" Minimum="3" Maximum="60" SmallChange="1" LargeChange="5"
                             TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,4"
@@ -251,9 +261,9 @@
 
             <!-- Düğmeler -->
             <DockPanel Margin="16,14,16,16" LastChildFill="False">
-                <Button DockPanel.Dock="Left" Content="Uygulamadan çık" Style="{StaticResource DangerButton}"
+                <Button DockPanel.Dock="Left" Content="{h:Loc S.ExitApp}" Style="{StaticResource DangerButton}"
                         Click="ExitAppButton_Click" />
-                <Button DockPanel.Dock="Right" Content="Kapat" Style="{StaticResource DarkButton}" MinWidth="80"
+                <Button DockPanel.Dock="Right" Content="{h:Loc S.Close}" Style="{StaticResource DarkButton}" MinWidth="80"
                         IsDefault="True" IsCancel="True" Click="CloseButton_Click" />
             </DockPanel>
         </StackPanel>

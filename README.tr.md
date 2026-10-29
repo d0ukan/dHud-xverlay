@@ -18,6 +18,7 @@
 - Sıcaklığa göre renk ve kritik sıcaklık bildirimi
 - Tıklama geçirme, konum kilidi, kenara yapışma, kısayol tuşları
 - Koyu temalı sistem tepsisi menüsü ve Windows başlangıcında çalıştırma
+- İngilizce ve Türkçe arayüz (varsayılan İngilizce, Ayarlar → Görünüm'den değiştirilir)
 - GitHub Releases üzerinden otomatik güncelleme
 
 ## Gereksinimler

@@ -36,6 +36,6 @@ public sealed class TemperatureAlert(string label)
         }
 
         _notified = true;
-        return $"{label} sıcaklığı {t:0}°C — {settings.AlertSeconds} sn'dir kritik eşiğin ({settings.HotTemperature}°C) üzerinde.";
+        return Loc.T("N.HighTemp.Text", label, t, settings.AlertSeconds, settings.HotTemperature);
     }
 }

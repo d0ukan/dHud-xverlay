@@ -18,6 +18,7 @@
 - Temperature-based colors and critical temperature notifications
 - Click-through, position lock, edge snapping, hotkeys
 - Dark-themed system tray menu and run at Windows startup
+- English and Turkish UI (English by default, switch in Settings → Appearance)
 - Automatic updates via GitHub Releases
 
 ## Requirements

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Markup;
 using System.Windows.Threading;
 using CpuGpuOverlay.Services;
 
@@ -19,6 +20,7 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        Language = XmlLanguage.GetLanguage(Loc.CultureName);
 
         LoadValues();
         RefreshStartupState();
@@ -55,6 +57,8 @@ public partial class SettingsWindow : Window
 
         VerticalLayoutRadio.IsChecked = s.Layout == OverlayLayout.Vertical;
         HorizontalLayoutRadio.IsChecked = s.Layout == OverlayLayout.Horizontal;
+        EnglishRadio.IsChecked = s.Language == AppLanguage.English;
+        TurkishRadio.IsChecked = s.Language == AppLanguage.Turkish;
         CompactCheckBox.IsChecked = s.Compact;
         AlwaysOnTopCheckBox.IsChecked = s.AlwaysOnTop;
         OpacitySlider.Value = s.BackgroundOpacity;
@@ -106,6 +110,7 @@ public partial class SettingsWindow : Window
         var s = _settings.Current;
 
         s.Layout = HorizontalLayoutRadio.IsChecked == true ? OverlayLayout.Horizontal : OverlayLayout.Vertical;
+        s.Language = TurkishRadio.IsChecked == true ? AppLanguage.Turkish : AppLanguage.English;
         s.Compact = CompactCheckBox.IsChecked == true;
         s.AlwaysOnTop = AlwaysOnTopCheckBox.IsChecked == true;
         s.BackgroundOpacity = OpacitySlider.Value;
@@ -160,6 +165,8 @@ public partial class SettingsWindow : Window
 
     private void AppearanceRadio_Checked(object sender, RoutedEventArgs e) => SaveValues();
 
+    private void LanguageRadio_Checked(object sender, RoutedEventArgs e) => SaveValues();
+
     private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => SaveValues();
 
     private void ThresholdSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -209,9 +216,9 @@ public partial class SettingsWindow : Window
 
         StartupStatusText.Text = active switch
         {
-            StartupMethod.TaskScheduler => "✓ Etkin: Görev Zamanlayıcı (\"CpuGpuOverlay\" görevi)",
-            StartupMethod.Registry => "✓ Etkin: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-            _ => "Başlangıçta çalıştırma kapalı."
+            StartupMethod.TaskScheduler => Loc.T("S.Startup.Task"),
+            StartupMethod.Registry => Loc.T("S.Startup.Registry"),
+            _ => Loc.T("S.Startup.Off")
         };
 
         _loading = wasLoading;
@@ -261,7 +268,7 @@ public partial class SettingsWindow : Window
         catch (Exception ex)
         {
             Mouse.OverrideCursor = null;
-            MessageBox.Show(this, ex.Message, "Başlangıç ayarı", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, ex.Message, Loc.T("S.Startup.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
@@ -279,18 +286,18 @@ public partial class SettingsWindow : Window
         var app = App.Current;
 
         ElevationStatusText.Text = app.IsElevated
-            ? "✓ Yönetici olarak çalışıyor"
-            : "⚠ Yönetici yetkisi yok — CPU sıcaklığı okunamayabilir";
+            ? Loc.T("S.Elevated")
+            : Loc.T("S.NotElevated");
         ElevationStatusText.Foreground = (Brush)FindResource(app.IsElevated ? "GoodBrush" : "WarnBrush");
 
         DriverStatusText.Text = app.IsPawnIoInstalled
-            ? "✓ PawnIO sürücüsü kurulu"
-            : "⚠ PawnIO sürücüsü yok — https://pawnio.eu adresinden kurun";
+            ? Loc.T("S.PawnIo.Ok")
+            : Loc.T("S.PawnIo.Missing");
         DriverStatusText.Foreground = (Brush)FindResource(app.IsPawnIoInstalled ? "GoodBrush" : "WarnBrush");
 
         var latest = app.Monitor.Latest;
-        CpuNameText.Text = "CPU: " + (latest is null ? "taranıyor..." : latest.Cpu?.Name ?? "bulunamadı");
-        GpuNameText.Text = "GPU: " + (latest is null ? "taranıyor..." : latest.Gpu?.Name ?? "bulunamadı");
+        CpuNameText.Text = "CPU: " + (latest is null ? Loc.T("S.Scanning") : latest.Cpu?.Name ?? Loc.T("S.NotFound"));
+        GpuNameText.Text = "GPU: " + (latest is null ? Loc.T("S.Scanning") : latest.Gpu?.Name ?? Loc.T("S.NotFound"));
 
         HotkeyStatusText.Text = app.HotkeyError ?? string.Empty;
         HotkeyStatusText.Visibility = app.HotkeyError is null ? Visibility.Collapsed : Visibility.Visible;

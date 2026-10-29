@@ -31,7 +31,7 @@ public static class StartupManager
     }
 
     private static string ExePath =>
-        Environment.ProcessPath ?? throw new InvalidOperationException("Uygulama yolu belirlenemedi.");
+        Environment.ProcessPath ?? throw new InvalidOperationException(Loc.T("St.NoPath"));
 
     /// <summary>Şu an etkin olan başlangıç yöntemi; hiçbiri yoksa null.</summary>
     public static StartupMethod? GetActiveMethod()
@@ -54,7 +54,7 @@ public static class StartupManager
         if (method == StartupMethod.TaskScheduler && !AdminHelper.IsElevated())
         {
             throw new InvalidOperationException(
-                "Görev Zamanlayıcı kaydı oluşturmak için uygulamanın yönetici olarak çalışması gerekir.");
+                Loc.T("St.NeedAdmin"));
         }
 
         // İki yöntem aynı anda etkin olursa uygulama iki kez başlatılmaya çalışılır.
@@ -79,7 +79,7 @@ public static class StartupManager
             if (exitCode != 0)
             {
                 throw new InvalidOperationException(
-                    "Zamanlanmış görev silinemedi. Yönetici olarak çalıştırıp tekrar deneyin.\n\n" + output);
+                    Loc.T("St.DeleteFailed") + output);
             }
         }
 
@@ -165,7 +165,7 @@ public static class StartupManager
             var (exitCode, output) = RunSchtasks($"/Create /TN \"{TaskName}\" /XML \"{xmlPath}\" /F");
             if (exitCode != 0)
             {
-                throw new InvalidOperationException("Zamanlanmış görev oluşturulamadı.\n\n" + output);
+                throw new InvalidOperationException(Loc.T("St.CreateFailed") + output);
             }
         }
         finally

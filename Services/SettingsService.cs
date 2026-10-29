@@ -24,6 +24,9 @@ public sealed class AppSettings
 
     // ---- Görünüm ----
 
+    /// <summary>Arayüz dili. İlk açılışta İngilizce.</summary>
+    public AppLanguage Language { get; set; } = AppLanguage.English;
+
     public OverlayLayout Layout { get; set; } = OverlayLayout.Vertical;
 
     /// <summary>Daha küçük yazı, daha dar boşluklar ve kısa birimler ("52°").</summary>
@@ -121,6 +124,7 @@ public sealed class SettingsService
         }
 
         Normalize(Current);
+        Loc.Current = Current.Language;
     }
 
     public void Save()
@@ -140,6 +144,7 @@ public sealed class SettingsService
     public void NotifyChanged()
     {
         Normalize(Current);
+        Loc.Current = Current.Language;
         Save();
         Changed?.Invoke(this, EventArgs.Empty);
     }

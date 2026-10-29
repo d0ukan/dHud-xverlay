@@ -15,6 +15,10 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.ToolStripMenuItem _toggleItem;
     private readonly Forms.ToolStripMenuItem _clickThroughItem;
     private readonly Forms.ToolStripMenuItem _lockItem;
+    private readonly Forms.ToolStripMenuItem _settingsItem;
+    private readonly Forms.ToolStripMenuItem _updateItem;
+    private readonly Forms.ToolStripMenuItem _exitItem;
+    private bool _overlayVisible = true;
 
     public event EventHandler? ToggleOverlayRequested;
     public event EventHandler? SettingsRequested;
@@ -28,22 +32,22 @@ public sealed class TrayIconService : IDisposable
     {
         _icon = CreateLogoIcon();
 
-        var settingsItem = new Forms.ToolStripMenuItem("Ayarlar...", null, (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty))
+        _settingsItem = new Forms.ToolStripMenuItem(Loc.T("T.Settings"), null, (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty))
         {
             Font = new Drawing.Font("Segoe UI", 9.5f, Drawing.FontStyle.Bold)
         };
-        _toggleItem = new Forms.ToolStripMenuItem("Overlay'i gizle", null, (_, _) => ToggleOverlayRequested?.Invoke(this, EventArgs.Empty))
+        _toggleItem = new Forms.ToolStripMenuItem(Loc.T("T.Hide"), null, (_, _) => ToggleOverlayRequested?.Invoke(this, EventArgs.Empty))
         {
             ShortcutKeyDisplayString = toggleOverlayShortcut
         };
-        _clickThroughItem = new Forms.ToolStripMenuItem("Tıklama geçirme", null, (_, _) => ClickThroughToggleRequested?.Invoke(this, EventArgs.Empty))
+        _clickThroughItem = new Forms.ToolStripMenuItem(Loc.T("T.ClickThrough"), null, (_, _) => ClickThroughToggleRequested?.Invoke(this, EventArgs.Empty))
         {
             ShortcutKeyDisplayString = clickThroughShortcut
         };
-        _lockItem = new Forms.ToolStripMenuItem("Konumu kilitle", null, (_, _) => LockToggleRequested?.Invoke(this, EventArgs.Empty));
-        var updateItem = new Forms.ToolStripMenuItem($"Güncellemeleri denetle ({UpdateService.CurrentVersionText})", null,
+        _lockItem = new Forms.ToolStripMenuItem(Loc.T("T.Lock"), null, (_, _) => LockToggleRequested?.Invoke(this, EventArgs.Empty));
+        _updateItem = new Forms.ToolStripMenuItem(Loc.T("T.CheckUpdates", UpdateService.CurrentVersionText), null,
             (_, _) => UpdateCheckRequested?.Invoke(this, EventArgs.Empty));
-        var exitItem = new Forms.ToolStripMenuItem("Çıkış", null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
+        _exitItem = new Forms.ToolStripMenuItem(Loc.T("T.Exit"), null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
 
         var menu = new Forms.ContextMenuStrip
         {
@@ -56,14 +60,14 @@ public sealed class TrayIconService : IDisposable
             ShowCheckMargin = true
         };
         menu.Items.AddRange([
-            settingsItem,
+            _settingsItem,
             _toggleItem,
             new Forms.ToolStripSeparator(),
             _clickThroughItem,
             _lockItem,
             new Forms.ToolStripSeparator(),
-            updateItem,
-            exitItem
+            _updateItem,
+            _exitItem
         ]);
 
         _notifyIcon = new Forms.NotifyIcon
@@ -79,9 +83,21 @@ public sealed class TrayIconService : IDisposable
 
     public void SetStates(bool overlayVisible, bool clickThrough, bool locked)
     {
-        _toggleItem.Text = overlayVisible ? "Overlay'i gizle" : "Overlay'i göster";
+        _overlayVisible = overlayVisible;
+        _toggleItem.Text = Loc.T(overlayVisible ? "T.Hide" : "T.Show");
         _clickThroughItem.Checked = clickThrough;
         _lockItem.Checked = locked;
+    }
+
+    /// <summary>Dil değişince menü metinlerini yeniden yazar.</summary>
+    public void ApplyLanguage()
+    {
+        _settingsItem.Text = Loc.T("T.Settings");
+        _toggleItem.Text = Loc.T(_overlayVisible ? "T.Hide" : "T.Show");
+        _clickThroughItem.Text = Loc.T("T.ClickThrough");
+        _lockItem.Text = Loc.T("T.Lock");
+        _updateItem.Text = Loc.T("T.CheckUpdates", UpdateService.CurrentVersionText);
+        _exitItem.Text = Loc.T("T.Exit");
     }
 
     public void UpdateTooltip(string text)

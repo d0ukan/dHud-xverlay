@@ -133,15 +133,15 @@
     <Grid x:Name="Root" Margin="10">
         <Grid.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Ayarlar..." Click="SettingsMenu_Click" FontWeight="SemiBold" />
-                <MenuItem x:Name="LayoutMenuItem" Header="Yatay düzene geç" Click="LayoutMenu_Click" />
-                <MenuItem x:Name="CompactMenuItem" Header="Kompakt görünüm" IsCheckable="True" Click="CompactMenu_Click" />
-                <MenuItem x:Name="LockMenuItem" Header="Konumu kilitle" IsCheckable="True" Click="LockMenu_Click" />
-                <MenuItem Header="Tıklama geçirmeyi aç" Click="ClickThroughMenu_Click" InputGestureText="Ctrl+Shift+F10" />
-                <MenuItem Header="Konumu sıfırla" Click="ResetPositionMenu_Click" />
-                <MenuItem Header="Overlay'i gizle" Click="HideMenu_Click" InputGestureText="Ctrl+Shift+F9" />
+                <MenuItem x:Name="SettingsMenuItem" Header="Settings..." Click="SettingsMenu_Click" FontWeight="SemiBold" />
+                <MenuItem x:Name="LayoutMenuItem" Header="Switch to horizontal layout" Click="LayoutMenu_Click" />
+                <MenuItem x:Name="CompactMenuItem" Header="Compact view" IsCheckable="True" Click="CompactMenu_Click" />
+                <MenuItem x:Name="LockMenuItem" Header="Lock position" IsCheckable="True" Click="LockMenu_Click" />
+                <MenuItem x:Name="ClickThroughMenuItem" Header="Enable click-through" Click="ClickThroughMenu_Click" InputGestureText="Ctrl+Shift+F10" />
+                <MenuItem x:Name="ResetPositionMenuItem" Header="Reset position" Click="ResetPositionMenu_Click" />
+                <MenuItem x:Name="HideMenuItem" Header="Hide overlay" Click="HideMenu_Click" InputGestureText="Ctrl+Shift+F9" />
                 <Separator />
-                <MenuItem Header="Çıkış" Click="ExitMenu_Click" />
+                <MenuItem x:Name="ExitMenuItem" Header="Exit" Click="ExitMenu_Click" />
             </ContextMenu>
         </Grid.ContextMenu>
 
@@ -244,9 +244,9 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="NET" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="1" x:Name="NetDownText" Text="↓ --" Style="{StaticResource SmallText}"
-                           Margin="0" MinWidth="{DynamicResource NetMinWidth}" ToolTip="İndirme" />
+                           Margin="0" MinWidth="{DynamicResource NetMinWidth}" ToolTip="Download" />
                 <TextBlock Grid.Column="2" x:Name="NetUpText" Text="↑ --" Style="{StaticResource SmallText}"
-                           MinWidth="{DynamicResource NetMinWidth}" ToolTip="Yükleme" />
+                           MinWidth="{DynamicResource NetMinWidth}" ToolTip="Upload" />
                 <TextBlock Grid.Column="3" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
             </Grid>
         </StackPanel>

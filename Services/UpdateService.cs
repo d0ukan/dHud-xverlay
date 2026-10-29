@@ -73,7 +73,7 @@ public sealed class UpdateService
     {
         if (update.DownloadUrl is null || Environment.ProcessPath is not { } exePath)
         {
-            throw new InvalidOperationException("Bu sürümde indirilebilir dosya yok.");
+            throw new InvalidOperationException(Loc.T("U.NoAsset"));
         }
 
         var newPath = exePath + ".new";
@@ -89,7 +89,7 @@ public sealed class UpdateService
         if (new FileInfo(newPath).Length < 100_000)
         {
             File.Delete(newPath);
-            throw new InvalidOperationException("İndirilen dosya geçersiz.");
+            throw new InvalidOperationException(Loc.T("U.BadDownload"));
         }
 
         if (File.Exists(oldPath))

@@ -29,6 +29,7 @@ public partial class App : Application
     private MainWindow? _overlay;
     private SettingsWindow? _settingsWindow;
     private bool? _hotkeysRegisteredFor;
+    private AppLanguage? _appliedLanguage;
     private readonly TemperatureAlert _cpuAlert = new("CPU");
     private readonly TemperatureAlert _gpuAlert = new("GPU");
 
@@ -117,20 +118,26 @@ public partial class App : Application
 
         if (!IsElevated)
         {
-            _tray.ShowBalloon("Yönetici yetkisi yok",
-                "CPU sıcaklığı okunamayabilir. Uygulamayı yönetici olarak çalıştırın.",
+            _tray.ShowBalloon(Loc.T("N.NoAdmin.Title"),
+                Loc.T("N.NoAdmin.Text"),
                 Forms.ToolTipIcon.Warning);
         }
         else if (!IsPawnIoInstalled)
         {
-            _tray.ShowBalloon("PawnIO sürücüsü bulunamadı",
-                "CPU sıcaklığı için PawnIO sürücüsü gerekir: https://pawnio.eu",
+            _tray.ShowBalloon(Loc.T("N.NoPawnIo.Title"),
+                Loc.T("N.NoPawnIo.Text"),
                 Forms.ToolTipIcon.Warning);
         }
         else if (Settings.Current.ClickThrough)
         {
-            _tray.ShowBalloon("Tıklama geçirme açık",
-                $"Overlay fareye tepki vermez. Kapatmak için {ToggleClickThroughShortcut} veya tepsi menüsü.");
+            _tray.ShowBalloon(Loc.T("N.ClickThroughOn"),
+                Loc.T("N.ClickThroughOn.Text", ToggleClickThroughShortcut));
+        }
+
+        // Geliştirme/test kolaylığı: ayarlar penceresini doğrudan açar.
+        if (e.Args.Contains("--settings"))
+        {
+            OpenSettings();
         }
 
         if (Settings.Current.AutoUpdateCheck)
@@ -157,7 +164,7 @@ public partial class App : Application
         {
             if (manual)
             {
-                MessageBox.Show($"Güncelleme denetlenemedi:\n\n{ex.Message}", "dHud",
+                MessageBox.Show(Loc.T("U.CheckFailed", ex.Message), "dHud",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
@@ -168,7 +175,7 @@ public partial class App : Application
         {
             if (manual)
             {
-                MessageBox.Show($"dHud güncel ({UpdateService.CurrentVersionText}).", "dHud",
+                MessageBox.Show(Loc.T("U.UpToDate", UpdateService.CurrentVersionText), "dHud",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
@@ -182,8 +189,8 @@ public partial class App : Application
         }
         else
         {
-            _tray?.ShowBalloon($"dHud {update.Tag} yayında",
-                "Güncellemek için tıklayın.", Forms.ToolTipIcon.Info, UpdateBalloonKind);
+            _tray?.ShowBalloon(Loc.T("U.Available", update.Tag),
+                Loc.T("U.ClickToUpdate"), Forms.ToolTipIcon.Info, UpdateBalloonKind);
         }
     }
 
@@ -192,7 +199,7 @@ public partial class App : Application
         if (!UpdateService.CanSelfUpdate || update.DownloadUrl is null)
         {
             // Geliştirme derlemesi kendini değiştiremez; sürüm sayfasını aç.
-            if (MessageBox.Show($"Yeni sürüm: {update.Tag} (şu an {UpdateService.CurrentVersionText}).\n\nSürüm sayfası açılsın mı?",
+            if (MessageBox.Show(Loc.T("U.OpenPage", update.Tag, UpdateService.CurrentVersionText),
                     "dHud", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
             {
                 Process.Start(new ProcessStartInfo(update.PageUrl) { UseShellExecute = true });
@@ -201,7 +208,7 @@ public partial class App : Application
             return;
         }
 
-        if (MessageBox.Show($"Yeni sürüm: {update.Tag} (şu an {UpdateService.CurrentVersionText}).\n\nİndirilip kurulsun ve dHud yeniden başlatılsın mı?",
+        if (MessageBox.Show(Loc.T("U.Install", update.Tag, UpdateService.CurrentVersionText),
                 "dHud", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {
             return;
@@ -213,7 +220,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Güncelleme kurulamadı:\n\n{ex.Message}", "dHud",
+            MessageBox.Show(Loc.T("U.InstallFailed", ex.Message), "dHud",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -229,6 +236,7 @@ public partial class App : Application
     {
         var s = Settings.Current;
 
+        ApplyLanguageChange(s.Language);
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
         Monitor.Network.PingEnabled = s.ShowNetwork && s.ShowPing;
@@ -239,6 +247,37 @@ public partial class App : Application
         {
             _hotkeysRegisteredFor = s.HotkeysEnabled;
             RegisterHotkeys(s.HotkeysEnabled);
+        }
+    }
+
+    /// <summary>
+    /// Dil değiştiyse tepsi menüsünü yeniler ve (açıksa) ayarlar penceresini yeni dilde yeniden açar.
+    /// Overlay menüsü her ayar değişiminde kendi metinlerini zaten yeniler.
+    /// </summary>
+    private void ApplyLanguageChange(AppLanguage language)
+    {
+        var previous = _appliedLanguage;
+        _appliedLanguage = language;
+        if (previous is null || previous == language)
+        {
+            return;
+        }
+
+        _tray?.ApplyLanguage();
+        RegisterHotkeys(Settings.Current.HotkeysEnabled); // hata iletisi dile bağlı
+
+        if (_settingsWindow is { IsLoaded: true } window)
+        {
+            var location = (window.Left, window.Top);
+            window.Close();
+            Dispatcher.BeginInvoke(() =>
+            {
+                OpenSettings();
+                if (_settingsWindow is not null)
+                {
+                    (_settingsWindow.Left, _settingsWindow.Top) = location;
+                }
+            });
         }
     }
 
@@ -269,7 +308,7 @@ public partial class App : Application
 
         if (failed.Count > 0)
         {
-            HotkeyError = $"⚠ Başka bir uygulama kullandığı için kaydedilemedi: {string.Join(", ", failed)}";
+            HotkeyError = Loc.T("N.HotkeyFailed", string.Join(", ", failed));
         }
     }
 
@@ -288,7 +327,7 @@ public partial class App : Application
         {
             if (message is not null)
             {
-                _tray?.ShowBalloon("Yüksek sıcaklık", message, Forms.ToolTipIcon.Warning);
+                _tray?.ShowBalloon(Loc.T("N.HighTemp"), message, Forms.ToolTipIcon.Warning);
             }
         }
     }
@@ -338,10 +377,10 @@ public partial class App : Application
         Settings.NotifyChanged();
 
         _tray?.ShowBalloon(
-            s.ClickThrough ? "Tıklama geçirme açık" : "Tıklama geçirme kapalı",
+            Loc.T(s.ClickThrough ? "N.ClickThroughOn" : "N.ClickThroughOff"),
             s.ClickThrough
-                ? $"Tıklamalar alttaki pencereye gider. Kapatmak için {ToggleClickThroughShortcut}."
-                : "Overlay yeniden sürüklenebilir ve sağ tık menüsü kullanılabilir.");
+                ? Loc.T("N.ClickThroughOn.Hint", ToggleClickThroughShortcut)
+                : Loc.T("N.ClickThroughOff.Hint"));
     }
 
     public void ToggleLock()
@@ -408,7 +447,7 @@ public partial class App : Application
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        MessageBox.Show($"Beklenmeyen bir hata oluştu:\n\n{e.Exception.Message}", "dHud",
+        MessageBox.Show(Loc.T("N.Unexpected", e.Exception.Message), "dHud",
             MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
     }
