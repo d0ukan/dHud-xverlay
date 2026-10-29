@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 
 namespace CpuGpuOverlay.Services;
@@ -12,13 +13,14 @@ public sealed record UpdateInfo(Version Version, string Tag, string PageUrl, str
 
 /// <summary>
 /// GitHub Releases üzerinden güncelleme denetler ve indirir. Depo public olmalıdır (token gerekmez).
-/// Release'te <see cref="AssetName"/> adlı tek dosyalık exe bulunur.
+/// Release'te dHud-&lt;sürüm&gt;.exe adlı tek dosyalık exe bulunur.
 /// </summary>
 public sealed class UpdateService
 {
     public const string Repository = "d0ukan/dHud-xverlay";
     public const string ReleasesUrl = "https://github.com/" + Repository + "/releases";
-    private const string AssetName = "CpuGpuOverlay.exe";
+    // Taşınabilir exe: dHud-1.2.3.exe (kurulum dosyası dHud-Setup-1.2.3.exe bununla eşleşmez).
+    private static readonly Regex AssetNamePattern = new(@"^dHud-\d+(\.\d+)*\.exe$", RegexOptions.IgnoreCase);
     private const string LatestApi = "https://api.github.com/repos/" + Repository + "/releases/latest";
 
     /// <summary>Yeniden başlatılan örneğin eski örneğin mutex'ini bırakmasını beklemesi için argüman.</summary>
@@ -59,8 +61,7 @@ public sealed class UpdateService
             return null;
         }
 
-        var asset = release.Assets?.FirstOrDefault(a =>
-            string.Equals(a.Name, AssetName, StringComparison.OrdinalIgnoreCase));
+        var asset = release.Assets?.FirstOrDefault(a => a.Name is not null && AssetNamePattern.IsMatch(a.Name));
         return new UpdateInfo(latest, release.TagName, release.HtmlUrl ?? ReleasesUrl,
             asset?.DownloadUrl, release.Body ?? string.Empty);
     }

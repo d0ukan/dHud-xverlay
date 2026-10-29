@@ -24,6 +24,8 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           dotnet publish -c Release -p:Version="$VERSION"
+          # Release dosyasında sürüm görünsün (uygulama içi güncelleme dHud-<sürüm>.exe adını arar).
+          cp bin/Release/publish/CpuGpuOverlay.exe "bin/Release/publish/dHud-$VERSION.exe"
 
       - name: Inno Setup kur
         shell: pwsh
@@ -41,7 +43,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" \
-            bin/Release/publish/CpuGpuOverlay.exe \
-            bin/Release/installer/dHud-Setup.exe \
+            "bin/Release/publish/dHud-$VERSION.exe" \
+            "bin/Release/installer/dHud-Setup-$VERSION.exe" \
             --title "dHud $GITHUB_REF_NAME" --generate-notes
