@@ -14,7 +14,7 @@
     <AssemblyName>dHud</AssemblyName>
     <RootNamespace>DHud</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.13</Version>
+    <Version>1.0.14</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
 
@@ -49,12 +49,22 @@
 
   <ItemGroup>
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <!-- Mobil uygulama eşleştirme QR kodu (System.Drawing gerektirmeyen PNG üretici) -->
+    <PackageReference Include="QRCoder" Version="1.6.0" />
   </ItemGroup>
 
   <!-- LibreHardwareMonitorLib'in bir bağımlılığı Linux için Mono yardımcı DLL'leri getiriyor; Windows'ta kullanılmıyor. -->
   <Target Name="RemoveUnusedNativeFiles" AfterTargets="Publish">
     <Delete Files="$(PublishDir)libMonoPosixHelper.dll;$(PublishDir)MonoPosixHelper.dll" />
   </Target>
+
+  <!-- Android uygulaması aynı depoda ayrı bir projedir; Windows uygulamasına dahil edilmesin. -->
+  <ItemGroup>
+    <Compile Remove="mobile\**" />
+    <EmbeddedResource Remove="mobile\**" />
+    <Page Remove="mobile\**" />
+    <None Remove="mobile\**" />
+  </ItemGroup>
 
   <!-- WPF ve WinForms tipleri (Application, Point, Color...) çakışmasın diye
        WinForms isim alanları global olarak eklenmiyor; gereken yerde takma adla kullanılıyor. -->

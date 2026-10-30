@@ -4,7 +4,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using System.IO;
+using System.Windows.Media.Imaging;
 using DHud.Services;
+using QRCoder;
 
 namespace DHud;
 
@@ -14,6 +17,7 @@ public partial class SettingsWindow : Window
 
     private readonly SettingsService _settings = App.Current.Settings;
     private readonly DispatcherTimer _statusTimer;
+    private string? _shownQrUri;
 
     // InitializeComponent ve programatik değişiklikler sırasında olay işleyicileri çalışmasın.
     private bool _loading = true;
@@ -97,6 +101,9 @@ public partial class SettingsWindow : Window
         }
 
         UpdateHoursPanel.IsEnabled = s.AutoUpdateCheck;
+        MobileCheckBox.IsChecked = s.MobileEnabled;
+        MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
+        RefreshMobile();
         VersionText.Text = UpdateService.CurrentVersionText;
 
         ColorCheckBox.IsChecked = s.ColorByTemperature;
@@ -148,6 +155,7 @@ public partial class SettingsWindow : Window
         s.SnapToEdges = SnapCheckBox.IsChecked == true;
         s.HotkeysEnabled = HotkeysCheckBox.IsChecked == true;
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
+        s.MobileEnabled = MobileCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
         {
             s.UpdateCheckHours = int.Parse((string)hours.Tag);
@@ -306,6 +314,57 @@ public partial class SettingsWindow : Window
         RefreshStartupState();
     }
 
+    // ---- Mobil bağlantı ----
+
+    private void MobileResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        App.Current.MobileLink.ResetPairing();
+        _shownQrUri = null;
+        RefreshMobile();
+    }
+
+    /// <summary>QR kodu ve durum satırını günceller. QR yalnızca adres/anahtar değişince yeniden çizilir.</summary>
+    private void RefreshMobile()
+    {
+        if (!_settings.Current.MobileEnabled)
+        {
+            _shownQrUri = null;
+            MobileQrImage.Source = null;
+            return;
+        }
+
+        var link = App.Current.MobileLink;
+        var uri = link.BuildPairingUri();
+        if (uri != _shownQrUri)
+        {
+            _shownQrUri = uri;
+            MobileQrImage.Source = uri is null ? null : CreateQrImage(uri);
+        }
+
+        MobileQrBorder.Visibility = uri is null ? Visibility.Collapsed : Visibility.Visible;
+        MobileStatusText.Text = uri is null
+            ? Loc.T("S.MobileNoNetwork")
+            : link.LastError is { } error
+                ? Loc.T("S.MobileError", error)
+                : Loc.T("S.MobileStatus", $"{link.GetLocalAddresses().First()}:{MobileLinkService.Port}", link.ClientCount);
+    }
+
+    private static BitmapImage CreateQrImage(string text)
+    {
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(text, QRCodeGenerator.ECCLevel.M);
+        var png = new PngByteQRCode(data).GetGraphic(8);
+
+        var image = new BitmapImage();
+        using var stream = new MemoryStream(png);
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+        return image;
+    }
+
     // ---- Durum ----
 
     private void RefreshStatus()
@@ -325,6 +384,8 @@ public partial class SettingsWindow : Window
         var latest = app.Monitor.Latest;
         CpuNameText.Text = "CPU: " + (latest is null ? Loc.T("S.Scanning") : latest.Cpu?.Name ?? Loc.T("S.NotFound"));
         GpuNameText.Text = "GPU: " + (latest is null ? Loc.T("S.Scanning") : latest.Gpu?.Name ?? Loc.T("S.NotFound"));
+
+        RefreshMobile();
 
         HotkeyStatusText.Text = app.HotkeyError ?? string.Empty;
         HotkeyStatusText.Visibility = app.HotkeyError is null ? Visibility.Collapsed : Visibility.Visible;

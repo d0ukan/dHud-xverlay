@@ -200,6 +200,21 @@
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
+                    <TextBlock Text="{h:Loc S.Mobile}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="MobileCheckBox" Content="{h:Loc S.MobileEnable}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <StackPanel x:Name="MobilePanel" Visibility="Collapsed">
+                        <TextBlock Text="{h:Loc S.MobileHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                        <Border x:Name="MobileQrBorder" Background="White" CornerRadius="6" Padding="8"
+                                HorizontalAlignment="Left" Margin="0,8,0,4">
+                            <Image x:Name="MobileQrImage" Width="168" Height="168"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                        </Border>
+                        <TextBlock x:Name="MobileStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                        <Button Content="{h:Loc S.MobileReset}" Style="{StaticResource DarkButton}"
+                                HorizontalAlignment="Left" Margin="0,6,0,0" Click="MobileResetButton_Click" />
+                    </StackPanel>
+
                     <TextBlock Text="{h:Loc S.Version}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="AutoUpdateCheckBox" Content="{h:Loc S.AutoUpdate}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />

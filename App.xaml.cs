@@ -41,6 +41,7 @@ public partial class App : Application
 
     public SettingsService Settings { get; } = new();
     public HardwareMonitorService Monitor { get; } = new();
+    public MobileLinkService MobileLink { get; private set; } = null!;
     public bool IsElevated { get; private set; }
     public bool IsPawnIoInstalled { get; private set; }
 
@@ -95,6 +96,8 @@ public partial class App : Application
 
         Settings.Load();
         StartupManager.MigrateLegacy();
+
+        MobileLink = new MobileLinkService(Monitor, Settings);
 
         _overlay = new MainWindow();
         _overlay.Show();
@@ -306,6 +309,7 @@ public partial class App : Application
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
         ConfigureUpdateTimer();
+        MobileLink.Apply();
 
         // Kısayollar yalnızca ayar gerçekten değiştiğinde yeniden kaydedilir.
         if (_hotkeysRegisteredFor != s.HotkeysEnabled)
@@ -474,6 +478,7 @@ public partial class App : Application
     {
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        MobileLink?.Dispose();
         Monitor.Dispose();
         ReleaseSingleInstance();
         base.OnExit(e);

@@ -112,6 +112,12 @@ public sealed class AppSettings
 
     public static readonly int[] UpdateCheckChoices = [1, 3, 6, 12, 24];
 
+    /// <summary>Mobil uygulamanın yerel ağdan bağlanmasına izin ver. Varsayılan kapalı.</summary>
+    public bool MobileEnabled { get; set; }
+
+    /// <summary>QR ile paylaşılan eşleştirme anahtarı; ilk açılışta üretilir.</summary>
+    public string MobileToken { get; set; } = string.Empty;
+
     public StartupMethod PreferredStartupMethod { get; set; } = StartupMethod.TaskScheduler;
 }
 
