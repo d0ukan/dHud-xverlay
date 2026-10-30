@@ -322,21 +322,24 @@
 
             <Rectangle x:Name="RamNetSeparator" Style="{StaticResource GroupSeparator}" />
 
-            <!-- Ağ: yalnızca etiket sütunu diğer satırlarla hizalanır; hız metinleri
-                 diğer sütunların genişliğini etkilemesin diye kendi sütunlarında durur. -->
+            <!-- Ağ: CPU/GPU/RAM ile aynı ortak sütunları kullanır. Her metin birkaç sütunu kaplar ve sağ kenarı
+                 üstteki satırların sütun kenarlarıyla çakışır (hız ↓: grafik sütunu, hız ↑: frekans sütunu, ping: bellek sütunu). -->
             <Grid x:Name="NetGroup">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="NET" Style="{StaticResource LabelText}" />
-                <TextBlock Grid.Column="1" x:Name="NetDownText" Text="↓ --" Style="{StaticResource SmallText}"
+                <TextBlock Grid.Column="1" Grid.ColumnSpan="2" x:Name="NetDownText" Text="↓ --" Style="{StaticResource SmallText}"
                            Margin="0" MinWidth="{DynamicResource NetMinWidth}" ToolTip="Download" />
-                <TextBlock Grid.Column="2" x:Name="NetUpText" Text="↑ --" Style="{StaticResource SmallText}"
+                <TextBlock Grid.Column="3" Grid.ColumnSpan="2" x:Name="NetUpText" Text="↑ --" Style="{StaticResource SmallText}"
                            MinWidth="{DynamicResource NetMinWidth}" ToolTip="Upload" />
-                <TextBlock Grid.Column="3" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="5" Grid.ColumnSpan="2" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
             </Grid>
         </StackPanel>
 
