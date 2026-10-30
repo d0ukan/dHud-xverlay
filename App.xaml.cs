@@ -265,6 +265,8 @@ public partial class App : Application
         ApplyLanguageChange(s.Language);
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
+        Monitor.CpuEnabled = s.ShowCpu;
+        Monitor.GpuEnabled = s.ShowGpu;
         Monitor.Network.Enabled = s.ShowNetwork;
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
@@ -342,8 +344,18 @@ public partial class App : Application
     private void OnSnapshot(SensorSnapshot snapshot)
     {
         _overlay?.UpdateReadings(snapshot);
-        _tray?.UpdateTooltip(
-            $"CPU {Format.Temperature(snapshot.Cpu?.Temperature)} | GPU {Format.Temperature(snapshot.Gpu?.Temperature)}");
+        var tooltip = new List<string>();
+        if (Settings.Current.ShowCpu)
+        {
+            tooltip.Add($"CPU {Format.Temperature(snapshot.Cpu?.Temperature)}");
+        }
+
+        if (Settings.Current.ShowGpu)
+        {
+            tooltip.Add($"GPU {Format.Temperature(snapshot.Gpu?.Temperature)}");
+        }
+
+        _tray?.UpdateTooltip(tooltip.Count > 0 ? string.Join(" | ", tooltip) : "dHud");
 
         var now = DateTime.UtcNow;
         foreach (var message in new[]

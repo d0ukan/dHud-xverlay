@@ -220,6 +220,8 @@ public partial class MainWindow : Window
         GroupsPanel.Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
         Grid.SetIsSharedSizeScope(GroupsPanel, !horizontal);
 
+        SetVisible(s.ShowCpu, CpuGroup);
+        SetVisible(s.ShowGpu, GpuGroup);
         SetVisible(s.ShowUsage, CpuLoadText, GpuLoadText);
         SetVisible(s.ShowSparkline, CpuSpark, GpuSpark);
         SetVisible(s.ShowClock, CpuClockText, GpuClockText);
@@ -230,9 +232,11 @@ public partial class MainWindow : Window
         SetVisible(s.ShowNetwork || s.ShowPing, NetGroup);
         SetVisible(s.ShowNetwork, NetDownText, NetUpText);
         SetVisible(s.ShowPing, NetPingText);
-        SetVisible(horizontal, CpuGpuSeparator);
-        SetVisible(horizontal && s.ShowRam, GpuRamSeparator);
-        SetVisible(horizontal && (s.ShowNetwork || s.ShowPing), RamNetSeparator);
+        // Yatay düzende yalnızca görünen gruplar arasında ayraç olur.
+        var netVisible = s.ShowNetwork || s.ShowPing;
+        SetVisible(horizontal && s.ShowCpu && s.ShowGpu, CpuGpuSeparator);
+        SetVisible(horizontal && s.ShowRam && (s.ShowCpu || s.ShowGpu), GpuRamSeparator);
+        SetVisible(horizontal && netVisible && (s.ShowCpu || s.ShowGpu || s.ShowRam), RamNetSeparator);
 
         SettingsMenuItem.Header = Loc.T("M.Settings");
         LayoutMenuItem.Header = Loc.T(horizontal ? "M.ToVertical" : "M.ToHorizontal");
@@ -243,6 +247,10 @@ public partial class MainWindow : Window
         HideMenuItem.Header = Loc.T("M.Hide");
         ExitMenuItem.Header = Loc.T("M.Exit");
         MetricsMenuItem.Header = Loc.T("M.Metrics");
+        CpuMenuItem.Header = Loc.T("S.ShowCpu");
+        GpuMenuItem.Header = Loc.T("S.ShowGpu");
+        CpuMenuItem.IsChecked = s.ShowCpu;
+        GpuMenuItem.IsChecked = s.ShowGpu;
         UsageMenuItem.Header = Loc.T("S.Usage");
         SparklineMenuItem.Header = Loc.T("S.Sparkline");
         ClockMenuItem.Header = Loc.T("S.Clock");
@@ -550,6 +558,8 @@ public partial class MainWindow : Window
         var on = item.IsChecked;
         switch (key)
         {
+            case "Cpu": s.ShowCpu = on; break;
+            case "Gpu": s.ShowGpu = on; break;
             case "Usage": s.ShowUsage = on; break;
             case "Sparkline": s.ShowSparkline = on; break;
             case "Clock": s.ShowClock = on; break;

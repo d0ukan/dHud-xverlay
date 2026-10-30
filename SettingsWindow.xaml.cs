@@ -64,6 +64,8 @@ public partial class SettingsWindow : Window
         OpacitySlider.Value = s.BackgroundOpacity;
         ScaleSlider.Value = s.Scale;
 
+        ShowCpuCheckBox.IsChecked = s.ShowCpu;
+        ShowGpuCheckBox.IsChecked = s.ShowGpu;
         ShowUsageCheckBox.IsChecked = s.ShowUsage;
         ShowSparklineCheckBox.IsChecked = s.ShowSparkline;
         ShowClockCheckBox.IsChecked = s.ShowClock;
@@ -118,6 +120,8 @@ public partial class SettingsWindow : Window
         s.BackgroundOpacity = OpacitySlider.Value;
         s.Scale = ScaleSlider.Value;
 
+        s.ShowCpu = ShowCpuCheckBox.IsChecked == true;
+        s.ShowGpu = ShowGpuCheckBox.IsChecked == true;
         s.ShowUsage = ShowUsageCheckBox.IsChecked == true;
         s.ShowSparkline = ShowSparklineCheckBox.IsChecked == true;
         s.ShowClock = ShowClockCheckBox.IsChecked == true;

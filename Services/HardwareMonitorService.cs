@@ -55,6 +55,11 @@ public sealed class HardwareMonitorService : IDisposable
     };
 
     private readonly CancellationTokenSource _cts = new();
+
+    /// <summary>Okunacak donanımlar. Kapalı olan donanım taranmaz ve okunmaz.</summary>
+    public volatile bool CpuEnabled = true;
+    public volatile bool GpuEnabled = true;
+
     private PeriodicTimer? _timer;
     private TimeSpan _interval = TimeSpan.FromSeconds(1);
     private Task? _loop;
@@ -97,6 +102,8 @@ public sealed class HardwareMonitorService : IDisposable
         try
         {
             // Open() sürücü yükleme ve donanım taraması yaptığı için 1-2 sn sürebilir.
+            _computer.IsCpuEnabled = CpuEnabled;
+            _computer.IsGpuEnabled = GpuEnabled;
             _computer.Open();
             _opened = true;
             _cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
@@ -135,6 +142,7 @@ public sealed class HardwareMonitorService : IDisposable
         SensorSnapshot snapshot;
         try
         {
+            SyncEnabledHardware();
             UpdateHardware(_cpu);
             UpdateHardware(_gpu);
             UpdateHardware(_memory);
@@ -161,6 +169,30 @@ public sealed class HardwareMonitorService : IDisposable
 
         Latest = snapshot;
         SnapshotUpdated?.Invoke(snapshot);
+    }
+
+    /// <summary>
+    /// Ayardan CPU/GPU açılıp kapatıldıysa ilgili donanım grubunu çalışırken ekler/kaldırır.
+    /// Okuma döngüsü ile aynı iş parçacığında çalışır, bu yüzden Update çağrılarıyla çakışmaz.
+    /// </summary>
+    private void SyncEnabledHardware()
+    {
+        if (!_opened)
+        {
+            return;
+        }
+
+        if (_computer.IsCpuEnabled != CpuEnabled)
+        {
+            _computer.IsCpuEnabled = CpuEnabled;
+            _cpu = CpuEnabled ? _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu) : null;
+        }
+
+        if (_computer.IsGpuEnabled != GpuEnabled)
+        {
+            _computer.IsGpuEnabled = GpuEnabled;
+            _gpu = GpuEnabled ? SelectGpu(_computer.Hardware) : null;
+        }
     }
 
     private static void UpdateHardware(IHardware? hardware)

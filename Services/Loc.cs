@@ -54,6 +54,8 @@ public static class Loc
 
         // ---- Göstergeler ----
         ["S.CpuGpu"] = ("CPU AND GPU", "CPU VE GPU"),
+        ["S.ShowCpu"] = ("Show CPU", "CPU'yu göster"),
+        ["S.ShowGpu"] = ("Show GPU", "GPU'yu göster"),
         ["S.Usage"] = ("Usage (%)", "Kullanım yüzdesi (%)"),
         ["S.Sparkline"] = ("Mini temperature graph (last 60 samples)", "Mini sıcaklık grafiği (son 60 ölçüm)"),
         ["S.Clock"] = ("Clock speed (GHz / MHz)", "Frekans (GHz / MHz)"),

@@ -217,6 +217,8 @@
                 <MenuItem x:Name="CompactMenuItem" Header="Compact view" IsCheckable="True" Click="CompactMenu_Click" />
                 <MenuItem x:Name="LockMenuItem" Header="Lock position" IsCheckable="True" Click="LockMenu_Click" />
                 <MenuItem x:Name="MetricsMenuItem" Header="Metrics">
+                    <MenuItem x:Name="CpuMenuItem" Tag="Cpu" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="GpuMenuItem" Tag="Gpu" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="UsageMenuItem" Tag="Usage" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="SparklineMenuItem" Tag="Sparkline" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="ClockMenuItem" Tag="Clock" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />

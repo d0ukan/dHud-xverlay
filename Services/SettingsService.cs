@@ -46,6 +46,10 @@ public sealed class AppSettings
 
     // ---- Göstergeler ----
 
+    /// <summary>CPU / GPU satırları. Kapalı donanım okunmaz (CPU ve bellek tasarrufu).</summary>
+    public bool ShowCpu { get; set; } = true;
+    public bool ShowGpu { get; set; } = true;
+
     public bool ShowUsage { get; set; } = true;
     public bool ShowSparkline { get; set; }
     public bool ShowClock { get; set; }

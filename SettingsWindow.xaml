@@ -101,6 +101,10 @@
                 <!-- ============ GÖSTERGELER ============ -->
                 <StackPanel Visibility="{Binding IsChecked, ElementName=MetricsTab, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="{h:Loc S.CpuGpu}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="ShowCpuCheckBox" Content="{h:Loc S.ShowCpu}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="ShowGpuCheckBox" Content="{h:Loc S.ShowGpu}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <CheckBox x:Name="ShowUsageCheckBox" Content="{h:Loc S.Usage}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <CheckBox x:Name="ShowSparklineCheckBox" Content="{h:Loc S.Sparkline}"
