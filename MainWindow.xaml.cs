@@ -112,9 +112,11 @@ public partial class MainWindow : Window
         NetDownText.ToolTip = Loc.T("Tip.Download");
         NetUpText.ToolTip = Loc.T("Tip.Upload");
         RamGroup.ToolTip = Loc.T("Tip.Ram");
-        NetGroup.ToolTip = net?.AdapterName is { } adapter
-            ? $"{adapter}\nPing: {_settings.Current.PingHost}"
-            : Loc.T("Tip.NoNetwork");
+        NetGroup.ToolTip = !_settings.Current.ShowNetwork
+            ? $"Ping: {_settings.Current.PingHost}"
+            : net?.AdapterName is { } adapter
+                ? $"{adapter}\nPing: {_settings.Current.PingHost}"
+                : Loc.T("Tip.NoNetwork");
     }
 
     private static string CpuUnavailableReason()
@@ -224,11 +226,13 @@ public partial class MainWindow : Window
         SetVisible(s.ShowPower, CpuPowerText, GpuPowerText);
         SetVisible(s.ShowVram, GpuMemText);
         SetVisible(s.ShowRam, RamGroup);
-        SetVisible(s.ShowNetwork, NetGroup);
+        // Ağ satırı: indirme/yükleme hızı ve ping birbirinden bağımsız açılıp kapanır.
+        SetVisible(s.ShowNetwork || s.ShowPing, NetGroup);
+        SetVisible(s.ShowNetwork, NetDownText, NetUpText);
         SetVisible(s.ShowPing, NetPingText);
         SetVisible(horizontal, CpuGpuSeparator);
         SetVisible(horizontal && s.ShowRam, GpuRamSeparator);
-        SetVisible(horizontal && s.ShowNetwork, RamNetSeparator);
+        SetVisible(horizontal && (s.ShowNetwork || s.ShowPing), RamNetSeparator);
 
         SettingsMenuItem.Header = Loc.T("M.Settings");
         LayoutMenuItem.Header = Loc.T(horizontal ? "M.ToVertical" : "M.ToHorizontal");
@@ -255,7 +259,6 @@ public partial class MainWindow : Window
         RamMenuItem.IsChecked = s.ShowRam;
         NetworkMenuItem.IsChecked = s.ShowNetwork;
         PingMenuItem.IsChecked = s.ShowPing;
-        PingMenuItem.IsEnabled = s.ShowNetwork;
         CompactMenuItem.IsChecked = s.Compact;
         LockMenuItem.IsChecked = s.LockPosition;
         Cursor = s.LockPosition ? null : Cursors.SizeAll;

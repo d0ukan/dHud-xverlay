@@ -266,7 +266,7 @@ public partial class App : Application
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
         Monitor.Network.Enabled = s.ShowNetwork;
-        Monitor.Network.PingEnabled = s.ShowNetwork && s.ShowPing;
+        Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
 
         // Kısayollar yalnızca ayar gerçekten değiştiğinde yeniden kaydedilir.

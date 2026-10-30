@@ -122,17 +122,17 @@
                     <StackPanel x:Name="NetworkOptionsPanel" Margin="28,0,0,0">
                         <CheckBox x:Name="NetworkInBitsCheckBox" Content="{h:Loc S.NetBits}"
                                   Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                        <CheckBox x:Name="ShowPingCheckBox" Content="{h:Loc S.Ping}"
-                                  Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                        <DockPanel Margin="28,4,0,0">
-                            <TextBlock Text="{h:Loc S.Address}" VerticalAlignment="Center" Margin="0,0,10,0"
-                                       Foreground="{StaticResource SubtleTextBrush}" />
-                            <TextBox x:Name="PingHostTextBox" Padding="6,3" Background="#1AFFFFFF"
-                                     Foreground="{StaticResource TextBrush}" CaretBrush="White"
-                                     BorderBrush="#40FFFFFF" BorderThickness="1"
-                                     LostFocus="PingHostTextBox_LostFocus" PreviewKeyDown="PingHostTextBox_KeyDown" />
-                        </DockPanel>
                     </StackPanel>
+                    <CheckBox x:Name="ShowPingCheckBox" Content="{h:Loc S.Ping}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <DockPanel Margin="28,4,0,0">
+                        <TextBlock Text="{h:Loc S.Address}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                   Foreground="{StaticResource SubtleTextBrush}" />
+                        <TextBox x:Name="PingHostTextBox" Padding="6,3" Background="#1AFFFFFF"
+                                 Foreground="{StaticResource TextBrush}" CaretBrush="White"
+                                 BorderBrush="#40FFFFFF" BorderThickness="1"
+                                 LostFocus="PingHostTextBox_LostFocus" PreviewKeyDown="PingHostTextBox_KeyDown" />
+                    </DockPanel>
 
                     <TextBlock Text="{h:Loc S.Refresh}" Style="{StaticResource SectionHeader}" />
                     <DockPanel Margin="0,2">
