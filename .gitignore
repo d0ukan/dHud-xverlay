@@ -3,9 +3,5 @@ obj/
 .vs/
 *.user
 
-# Inno Setup şablonu: derleme çıktıları ve kopyalanan publish dosyaları
-setupper/Installer/
-setupper/publish/
-
 # WPF derlemesinin geçici proje dosyaları
 *_wpftmp.csproj
