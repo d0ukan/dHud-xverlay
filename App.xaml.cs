@@ -144,6 +144,12 @@ public partial class App : Application
             OpenSettings();
         }
 
+        // Test kolaylığı: güncelleme denetimini hemen (elle denetlemiş gibi) çalıştırır.
+        if (e.Args.Contains("--check-update"))
+        {
+            _ = CheckForUpdatesAsync(manual: true);
+        }
+
         if (Settings.Current.AutoUpdateCheck)
         {
             // Açılışı yavaşlatmamak ve ağın hazır olması için kısa bir gecikmeyle.

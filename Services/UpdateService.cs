@@ -41,12 +41,14 @@ public sealed class UpdateService
     public static string CurrentVersionText => $"v{CurrentVersion}";
 
     /// <summary>
-    /// Yalnızca release'in tek dosyalık exe'si kendini değiştirebilir. Geliştirme derlemesinde
-    /// (yanında dHud.dll olan) kullanıcı yalnızca bilgilendirilir.
+    /// Uygulama kendi exe'sini yenisiyle değiştirebilir. Tek dosyalık release exe'si ve klasör olarak
+    /// derlenmiş (yanında dHud.dll olan) sürüm de güncellenir; yeni tek dosyalık exe eskisinin yerine geçer.
+    /// Yalnızca <c>dotnet run</c> (süreç dotnet.exe) veya hata ayıklayıcı bağlıyken güncellenmez.
     /// </summary>
     public static bool CanSelfUpdate =>
-        Environment.ProcessPath is not null &&
-        !File.Exists(Path.Combine(AppContext.BaseDirectory, "dHud.dll"));
+        !Debugger.IsAttached &&
+        Environment.ProcessPath is { } path &&
+        !string.Equals(Path.GetFileNameWithoutExtension(path), "dotnet", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Daha yeni bir sürüm varsa bilgisini döner; yoksa veya ağ hatasında null.</summary>
     public async Task<UpdateInfo?> CheckAsync(CancellationToken ct = default)
