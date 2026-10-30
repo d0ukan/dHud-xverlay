@@ -19,7 +19,7 @@
 - Tıklama geçirme, konum kilidi, kenara yapışma, kısayol tuşları
 - Koyu temalı sistem tepsisi menüsü ve Windows başlangıcında çalıştırma
 - İngilizce ve Türkçe arayüz (varsayılan İngilizce, Ayarlar → Görünüm'den değiştirilir)
-- GitHub Releases üzerinden otomatik güncelleme
+- GitHub Releases üzerinden otomatik güncelleme denetimi (açılışta ve çalıştığı sürece 1–24 saatte bir; bildirim gelir, tek tıkla güncellenir)
 
 ## Gereksinimler
 

@@ -19,7 +19,7 @@
 - Click-through, position lock, edge snapping, hotkeys
 - Dark-themed system tray menu and run at Windows startup
 - English and Turkish UI (English by default, switch in Settings → Appearance)
-- Automatic updates via GitHub Releases
+- Automatic update checks via GitHub Releases (on startup and every 1–24 hours while running; you get a notification and update with one click)
 
 ## Requirements
 

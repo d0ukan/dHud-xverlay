@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Markup;
@@ -90,6 +91,12 @@ public partial class SettingsWindow : Window
         SnapCheckBox.IsChecked = s.SnapToEdges;
         HotkeysCheckBox.IsChecked = s.HotkeysEnabled;
         AutoUpdateCheckBox.IsChecked = s.AutoUpdateCheck;
+        foreach (var radio in UpdateHoursPanel.Children.OfType<RadioButton>())
+        {
+            radio.IsChecked = (string)radio.Tag == s.UpdateCheckHours.ToString();
+        }
+
+        UpdateHoursPanel.IsEnabled = s.AutoUpdateCheck;
         VersionText.Text = UpdateService.CurrentVersionText;
 
         ColorCheckBox.IsChecked = s.ColorByTemperature;
@@ -141,6 +148,10 @@ public partial class SettingsWindow : Window
         s.SnapToEdges = SnapCheckBox.IsChecked == true;
         s.HotkeysEnabled = HotkeysCheckBox.IsChecked == true;
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
+        if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
+        {
+            s.UpdateCheckHours = int.Parse((string)hours.Tag);
+        }
 
         s.ColorByTemperature = ColorCheckBox.IsChecked == true;
         s.CpuWarnTemperature = (int)CpuWarnSlider.Value;
@@ -176,6 +187,8 @@ public partial class SettingsWindow : Window
     private void AppearanceRadio_Checked(object sender, RoutedEventArgs e) => SaveValues();
 
     private void LanguageRadio_Checked(object sender, RoutedEventArgs e) => SaveValues();
+
+    private void UpdateHoursRadio_Checked(object sender, RoutedEventArgs e) => SaveValues();
 
     private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => SaveValues();
 

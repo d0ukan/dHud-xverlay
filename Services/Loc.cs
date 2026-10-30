@@ -100,7 +100,8 @@ public static class Loc
         ["S.Hotkeys.Toggle"] = ("Hide / show overlay", "Overlay'i gizle / göster"),
         ["S.Hotkeys.ClickThrough"] = ("Toggle click-through", "Tıklama geçirmeyi aç / kapat"),
         ["S.Version"] = ("VERSION", "SÜRÜM"),
-        ["S.AutoUpdate"] = ("Check for updates on startup", "Açılışta güncellemeleri denetle"),
+        ["S.AutoUpdate"] = ("Check for updates automatically and notify me", "Güncellemeleri otomatik denetle ve bildirim gönder"),
+        ["S.CheckEvery"] = ("Check every (hours)", "Denetim sıklığı (saat)"),
         ["S.CheckNow"] = ("Check now", "Şimdi denetle"),
 
         // ---- Uyarılar ----

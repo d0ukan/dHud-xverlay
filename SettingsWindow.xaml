@@ -203,6 +203,19 @@
                     <TextBlock Text="{h:Loc S.Version}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="AutoUpdateCheckBox" Content="{h:Loc S.AutoUpdate}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <TextBlock Text="{h:Loc S.CheckEvery}" Style="{StaticResource HintText}" Margin="0,6,0,2" />
+                    <StackPanel x:Name="UpdateHoursPanel" Orientation="Horizontal">
+                        <RadioButton Tag="1" Content="1" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="3" Content="3" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="6" Content="6" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="12" Content="12" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="24" Content="24" GroupName="UpdateHours"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                    </StackPanel>
                     <Button Content="{h:Loc S.CheckNow}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
                             Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
                 </StackPanel>

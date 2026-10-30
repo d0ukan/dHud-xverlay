@@ -24,6 +24,9 @@ public partial class App : Application
 
     private readonly UpdateService _updates = new();
     private UpdateInfo? _pendingUpdate;
+    private string? _notifiedUpdateTag;
+    private DispatcherTimer? _updateTimer;
+    private int _updateTimerHours;
     private Mutex? _singleInstanceMutex;
     private TrayIconService? _tray;
     private HotkeyService? _hotkeys;
@@ -150,13 +153,42 @@ public partial class App : Application
             _ = CheckForUpdatesAsync(manual: true);
         }
 
-        if (Settings.Current.AutoUpdateCheck)
+    }
+
+    /// <summary>
+    /// Otomatik güncelleme denetimi: açılıştan kısa süre sonra bir kez, ardından uygulama açık kaldığı sürece
+    /// seçilen saatte bir. Ayar kapatılırsa durur; aralık değişirse yeni aralıkla yeniden başlar.
+    /// </summary>
+    private void ConfigureUpdateTimer()
+    {
+        var s = Settings.Current;
+        if (!s.AutoUpdateCheck)
         {
-            // Açılışı yavaşlatmamak ve ağın hazır olması için kısa bir gecikmeyle.
-            _ = Task.Delay(TimeSpan.FromSeconds(15)).ContinueWith(
-                _ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(manual: false)),
-                TaskScheduler.Default);
+            _updateTimer?.Stop();
+            return;
         }
+
+        if (_updateTimer is { IsEnabled: true } && _updateTimerHours == s.UpdateCheckHours)
+        {
+            return;
+        }
+
+        // Sıfırdan başlıyorsa ilk denetim açılışı yavaşlatmamak ve ağın hazır olması için kısa bir gecikmeyle yapılır.
+        var firstStart = _updateTimer is not { IsEnabled: true };
+        _updateTimerHours = s.UpdateCheckHours;
+        if (_updateTimer is null)
+        {
+            _updateTimer = new DispatcherTimer();
+            _updateTimer.Tick += (_, _) =>
+            {
+                _updateTimer.Interval = TimeSpan.FromHours(_updateTimerHours);
+                _ = CheckForUpdatesAsync(manual: false);
+            };
+        }
+
+        _updateTimer.Stop();
+        _updateTimer.Interval = firstStart ? TimeSpan.FromSeconds(15) : TimeSpan.FromHours(_updateTimerHours);
+        _updateTimer.Start();
     }
 
     /// <summary>
@@ -197,8 +229,10 @@ public partial class App : Application
         {
             await PromptAndInstallAsync(update);
         }
-        else
+        else if (_notifiedUpdateTag != update.Tag)
         {
+            // Aynı sürüm için bildirim bir kez gösterilir; her denetimde tekrar rahatsız etmez.
+            _notifiedUpdateTag = update.Tag;
             _tray?.ShowBalloon(Loc.T("U.Available", update.Tag),
                 Loc.T("U.ClickToUpdate"), Forms.ToolTipIcon.Info, UpdateBalloonKind);
         }
@@ -271,6 +305,7 @@ public partial class App : Application
         Monitor.Network.Enabled = s.ShowNetwork;
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
+        ConfigureUpdateTimer();
 
         // Kısayollar yalnızca ayar gerçekten değiştiğinde yeniden kaydedilir.
         if (_hotkeysRegisteredFor != s.HotkeysEnabled)

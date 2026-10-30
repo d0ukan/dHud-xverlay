@@ -107,6 +107,11 @@ public sealed class AppSettings
     /// <summary>Açılışta GitHub Releases'te yeni sürüm var mı diye bak.</summary>
     public bool AutoUpdateCheck { get; set; } = true;
 
+    /// <summary>Uygulama açık kaldığı sürece kaç saatte bir yeni sürüm aranır (seçenekler: <see cref="UpdateCheckChoices"/>).</summary>
+    public int UpdateCheckHours { get; set; } = 6;
+
+    public static readonly int[] UpdateCheckChoices = [1, 3, 6, 12, 24];
+
     public StartupMethod PreferredStartupMethod { get; set; } = StartupMethod.TaskScheduler;
 }
 
@@ -214,6 +219,11 @@ public sealed class SettingsService
         s.GpuHotTemperature = Math.Clamp(s.GpuHotTemperature, s.GpuWarnTemperature + 1, 110);
         s.UpdateIntervalMs = Math.Clamp(s.UpdateIntervalMs, 500, 5000);
         s.AlertSeconds = Math.Clamp(s.AlertSeconds, 3, 120);
+        if (!AppSettings.UpdateCheckChoices.Contains(s.UpdateCheckHours))
+        {
+            s.UpdateCheckHours = 6;
+        }
+
         s.PingHost = string.IsNullOrWhiteSpace(s.PingHost) ? "1.1.1.1" : s.PingHost.Trim();
     }
 }
