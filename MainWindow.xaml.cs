@@ -64,14 +64,14 @@ public partial class MainWindow : Window
         var ram = snapshot.Memory;
 
         CpuTempText.Text = Format.Temperature(cpu?.Temperature, compact);
-        CpuTempText.Foreground = BrushFor(cpu?.Temperature);
+        CpuTempText.Foreground = BrushFor(cpu?.Temperature, gpu: false);
         CpuLoadText.Text = Format.Load(cpu?.Load);
         CpuClockText.Text = Format.Clock(cpu?.ClockMhz, compact);
         CpuPowerText.Text = Format.Power(cpu?.PowerWatts, compact);
         DrawSparkline(CpuSpark, _cpuHistory, CpuTempText.Foreground);
 
         GpuTempText.Text = Format.Temperature(gpu?.Temperature, compact);
-        GpuTempText.Foreground = BrushFor(gpu?.Temperature);
+        GpuTempText.Foreground = BrushFor(gpu?.Temperature, gpu: true);
         GpuLoadText.Text = Format.Load(gpu?.Load);
         GpuClockText.Text = Format.Clock(gpu?.ClockMhz, compact);
         GpuPowerText.Text = Format.Power(gpu?.PowerWatts, compact);
@@ -118,7 +118,7 @@ public partial class MainWindow : Window
             : Loc.T("Tip.CpuNeedsPawnIo");
     }
 
-    private Brush BrushFor(float? temperature)
+    private Brush BrushFor(float? temperature, bool gpu)
     {
         var s = _settings.Current;
         if (!s.ColorByTemperature || temperature is null)
@@ -126,8 +126,9 @@ public partial class MainWindow : Window
             return (Brush)FindResource("TextBrush");
         }
 
-        var key = temperature >= s.HotTemperature ? "HotBrush"
-            : temperature >= s.WarnTemperature ? "WarnBrush"
+        var (warn, hot) = s.Thresholds(gpu);
+        var key = temperature >= hot ? "HotBrush"
+            : temperature >= warn ? "WarnBrush"
             : "GoodBrush";
         return (Brush)FindResource(key);
     }

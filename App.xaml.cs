@@ -31,8 +31,8 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private bool? _hotkeysRegisteredFor;
     private AppLanguage? _appliedLanguage;
-    private readonly TemperatureAlert _cpuAlert = new("CPU");
-    private readonly TemperatureAlert _gpuAlert = new("GPU");
+    private readonly TemperatureAlert _cpuAlert = new("CPU", isGpu: false);
+    private readonly TemperatureAlert _gpuAlert = new("GPU", isGpu: true);
 
     public static new App Current => (App)Application.Current;
 

@@ -90,12 +90,14 @@ public partial class SettingsWindow : Window
         VersionText.Text = UpdateService.CurrentVersionText;
 
         ColorCheckBox.IsChecked = s.ColorByTemperature;
-        WarnSlider.Value = s.WarnTemperature;
-        HotSlider.Value = s.HotTemperature;
+        CpuWarnSlider.Value = s.CpuWarnTemperature;
+        CpuHotSlider.Value = s.CpuHotTemperature;
+        GpuWarnSlider.Value = s.GpuWarnTemperature;
+        GpuHotSlider.Value = s.GpuHotTemperature;
         AlertCheckBox.IsChecked = s.AlertEnabled;
         AlertSecondsSlider.Value = s.AlertSeconds;
 
-        WarnSlider.IsEnabled = HotSlider.IsEnabled = s.ColorByTemperature;
+        CpuWarnSlider.IsEnabled = CpuHotSlider.IsEnabled = GpuWarnSlider.IsEnabled = GpuHotSlider.IsEnabled = s.ColorByTemperature;
         AlertSecondsSlider.IsEnabled = s.AlertEnabled;
     }
 
@@ -135,8 +137,10 @@ public partial class SettingsWindow : Window
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
 
         s.ColorByTemperature = ColorCheckBox.IsChecked == true;
-        s.WarnTemperature = (int)WarnSlider.Value;
-        s.HotTemperature = (int)HotSlider.Value;
+        s.CpuWarnTemperature = (int)CpuWarnSlider.Value;
+        s.CpuHotTemperature = (int)CpuHotSlider.Value;
+        s.GpuWarnTemperature = (int)GpuWarnSlider.Value;
+        s.GpuHotTemperature = (int)GpuHotSlider.Value;
         s.AlertEnabled = AlertCheckBox.IsChecked == true;
         s.AlertSeconds = (int)AlertSecondsSlider.Value;
 
@@ -176,22 +180,26 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        var warn = (int)WarnSlider.Value;
-        var hot = (int)HotSlider.Value;
+        // Hangi çiftin (CPU / GPU) kaydırıcısı oynatıldıysa yalnızca o çift düzeltilir.
+        var (warnSlider, hotSlider) = ReferenceEquals(sender, CpuWarnSlider) || ReferenceEquals(sender, CpuHotSlider)
+            ? (CpuWarnSlider, CpuHotSlider)
+            : (GpuWarnSlider, GpuHotSlider);
+        var warn = (int)warnSlider.Value;
+        var hot = (int)hotSlider.Value;
 
         // Kritik eşik her zaman uyarı eşiğinin üzerinde kalsın; hangi kaydırıcı oynatıldıysa diğeri itilir.
         if (hot < warn + MinThresholdGap)
         {
             _loading = true;
-            if (ReferenceEquals(sender, WarnSlider))
+            if (ReferenceEquals(sender, warnSlider))
             {
-                HotSlider.Value = Math.Min(warn + MinThresholdGap, (int)HotSlider.Maximum);
-                WarnSlider.Value = HotSlider.Value - MinThresholdGap;
+                hotSlider.Value = Math.Min(warn + MinThresholdGap, (int)hotSlider.Maximum);
+                warnSlider.Value = hotSlider.Value - MinThresholdGap;
             }
             else
             {
-                WarnSlider.Value = Math.Max(hot - MinThresholdGap, (int)WarnSlider.Minimum);
-                HotSlider.Value = WarnSlider.Value + MinThresholdGap;
+                warnSlider.Value = Math.Max(hot - MinThresholdGap, (int)warnSlider.Minimum);
+                hotSlider.Value = warnSlider.Value + MinThresholdGap;
             }
 
             _loading = false;

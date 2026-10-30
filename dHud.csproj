@@ -14,7 +14,7 @@
     <AssemblyName>dHud</AssemblyName>
     <RootNamespace>DHud</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
 

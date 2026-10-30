@@ -73,8 +73,22 @@ public sealed class AppSettings
     // ---- Renkler ve uyarılar ----
 
     public bool ColorByTemperature { get; set; } = true;
-    public int WarnTemperature { get; set; } = 60;
-    public int HotTemperature { get; set; } = 80;
+    // Eşikler CPU ve GPU için ayrıdır. 0 = henüz ayarlanmamış (eski ayar dosyası): Normalize eski değerden / varsayılandan doldurur.
+    public int CpuWarnTemperature { get; set; }
+    public int CpuHotTemperature { get; set; }
+    public int GpuWarnTemperature { get; set; }
+    public int GpuHotTemperature { get; set; }
+
+    // Eski tek eşik ayarları (v1.0.6 ve öncesi): okunur, yeni eşiklere taşınır ve bir daha yazılmaz.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? WarnTemperature { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? HotTemperature { get; set; }
+
+    /// <summary>Verilen donanım için uyarı (sarı) ve kritik (kırmızı) eşikleri.</summary>
+    public (int Warn, int Hot) Thresholds(bool gpu) =>
+        gpu ? (GpuWarnTemperature, GpuHotTemperature) : (CpuWarnTemperature, CpuHotTemperature);
 
     /// <summary>Sıcaklık <see cref="AlertSeconds"/> boyunca kritik eşiğin üstünde kalırsa bildirim göster.</summary>
     public bool AlertEnabled { get; set; } = true;
@@ -174,8 +188,20 @@ public sealed class SettingsService
     {
         s.BackgroundOpacity = Math.Clamp(s.BackgroundOpacity, 0.2, 1.0);
         s.Scale = Math.Clamp(s.Scale, 0.7, 2.0);
-        s.WarnTemperature = Math.Clamp(s.WarnTemperature, 30, 100);
-        s.HotTemperature = Math.Clamp(s.HotTemperature, s.WarnTemperature + 1, 110);
+        // Eski tek eşiği (varsa) ayarlanmamış CPU/GPU eşiklerine taşı.
+        var legacyWarn = s.WarnTemperature ?? 60;
+        var legacyHot = s.HotTemperature ?? 80;
+        if (s.CpuWarnTemperature == 0) s.CpuWarnTemperature = legacyWarn;
+        if (s.CpuHotTemperature == 0) s.CpuHotTemperature = legacyHot;
+        if (s.GpuWarnTemperature == 0) s.GpuWarnTemperature = legacyWarn;
+        if (s.GpuHotTemperature == 0) s.GpuHotTemperature = legacyHot;
+        s.WarnTemperature = null;
+        s.HotTemperature = null;
+
+        s.CpuWarnTemperature = Math.Clamp(s.CpuWarnTemperature, 30, 100);
+        s.CpuHotTemperature = Math.Clamp(s.CpuHotTemperature, s.CpuWarnTemperature + 1, 110);
+        s.GpuWarnTemperature = Math.Clamp(s.GpuWarnTemperature, 30, 100);
+        s.GpuHotTemperature = Math.Clamp(s.GpuHotTemperature, s.GpuWarnTemperature + 1, 110);
         s.UpdateIntervalMs = Math.Clamp(s.UpdateIntervalMs, 500, 5000);
         s.AlertSeconds = Math.Clamp(s.AlertSeconds, 3, 120);
         s.PingHost = string.IsNullOrWhiteSpace(s.PingHost) ? "1.1.1.1" : s.PingHost.Trim();

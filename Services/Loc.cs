@@ -103,6 +103,8 @@ public static class Loc
         // ---- Uyarılar ----
         ["S.TempColors"] = ("TEMPERATURE COLORS", "SICAKLIK RENKLERİ"),
         ["S.ColorByTemp"] = ("Color by temperature", "Sıcaklığa göre renklendir"),
+        ["S.Cpu"] = ("CPU", "CPU"),
+        ["S.Gpu"] = ("GPU", "GPU"),
         ["S.WarnThreshold"] = ("Warning threshold", "Uyarı eşiği"),
         ["S.HotThreshold"] = ("Critical threshold", "Kritik eşik"),
         ["S.GreenHint"] = ("Below the warning threshold is shown in green.", "Uyarı eşiğinin altı yeşil gösterilir."),
