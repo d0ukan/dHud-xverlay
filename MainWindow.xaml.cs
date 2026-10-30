@@ -27,6 +27,9 @@ public partial class MainWindow : Window
     private SensorSnapshot? _lastSnapshot;
     private IntPtr _hwnd;
 
+    // Sağ kenarın (DIP) konumu. Gösterge eklenip çıkarılınca pencere genişliği değişir; sağ kenar sabit kalır, sol kenar kayar.
+    private double _right = double.NaN;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -36,8 +39,16 @@ public partial class MainWindow : Window
 
         _settings.Changed += (_, _) => ApplySettings();
         SourceInitialized += OnSourceInitialized;
-        Loaded += (_, _) => EnsureOnScreen();
-        SizeChanged += (_, _) => KeepInsideWorkArea();
+        Loaded += (_, _) =>
+        {
+            EnsureOnScreen();
+            InitializeRightEdge();
+        };
+        SizeChanged += (_, _) =>
+        {
+            KeepRightEdge();
+            KeepInsideWorkArea();
+        };
     }
 
     // ---- Değerler ----
@@ -227,6 +238,24 @@ public partial class MainWindow : Window
         ResetPositionMenuItem.Header = Loc.T("M.ResetPosition");
         HideMenuItem.Header = Loc.T("M.Hide");
         ExitMenuItem.Header = Loc.T("M.Exit");
+        MetricsMenuItem.Header = Loc.T("M.Metrics");
+        UsageMenuItem.Header = Loc.T("S.Usage");
+        SparklineMenuItem.Header = Loc.T("S.Sparkline");
+        ClockMenuItem.Header = Loc.T("S.Clock");
+        PowerMenuItem.Header = Loc.T("S.Power");
+        VramMenuItem.Header = Loc.T("S.Vram");
+        RamMenuItem.Header = Loc.T("S.Ram");
+        NetworkMenuItem.Header = Loc.T("S.NetSpeed");
+        PingMenuItem.Header = Loc.T("S.Ping");
+        UsageMenuItem.IsChecked = s.ShowUsage;
+        SparklineMenuItem.IsChecked = s.ShowSparkline;
+        ClockMenuItem.IsChecked = s.ShowClock;
+        PowerMenuItem.IsChecked = s.ShowPower;
+        VramMenuItem.IsChecked = s.ShowVram;
+        RamMenuItem.IsChecked = s.ShowRam;
+        NetworkMenuItem.IsChecked = s.ShowNetwork;
+        PingMenuItem.IsChecked = s.ShowPing;
+        PingMenuItem.IsEnabled = s.ShowNetwork;
         CompactMenuItem.IsChecked = s.Compact;
         LockMenuItem.IsChecked = s.LockPosition;
         Cursor = s.LockPosition ? null : Cursors.SizeAll;
@@ -317,6 +346,24 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Kayıtlı sağ kenarı (yoksa mevcut konumdan hesaplanan) sabitler ve pencereyi ona göre yerleştirir.</summary>
+    private void InitializeRightEdge()
+    {
+        _right = _settings.Current.Right is double saved && IsPointOnVirtualScreen(saved - 20, Top + 20)
+            ? saved
+            : Left + ActualWidth;
+        KeepRightEdge();
+        KeepInsideWorkArea();
+    }
+
+    private void KeepRightEdge()
+    {
+        if (IsLoaded && !double.IsNaN(_right) && !double.IsNaN(Left) && ActualWidth > 0)
+        {
+            Left = _right - ActualWidth;
+        }
+    }
+
     private void EnsureOnScreen()
     {
         if (double.IsNaN(Left) || double.IsNaN(Top) || !IsPointOnVirtualScreen(Left + 20, Top + 20))
@@ -330,6 +377,7 @@ public partial class MainWindow : Window
         var workArea = SystemParameters.WorkArea;
         Left = workArea.Right - ActualWidth - ScreenEdgeMargin;
         Top = workArea.Top + ScreenEdgeMargin;
+        _right = Left + ActualWidth;
     }
 
     /// <summary>Kayıtlı konum, artık bağlı olmayan bir monitörde kalmışsa false döner.</summary>
@@ -387,6 +435,9 @@ public partial class MainWindow : Window
         if (Top + ActualHeight > work.Bottom) Top = Math.Max(work.Top, work.Bottom - ActualHeight);
         if (Left < work.Left) Left = work.Left;
         if (Top < work.Top) Top = work.Top;
+
+        // Ekran sınırı pencereyi kaydırdıysa sağ kenar da yeni yerine taşınır.
+        _right = Left + ActualWidth;
     }
 
     public void SavePosition()
@@ -398,6 +449,7 @@ public partial class MainWindow : Window
 
         _settings.Current.Left = Left;
         _settings.Current.Top = Top;
+        _settings.Current.Right = Left + ActualWidth;
         _settings.Save();
     }
 
@@ -463,6 +515,7 @@ public partial class MainWindow : Window
             SnapToEdges();
         }
 
+        _right = Left + ActualWidth;
         SavePosition();
     }
 
@@ -480,6 +533,30 @@ public partial class MainWindow : Window
     private void CompactMenu_Click(object sender, RoutedEventArgs e)
     {
         _settings.Current.Compact = CompactMenuItem.IsChecked;
+        _settings.NotifyChanged();
+    }
+
+    private void MetricMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem { Tag: string key } item)
+        {
+            return;
+        }
+
+        var s = _settings.Current;
+        var on = item.IsChecked;
+        switch (key)
+        {
+            case "Usage": s.ShowUsage = on; break;
+            case "Sparkline": s.ShowSparkline = on; break;
+            case "Clock": s.ShowClock = on; break;
+            case "Power": s.ShowPower = on; break;
+            case "Vram": s.ShowVram = on; break;
+            case "Ram": s.ShowRam = on; break;
+            case "Network": s.ShowNetwork = on; break;
+            case "Ping": s.ShowPing = on; break;
+        }
+
         _settings.NotifyChanged();
     }
 

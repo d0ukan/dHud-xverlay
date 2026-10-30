@@ -164,8 +164,17 @@
                                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                 <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" TextElement.FontWeight="{TemplateBinding FontWeight}"
                                                   VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Margin="28,0,0,0"
+                                <TextBlock x:Name="Gesture" Grid.Column="2" Text="{TemplateBinding InputGestureText}" Margin="28,0,0,0"
                                            VerticalAlignment="Center" Foreground="#FF9CA3AF" />
+                                <Path x:Name="Arrow" Grid.Column="2" Data="M0,0 L4,4 L0,8" Stroke="#FF9CA3AF" StrokeThickness="1.5"
+                                      Margin="28,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                                <Popup x:Name="PART_Popup" Placement="Right" HorizontalOffset="-2" VerticalOffset="-5"
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}" AllowsTransparency="True" Focusable="False"
+                                       PopupAnimation="None">
+                                    <Border Background="#FF1A1B22" BorderBrush="#FF3A3D4A" BorderThickness="1" Padding="0,4" MinWidth="230">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                    </Border>
+                                </Popup>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -174,6 +183,10 @@
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#FF303342" />
+                            </Trigger>
+                            <Trigger Property="HasItems" Value="True">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45" />
@@ -203,6 +216,16 @@
                 <MenuItem x:Name="LayoutMenuItem" Header="Switch to horizontal layout" Click="LayoutMenu_Click" />
                 <MenuItem x:Name="CompactMenuItem" Header="Compact view" IsCheckable="True" Click="CompactMenu_Click" />
                 <MenuItem x:Name="LockMenuItem" Header="Lock position" IsCheckable="True" Click="LockMenu_Click" />
+                <MenuItem x:Name="MetricsMenuItem" Header="Metrics">
+                    <MenuItem x:Name="UsageMenuItem" Tag="Usage" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="SparklineMenuItem" Tag="Sparkline" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="ClockMenuItem" Tag="Clock" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="PowerMenuItem" Tag="Power" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="VramMenuItem" Tag="Vram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="RamMenuItem" Tag="Ram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="NetworkMenuItem" Tag="Network" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="PingMenuItem" Tag="Ping" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                </MenuItem>
                 <MenuItem x:Name="ClickThroughMenuItem" Header="Enable click-through" Click="ClickThroughMenu_Click" InputGestureText="Ctrl+Shift+F10" />
                 <MenuItem x:Name="ResetPositionMenuItem" Header="Reset position" Click="ResetPositionMenu_Click" />
                 <MenuItem x:Name="HideMenuItem" Header="Hide overlay" Click="HideMenu_Click" InputGestureText="Ctrl+Shift+F9" />

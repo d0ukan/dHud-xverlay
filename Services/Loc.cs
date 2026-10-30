@@ -131,6 +131,7 @@ public static class Loc
         ["M.ClickThrough"] = ("Enable click-through", "Tıklama geçirmeyi aç"),
         ["M.ResetPosition"] = ("Reset position", "Konumu sıfırla"),
         ["M.Hide"] = ("Hide overlay", "Overlay'i gizle"),
+        ["M.Metrics"] = ("Metrics", "Göstergeler"),
         ["M.Exit"] = ("Exit", "Çıkış"),
         ["Tip.CpuNotFound"] = ("CPU not found", "CPU bulunamadı"),
         ["Tip.GpuNotFound"] = ("GPU not found", "GPU bulunamadı"),

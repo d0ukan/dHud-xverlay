@@ -22,6 +22,9 @@ public sealed class AppSettings
     public double? Left { get; set; }
     public double? Top { get; set; }
 
+    /// <summary>Overlay'in sağ kenarı. Göstergeler eklenip çıkarılınca sağ kenar sabit kalır, sol kenar kayar.</summary>
+    public double? Right { get; set; }
+
     // ---- Görünüm ----
 
     /// <summary>Arayüz dili. İlk açılışta İngilizce.</summary>
