@@ -113,6 +113,8 @@
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <CheckBox x:Name="ShowPowerCheckBox" Content="{h:Loc S.Power}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="ShowFanCheckBox" Content="{h:Loc S.Fan}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <CheckBox x:Name="ShowVramCheckBox" Content="{h:Loc S.Vram}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 

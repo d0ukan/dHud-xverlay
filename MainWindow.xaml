@@ -223,6 +223,7 @@
                     <MenuItem x:Name="SparklineMenuItem" Tag="Sparkline" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="ClockMenuItem" Tag="Clock" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="PowerMenuItem" Tag="Power" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="FanMenuItem" Tag="Fan" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="VramMenuItem" Tag="Vram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="RamMenuItem" Tag="Ram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="NetworkMenuItem" Tag="Network" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
@@ -273,6 +274,7 @@
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="CPU" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="1" x:Name="CpuTempText" Text="--°C" Style="{StaticResource ValueText}" />
@@ -280,6 +282,7 @@
                 <TextBlock Grid.Column="3" x:Name="CpuLoadText" Text="--%" Style="{StaticResource SmallText}" />
                 <TextBlock Grid.Column="4" x:Name="CpuClockText" Text="--" Style="{StaticResource SmallText}" />
                 <TextBlock Grid.Column="5" x:Name="CpuPowerText" Text="--W" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="7" x:Name="CpuFanText" Text="--" Style="{StaticResource SmallText}" />
             </Grid>
 
             <Rectangle x:Name="CpuGpuSeparator" Style="{StaticResource GroupSeparator}" />
@@ -294,6 +297,7 @@
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="GPU" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="1" x:Name="GpuTempText" Text="--°C" Style="{StaticResource ValueText}" />
@@ -302,6 +306,7 @@
                 <TextBlock Grid.Column="4" x:Name="GpuClockText" Text="--" Style="{StaticResource SmallText}" />
                 <TextBlock Grid.Column="5" x:Name="GpuPowerText" Text="--W" Style="{StaticResource SmallText}" />
                 <TextBlock Grid.Column="6" x:Name="GpuMemText" Text="--" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="7" x:Name="GpuFanText" Text="--" Style="{StaticResource SmallText}" />
             </Grid>
 
             <Rectangle x:Name="GpuRamSeparator" Style="{StaticResource GroupSeparator}" />
@@ -316,6 +321,7 @@
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="RAM" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="3" x:Name="RamLoadText" Text="--%" Style="{StaticResource SmallText}" />
@@ -335,13 +341,14 @@
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="NET" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="1" Grid.ColumnSpan="2" x:Name="NetDownText" Text="↓ --" Style="{StaticResource SmallText}"
                            Margin="0" MinWidth="{DynamicResource NetMinWidth}" ToolTip="Download" />
                 <TextBlock Grid.Column="3" Grid.ColumnSpan="2" x:Name="NetUpText" Text="↑ --" Style="{StaticResource SmallText}"
                            MinWidth="{DynamicResource NetMinWidth}" ToolTip="Upload" />
-                <TextBlock Grid.Column="5" Grid.ColumnSpan="2" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="5" Grid.ColumnSpan="3" x:Name="NetPingText" Text="-- ms" Style="{StaticResource SmallText}" />
             </Grid>
         </StackPanel>
 

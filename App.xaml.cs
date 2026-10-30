@@ -267,6 +267,7 @@ public partial class App : Application
         Monitor.Network.PingHost = s.PingHost;
         Monitor.CpuEnabled = s.ShowCpu;
         Monitor.GpuEnabled = s.ShowGpu;
+        Monitor.FanEnabled = s.ShowFan;
         Monitor.Network.Enabled = s.ShowNetwork;
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);

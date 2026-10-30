@@ -12,7 +12,7 @@
 
 ## Özellikler
 
-- CPU / GPU sıcaklığı, kullanım, frekans, güç, VRAM ve RAM
+- CPU / GPU sıcaklığı, kullanım, frekans, güç, fan hızı (RPM), VRAM ve RAM
 - Ağ indirme / yükleme hızı ve ping
 - Dikey veya tek satır yatay düzen, kompakt görünüm, mini sıcaklık grafiği
 - Sıcaklığa göre renk ve kritik sıcaklık bildirimi

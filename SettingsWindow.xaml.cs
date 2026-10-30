@@ -70,6 +70,7 @@ public partial class SettingsWindow : Window
         ShowSparklineCheckBox.IsChecked = s.ShowSparkline;
         ShowClockCheckBox.IsChecked = s.ShowClock;
         ShowPowerCheckBox.IsChecked = s.ShowPower;
+        ShowFanCheckBox.IsChecked = s.ShowFan;
         ShowVramCheckBox.IsChecked = s.ShowVram;
         ShowRamCheckBox.IsChecked = s.ShowRam;
         ShowNetworkCheckBox.IsChecked = s.ShowNetwork;
@@ -126,6 +127,7 @@ public partial class SettingsWindow : Window
         s.ShowSparkline = ShowSparklineCheckBox.IsChecked == true;
         s.ShowClock = ShowClockCheckBox.IsChecked == true;
         s.ShowPower = ShowPowerCheckBox.IsChecked == true;
+        s.ShowFan = ShowFanCheckBox.IsChecked == true;
         s.ShowVram = ShowVramCheckBox.IsChecked == true;
         s.ShowRam = ShowRamCheckBox.IsChecked == true;
         s.ShowNetwork = ShowNetworkCheckBox.IsChecked == true;

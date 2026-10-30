@@ -12,7 +12,7 @@
 
 ## Features
 
-- CPU / GPU temperature, usage, clock, power, VRAM and RAM
+- CPU / GPU temperature, usage, clock, power, fan speed (RPM), VRAM and RAM
 - Network download / upload speed and ping
 - Vertical or single-row horizontal layout, compact mode, mini temperature graph
 - Temperature-based colors and critical temperature notifications

@@ -24,6 +24,12 @@ public static class Format
         null => "--W"
     };
 
+    public static string Fan(float? rpm, bool compact) => rpm switch
+    {
+        float v => compact ? $"{v:0}" : $"{v:0} RPM",
+        null => compact ? "--" : "-- RPM"
+    };
+
     /// <summary>Ağ hızı; bayt/sn (KB/s, MB/s) veya bit/sn (kbps, Mbps).</summary>
     public static string Speed(double? bytesPerSecond, bool inBits, bool compact)
     {

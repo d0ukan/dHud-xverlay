@@ -10,6 +10,7 @@ public sealed record HardwareReading(
     float? Load = null,
     float? ClockMhz = null,
     float? PowerWatts = null,
+    float? FanRpm = null,
     float? MemoryUsedGb = null,
     float? MemoryTotalGb = null);
 
@@ -60,12 +61,16 @@ public sealed class HardwareMonitorService : IDisposable
     public volatile bool CpuEnabled = true;
     public volatile bool GpuEnabled = true;
 
+    /// <summary>Fan hızları. Anakart (SuperIO) taraması yalnızca açıkken yapılır; yönetici yetkisi gerekir.</summary>
+    public volatile bool FanEnabled;
+
     private PeriodicTimer? _timer;
     private TimeSpan _interval = TimeSpan.FromSeconds(1);
     private Task? _loop;
     private IHardware? _cpu;
     private IHardware? _gpu;
     private IHardware? _memory;
+    private IHardware? _motherboard;
     private bool _opened;
 
     /// <summary>Ağ hızı ve ping ölçümü; sensör okumalarıyla aynı döngüde örneklenir.</summary>
@@ -104,10 +109,12 @@ public sealed class HardwareMonitorService : IDisposable
             // Open() sürücü yükleme ve donanım taraması yaptığı için 1-2 sn sürebilir.
             _computer.IsCpuEnabled = CpuEnabled;
             _computer.IsGpuEnabled = GpuEnabled;
+            _computer.IsMotherboardEnabled = FanEnabled;
             _computer.Open();
             _opened = true;
             _cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
             _gpu = SelectGpu(_computer.Hardware);
+            _motherboard = FanEnabled ? FindMotherboard() : null;
             // Bellek modülleri (DIMM) de "Memory" tipinde olabilir; toplam kullanımı veren donanımı seç.
             _memory = _computer.Hardware.FirstOrDefault(h =>
                 h.HardwareType == HardwareType.Memory && h.Sensors.Any(s => s.Name == "Memory Used"));
@@ -146,9 +153,10 @@ public sealed class HardwareMonitorService : IDisposable
             UpdateHardware(_cpu);
             UpdateHardware(_gpu);
             UpdateHardware(_memory);
+            UpdateHardware(_motherboard);
 
             snapshot = new SensorSnapshot(
-                _cpu is null ? null : ReadCpu(_cpu),
+                _cpu is null ? null : ReadCpu(_cpu, _motherboard),
                 _gpu is null ? null : ReadGpu(_gpu),
                 _memory is null ? null : ReadMemory(_memory));
         }
@@ -193,7 +201,16 @@ public sealed class HardwareMonitorService : IDisposable
             _computer.IsGpuEnabled = GpuEnabled;
             _gpu = GpuEnabled ? SelectGpu(_computer.Hardware) : null;
         }
+
+        if (_computer.IsMotherboardEnabled != FanEnabled)
+        {
+            _computer.IsMotherboardEnabled = FanEnabled;
+            _motherboard = FanEnabled ? FindMotherboard() : null;
+        }
     }
+
+    private IHardware? FindMotherboard() =>
+        _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard);
 
     private static void UpdateHardware(IHardware? hardware)
     {
@@ -209,7 +226,7 @@ public sealed class HardwareMonitorService : IDisposable
         }
     }
 
-    private static HardwareReading ReadCpu(IHardware cpu)
+    private static HardwareReading ReadCpu(IHardware cpu, IHardware? motherboard)
     {
         var sensors = AllSensors(cpu);
 
@@ -226,7 +243,8 @@ public sealed class HardwareMonitorService : IDisposable
             Temperature: PickTemperature(sensors, CpuTemperatureNames),
             Load: PickValue(sensors, SensorType.Load, CpuLoadNames),
             ClockMhz: coreClocks.Count > 0 ? coreClocks.Average() : null,
-            PowerWatts: PickValue(sensors, SensorType.Power, CpuPowerNames));
+            PowerWatts: PickValue(sensors, SensorType.Power, CpuPowerNames),
+            FanRpm: motherboard is null ? null : PickCpuFan(AllSensors(motherboard)));
     }
 
     private static HardwareReading ReadGpu(IHardware gpu)
@@ -243,9 +261,14 @@ public sealed class HardwareMonitorService : IDisposable
             Load: PickValue(sensors, SensorType.Load, GpuLoadNames),
             ClockMhz: PickValue(sensors, SensorType.Clock, GpuClockNames),
             PowerWatts: PickValue(sensors, SensorType.Power, GpuPowerNames, fallbackToFirst: true),
+            FanRpm: sensors.Where(s => s.SensorType == SensorType.Fan && s.Value.HasValue).Max(s => s.Value),
             MemoryUsedGb: usedMb / 1024f,
             MemoryTotalGb: totalMb / 1024f);
     }
+
+    /// <summary>"CPU Fan" başlığı; yoksa pompa okunur (sıvı soğutmada CPU fanı genelde yoktur).</summary>
+    private static float? PickCpuFan(IEnumerable<ISensor> sensors) =>
+        PickValue(sensors, SensorType.Fan, ["CPU Fan", "CPU Fan #1", "Pump Fan", "AIO Pump"]);
 
     private static HardwareReading ReadMemory(IHardware memory)
     {

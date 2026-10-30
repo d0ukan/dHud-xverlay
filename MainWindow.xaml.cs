@@ -79,6 +79,7 @@ public partial class MainWindow : Window
         CpuLoadText.Text = Format.Load(cpu?.Load);
         CpuClockText.Text = Format.Clock(cpu?.ClockMhz, compact);
         CpuPowerText.Text = Format.Power(cpu?.PowerWatts, compact);
+        CpuFanText.Text = Format.Fan(cpu?.FanRpm, compact);
         DrawSparkline(CpuSpark, _cpuHistory, CpuTempText.Foreground);
 
         GpuTempText.Text = Format.Temperature(gpu?.Temperature, compact);
@@ -86,6 +87,7 @@ public partial class MainWindow : Window
         GpuLoadText.Text = Format.Load(gpu?.Load);
         GpuClockText.Text = Format.Clock(gpu?.ClockMhz, compact);
         GpuPowerText.Text = Format.Power(gpu?.PowerWatts, compact);
+        GpuFanText.Text = Format.Fan(gpu?.FanRpm, compact);
         GpuMemText.Text = Format.Memory(gpu?.MemoryUsedGb, gpu?.MemoryTotalGb, compact);
         DrawSparkline(GpuSpark, _gpuHistory, GpuTempText.Foreground);
 
@@ -226,6 +228,7 @@ public partial class MainWindow : Window
         SetVisible(s.ShowSparkline, CpuSpark, GpuSpark);
         SetVisible(s.ShowClock, CpuClockText, GpuClockText);
         SetVisible(s.ShowPower, CpuPowerText, GpuPowerText);
+        SetVisible(s.ShowFan, CpuFanText, GpuFanText);
         SetVisible(s.ShowVram, GpuMemText);
         SetVisible(s.ShowRam, RamGroup);
         // Ağ satırı: indirme/yükleme hızı ve ping birbirinden bağımsız açılıp kapanır.
@@ -255,6 +258,7 @@ public partial class MainWindow : Window
         SparklineMenuItem.Header = Loc.T("S.Sparkline");
         ClockMenuItem.Header = Loc.T("S.Clock");
         PowerMenuItem.Header = Loc.T("S.Power");
+        FanMenuItem.Header = Loc.T("S.Fan");
         VramMenuItem.Header = Loc.T("S.Vram");
         RamMenuItem.Header = Loc.T("S.Ram");
         NetworkMenuItem.Header = Loc.T("S.NetSpeed");
@@ -263,6 +267,7 @@ public partial class MainWindow : Window
         SparklineMenuItem.IsChecked = s.ShowSparkline;
         ClockMenuItem.IsChecked = s.ShowClock;
         PowerMenuItem.IsChecked = s.ShowPower;
+        FanMenuItem.IsChecked = s.ShowFan;
         VramMenuItem.IsChecked = s.ShowVram;
         RamMenuItem.IsChecked = s.ShowRam;
         NetworkMenuItem.IsChecked = s.ShowNetwork;
@@ -564,6 +569,7 @@ public partial class MainWindow : Window
             case "Sparkline": s.ShowSparkline = on; break;
             case "Clock": s.ShowClock = on; break;
             case "Power": s.ShowPower = on; break;
+            case "Fan": s.ShowFan = on; break;
             case "Vram": s.ShowVram = on; break;
             case "Ram": s.ShowRam = on; break;
             case "Network": s.ShowNetwork = on; break;

@@ -60,6 +60,7 @@ public static class Loc
         ["S.Sparkline"] = ("Mini temperature graph (last 60 samples)", "Mini sıcaklık grafiği (son 60 ölçüm)"),
         ["S.Clock"] = ("Clock speed (GHz / MHz)", "Frekans (GHz / MHz)"),
         ["S.Power"] = ("Power draw (W)", "Güç tüketimi (W)"),
+        ["S.Fan"] = ("Fan speed (RPM)", "Fan hızı (RPM)"),
         ["S.Vram"] = ("GPU memory usage (VRAM)", "GPU bellek kullanımı (VRAM)"),
         ["S.System"] = ("SYSTEM", "SİSTEM"),
         ["S.Ram"] = ("RAM usage", "RAM kullanımı"),

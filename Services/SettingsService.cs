@@ -54,6 +54,9 @@ public sealed class AppSettings
     public bool ShowSparkline { get; set; }
     public bool ShowClock { get; set; }
     public bool ShowPower { get; set; }
+
+    /// <summary>Fan hızı (RPM). Anakart sensörleri için yönetici yetkisi gerekir.</summary>
+    public bool ShowFan { get; set; }
     public bool ShowVram { get; set; }
     public bool ShowRam { get; set; }
 
