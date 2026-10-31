@@ -108,6 +108,32 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
                 return null;
             }
 
+            case "fanAll":
+            {
+                // Hazır eğri tüm fanlara; pompalar ve telefondan kilitli fanlar atlanır.
+                var targets = monitor.FanChannels
+                    .Where(c => !IsPump(c.Name) && !s.MobileBlockedFans.Contains(c.Id))
+                    .ToList();
+                if (targets.Count == 0)
+                {
+                    return "nofan";
+                }
+
+                string? first = null;
+                foreach (var channel in targets)
+                {
+                    if (Str(command, "preset").Length == 0 || !Configure(channel, command, out var one))
+                    {
+                        return "bad";
+                    }
+
+                    first ??= one[(one.IndexOf(": ", StringComparison.Ordinal) + 2)..];
+                }
+
+                Commit($"{first} ({targets.Count})");
+                return null;
+            }
+
             case "profile":
             {
                 var name = Str(command, "name");

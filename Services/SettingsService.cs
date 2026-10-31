@@ -124,6 +124,9 @@ public sealed class AppSettings
     /// <summary>Tüm fanların ayarını saklayan profiller ("Oyun", "Gece" vb.).</summary>
     public List<FanProfile> FanProfiles { get; set; } = [];
 
+    /// <summary>Kontrol edilen bir fan dönmeyi bırakırsa bildirim (tepsi + telefon) gönder.</summary>
+    public bool FanStallAlerts { get; set; } = true;
+
     /// <summary>Mobil uygulamanın değiştirmesine İZİN VERİLMEYEN fanların kimlikleri (boşsa hepsine izin var).</summary>
     public List<string> MobileBlockedFans { get; set; } = [];
 

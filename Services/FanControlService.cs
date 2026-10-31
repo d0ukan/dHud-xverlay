@@ -31,9 +31,10 @@ public sealed class FanControlService : IDisposable
     public const int TestSeconds = 8;
 
     /// <summary>Fan bu kadar ardışık ölçüm 0 RPM okunursa (komut ≥ %30 iken) uyarı verilir.</summary>
-    public const int StallTicks = 10;
+    public const int StallTicks = 30;
 
-    private const double StallMinPercent = 30;
+    // Birçok fan düşük PWM'de (~%30-40 altı) kendiliğinden durur; bu arıza değildir. Bu yüzden eşik yüksek.
+    private const double StallMinPercent = 40;
     private const float SpinningRpm = 50;
 
     // Ekran kartları sıcaklık düşükken fanı kendileri durdurur (sıfır devir / 0-dB modu); bu arıza değildir.
@@ -42,7 +43,17 @@ public sealed class FanControlService : IDisposable
     private const double GpuStallMinPercent = 50;
 
     /// <summary>Aynı fan için iki "fan dönmüyor" bildirimi arasındaki en kısa süre.</summary>
-    private static readonly TimeSpan StallNoticeCooldown = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan StallNoticeCooldown = TimeSpan.FromHours(6);
+
+    /// <summary>Aynı anda durduğu görülen fanlar tek bildirimde toplanır; ilk fandan sonra bu kadar beklenir.</summary>
+    private static readonly TimeSpan StallBatchWindow = TimeSpan.FromSeconds(20);
+
+    /// <summary>İki bildirim arasındaki en kısa süre (tüm fanlar için ortak); bekleyenler sonra tek mesajla gider.</summary>
+    private static readonly TimeSpan StallGlobalGap = TimeSpan.FromMinutes(30);
+
+    private readonly List<(string Name, int Percent)> _pendingStalls = [];
+    private DateTime _pendingSince;
+    private DateTime _lastStallBroadcast = DateTime.MinValue;
 
     private sealed class State
     {
@@ -86,7 +97,7 @@ public sealed class FanControlService : IDisposable
     public bool Emergency => _emergency;
 
     /// <summary>Kontrol edilen bir fan dönmüyor: fan adı ve ayarlanan yüzde. DİKKAT: arka plan thread'inden çağrılır.</summary>
-    public event Action<string, int>? FanStalled;
+    public event Action<IReadOnlyList<(string Name, int Percent)>>? FanStalled;
 
     /// <summary>Bir fanı <see cref="TestSeconds"/> saniye %100'de çalıştırıp devrin artıp artmadığına bakar; sonra eski haline döner.</summary>
     public void StartTest(string id)
@@ -223,6 +234,26 @@ public sealed class FanControlService : IDisposable
         }
 
         _status = statuses;
+        FlushStalls(now);
+    }
+
+    /// <summary>Bekleyen "fan durdu" bildirimlerini tek mesajda gönderir (toplama penceresi ve ortak bekleme süresi dolunca).</summary>
+    private void FlushStalls(DateTime now)
+    {
+        if (_pendingStalls.Count == 0)
+        {
+            return;
+        }
+
+        if (now - _pendingSince < StallBatchWindow || now - _lastStallBroadcast < StallGlobalGap)
+        {
+            return;
+        }
+
+        var batch = _pendingStalls.ToList();
+        _pendingStalls.Clear();
+        _lastStallBroadcast = now;
+        FanStalled?.Invoke(batch);
     }
 
     /// <summary>Hedef yüzdeyi donanımın sınırlarına çekip yazar. Değişiklik varsa hemen, yoksa yaklaşık 10 saniyede bir yeniden yazar.</summary>
@@ -276,10 +307,15 @@ public sealed class FanControlService : IDisposable
                 state.Stalled = true;
 
                 // Aynı fan için art arda bildirim yağmasın (fan arada dönüp tekrar durabilir).
-                if (now - state.LastStallNotice >= StallNoticeCooldown)
+                if (_settings.Current.FanStallAlerts && now - state.LastStallNotice >= StallNoticeCooldown)
                 {
                     state.LastStallNotice = now;
-                    FanStalled?.Invoke(channel.Name, (int)Math.Round(state.Last.Value));
+                    if (_pendingStalls.Count == 0)
+                    {
+                        _pendingSince = now;
+                    }
+
+                    _pendingStalls.Add((channel.Name, (int)Math.Round(state.Last.Value)));
                 }
             }
         }

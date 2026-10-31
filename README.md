@@ -77,7 +77,7 @@ dHud lists every fan it can control (CPU fan, pump, case fans, GPU fans). For ea
 
 **Your own curves and profiles:** save any curve under a name (*My curves*) and reuse it on any fan. Save the settings of **all fans** as a *profile* ("Gaming", "Night"…) and load it with one click.
 
-**Fan test and fan alert:** the **Test** button runs a fan at 100% for a few seconds and tells you whether its speed really increased (useful to spot a loose cable). If a fan that dHud controls stops spinning, you get a notification (also on your phone).
+**Fan test and fan alert:** the **Test** button runs a fan at 100% for a few seconds and tells you whether its speed really increased (useful to spot a loose cable). If a fan that dHud controls stops spinning, you get a notification (also on your phone). To avoid spam, fans that stopped at the same time are reported in one message, the same fan is reported at most every 6 hours, there is at most one message per 30 minutes, and fans below 40% speed are ignored (many fans stop there by design). You can turn the alert off with **Notify me when a fan stops spinning** in the Fan control window.
 
 **Temperature source:** each curve can follow the CPU, the GPU, or the higher of the two.
 

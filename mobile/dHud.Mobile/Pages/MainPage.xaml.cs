@@ -396,13 +396,34 @@ public partial class MainPage : ContentPage
 		var ctl = s.FanCtl;
 
 		FanTitle.Text = Loc.T("Fans");
-		ProfileTitle.Text = Loc.T("Profiles");
 		FanEmergency.IsVisible = ctl?.Emergency == true;
 		FanEmergency.Text = Loc.T("FanEmergency");
 		FanStatusLabel.Text = ctl is null || !ctl.Remote ? Loc.T("FanRemoteOff")
 			: !ctl.Enabled ? Loc.T("FanCtlOff")
 			: Loc.T("FanTapHint");
 		FanStatusLabel.TextColor = ctl is { Remote: true, Enabled: true } ? Color.FromArgb("#9CA3AF") : Color.FromArgb("#FACC15");
+
+		// Hazır eğriler: tüm fanlara tek dokunuşla
+		ProfileTitle.Text = Loc.T("Presets");
+		PresetHint.Text = Loc.T("PresetHint");
+		ProfileSubTitle.Text = Loc.T("Profiles");
+		if (PresetRows.Children.Count == 0)
+		{
+			foreach (var (presetKey, labelKey) in FanPresets)
+			{
+				var key2 = presetKey;
+				var button = new Button
+				{
+					Text = Loc.T(labelKey + "Short"),
+					Style = TabStyle(true),
+					HeightRequest = 40,
+					Padding = new Thickness(16, 0),
+					Margin = new Thickness(0, 0, 8, 8)
+				};
+				button.Clicked += async (_, _) => await ApplyPresetToAllAsync(key2);
+				PresetRows.Children.Add(button);
+			}
+		}
 
 		// Profiller (PC'de kaydedilmiş tüm-fan ayarları)
 		var profiles = ctl?.Profiles ?? [];
@@ -541,6 +562,18 @@ public partial class MainPage : ContentPage
 		{
 			await SendAsync(new { cmd = "fan", id, saved = curve });
 		}
+	}
+
+	private async Task ApplyPresetToAllAsync(string preset)
+	{
+		var label = Loc.T(FanPresets.First(p => p.Key == preset).Label + "Short");
+		if (!await CanControlFansAsync()
+			|| !await DisplayAlert(Loc.T("Presets"), Loc.T("PresetConfirm", label), Loc.T("Yes"), Loc.T("No")))
+		{
+			return;
+		}
+
+		await SendAsync(new { cmd = "fanAll", preset });
 	}
 
 	private async Task ApplyProfileAsync(string name)

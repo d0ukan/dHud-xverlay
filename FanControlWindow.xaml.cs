@@ -31,6 +31,7 @@ public partial class FanControlWindow : Window
         // Yine de çok küçük ekranda taşmasın: içerik kaydırılır (başlık için ~70 px ayrılır).
         MainScroll.MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 24 - 70);
         EnableCheckBox.IsChecked = _settings.Current.FanControlEnabled;
+        StallAlertsCheckBox.IsChecked = _settings.Current.FanStallAlerts;
         ProfileStatusText.Text = Loc.T("F.ProfileHint");
 
         // Pencere açıkken anakart sensörleri taranır; böylece kontrol kapalıyken de fanlar listelenir.
@@ -63,6 +64,12 @@ public partial class FanControlWindow : Window
         }
 
         _settings.Current.FanControlEnabled = enable;
+        _settings.NotifyChanged();
+    }
+
+    private void StallAlertsCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.Current.FanStallAlerts = StallAlertsCheckBox.IsChecked == true;
         _settings.NotifyChanged();
     }
 

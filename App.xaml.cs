@@ -107,9 +107,12 @@ public partial class App : Application
 
         FanControl = new FanControlService(Monitor, Settings);
         // Kontrol edilen bir fan dönmeyi bırakırsa tepsi bildirimi ve (bağlıysa) mobil uyarı.
-        FanControl.FanStalled += (name, percent) => Dispatcher.BeginInvoke(() =>
+        FanControl.FanStalled += stalled => Dispatcher.BeginInvoke(() =>
         {
-            var message = Loc.T("F.Stalled", name, percent);
+            // Birden fazla fan aynı anda durduysa tek mesaj: yağmur gibi bildirim gelmesin.
+            var message = stalled.Count == 1
+                ? Loc.T("F.Stalled", stalled[0].Name, stalled[0].Percent)
+                : Loc.T("F.StalledMany", stalled.Count, string.Join(", ", stalled.Select(s => s.Name)));
             _tray?.ShowBalloon(Loc.T("F.StalledTitle"), message, Forms.ToolTipIcon.Warning);
             MobileLink?.SendAlert(message);
         });

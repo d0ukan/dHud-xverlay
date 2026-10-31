@@ -77,7 +77,7 @@ dHud kontrol edebildiği tüm fanları listeler (CPU fanı, pompa, kasa fanları
 
 **Kendi eğrilerin ve profiller:** herhangi bir eğriyi adla kaydet (*Kayıtlı eğrilerim*) ve her fanda kullan. **Tüm fanların** ayarını bir *profil* olarak ("Oyun", "Gece"…) kaydet ve tek tıkla yükle.
 
-**Fan testi ve fan uyarısı:** **Test** düğmesi fanı birkaç saniye %100'de çalıştırır ve hızının gerçekten artıp artmadığını söyler (gevşek kabloyu anlamak için işe yarar). dHud'un kontrol ettiği bir fan dönmeyi bırakırsa bildirim alırsın (telefonuna da gider).
+**Fan testi ve fan uyarısı:** **Test** düğmesi fanı birkaç saniye %100'de çalıştırır ve hızının gerçekten artıp artmadığını söyler (gevşek kabloyu anlamak için işe yarar). dHud'un kontrol ettiği bir fan dönmeyi bırakırsa bildirim alırsın (telefonuna da gider). Mesaj yağmasın diye aynı anda duran fanlar tek mesajda bildirilir, aynı fan en fazla 6 saatte bir, genel olarak da en fazla 30 dakikada bir mesaj gelir; %40'ın altındaki hızlar yok sayılır (birçok fan orada kendiliğinden durur). Uyarıyı Fan kontrolü penceresindeki **Bir fan dönmeyi bırakırsa bildir** kutusuyla kapatabilirsin.
 
 **Sıcaklık kaynağı:** her eğri CPU'yu, GPU'yu veya ikisinin yüksek olanını izleyebilir.
 

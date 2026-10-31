@@ -70,6 +70,8 @@
                     <TextBlock x:Name="TestAllStatusText" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" />
                     <CheckBox x:Name="IncludePumpCheckBox" Content="{h:Loc F.IncludePump}" Style="{StaticResource DarkCheckBox}"
                               Margin="0,8,0,0" />
+                    <CheckBox x:Name="StallAlertsCheckBox" Content="{h:Loc F.StallAlerts}" ToolTip="{h:Loc F.StallAlertsTip}"
+                              Style="{StaticResource DarkCheckBox}" Margin="0,4,0,0" Click="StallAlertsCheckBox_Click" />
                     <TextBlock Text="{h:Loc F.AllHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                     </StackPanel>
 

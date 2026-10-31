@@ -191,6 +191,10 @@
                 <Border x:Name="ProfileCard" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="8">
                         <Label x:Name="ProfileTitle" Style="{StaticResource TitleLabel}" />
+                        <Label x:Name="PresetHint" FontSize="12" TextColor="{StaticResource SubtleColor}" />
+                        <FlexLayout x:Name="PresetRows" Wrap="Wrap" JustifyContent="Start" />
+                        <Label x:Name="ProfileSubTitle" FontAttributes="Bold" FontSize="13" Margin="0,6,0,0"
+                               TextColor="{StaticResource TextColor}" />
                         <Label x:Name="ProfileHint" FontSize="12" TextColor="{StaticResource SubtleColor}" />
                         <FlexLayout x:Name="ProfileRows" Wrap="Wrap" JustifyContent="Start" />
                     </VerticalStackLayout>
