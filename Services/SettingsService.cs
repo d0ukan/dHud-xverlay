@@ -135,6 +135,18 @@ public sealed class AppSettings
     public WidgetOptions ToolsOptions { get; set; } = new();
     public WidgetOptions NotesOptions { get; set; } = new();
     public WidgetOptions StopwatchOptions { get; set; } = new();
+    public WidgetOptions WeatherOptions { get; set; } = new();
+
+    /// <summary>Hava durumu widget'ı (varsayılan kapalı; açıkken internete çıkar, bkz. WeatherService).</summary>
+    public bool WidgetWeather { get; set; }
+
+    /// <summary>Seçilen şehir (görünen ad) ve koordinatları; boşsa widget şehir sorar.</summary>
+    public string WeatherPlace { get; set; } = string.Empty;
+    public double? WeatherLat { get; set; }
+    public double? WeatherLon { get; set; }
+
+    /// <summary>true: °F ve mil/sa yerine °C (varsayılan) yerine Fahrenheit göster.</summary>
+    public bool WeatherFahrenheit { get; set; }
 
     /// <summary>Kronometre widget'ı.</summary>
     public bool WidgetStopwatch { get; set; }
@@ -295,6 +307,13 @@ public sealed class SettingsService
         s.ToolsOptions = (s.ToolsOptions ?? new()).Normalized();
         s.NotesOptions = (s.NotesOptions ?? new()).Normalized();
         s.StopwatchOptions = (s.StopwatchOptions ?? new()).Normalized();
+        s.WeatherOptions = (s.WeatherOptions ?? new()).Normalized();
+        s.WeatherPlace ??= string.Empty;
+        if (s.WeatherLat is not (>= -90 and <= 90) || s.WeatherLon is not (>= -180 and <= 180))
+        {
+            s.WeatherLat = s.WeatherLon = null;
+            s.WeatherPlace = string.Empty;
+        }
 
         s.MobileBlockedFans = (s.MobileBlockedFans ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
 

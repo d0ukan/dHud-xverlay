@@ -106,11 +106,12 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 
 ## Widgets
 
-*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets can never be dragged off the screen.
+*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets can never be dragged off the screen, and they never overlap each other or the overlay: if you drop one on another, it slides to the nearest free spot.
 
 - **Clock:** time and date, optional seconds and a second time zone (right-click).
 - **Sticky notes:** as many as you like (up to 30). Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
 - **Stopwatch:** start / pause, laps and reset.
+- **Weather:** current temperature, feels-like, wind and a 3-day forecast for a city you pick (°C or °F). It is the only widget that uses the internet (see *Privacy*), is off by default and does nothing until you choose a city.
 - **Timer, reminders and pomodoro:** quick timers (5 / 10 / 15 / 25 / 45 min or your own), reminders at a clock time (tomorrow if it has already passed) and a pomodoro (25 min focus, 5 min break, long break after 4 rounds). When time is up you get a notification and a sound, and optionally a notification on your phone.
 
 Notes are saved as you type (within a fraction of a second, and again when you leave the note, close dHud or shut Windows down); the file is replaced safely and a `.bak` copy is kept, so a power cut cannot leave you with a half-written file. Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.
@@ -160,7 +161,7 @@ dHud checks GitHub for new versions when it starts and every few hours while it 
 
 ## Privacy
 
-dHud has no telemetry. The only internet request is the update check to GitHub. The mobile connection stays on your local network and requires the pairing key.
+dHud has no telemetry. The only internet requests are the update check to GitHub and, only if you turn on the optional weather widget, the weather lookup at open-meteo.com (it receives the city you search for and its coordinates; no account, no key). The mobile connection stays on your local network and requires the pairing key.
 
 ## Credits and license
 

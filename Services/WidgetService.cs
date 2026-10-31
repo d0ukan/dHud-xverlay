@@ -74,6 +74,7 @@ public sealed class WidgetData
     public WidgetPos? ClockPos { get; set; }
     public WidgetPos? ToolsPos { get; set; }
     public WidgetPos? StopwatchPos { get; set; }
+    public WidgetPos? WeatherPos { get; set; }
     public List<StickyNote> Notes { get; set; } = [];
     public List<Reminder> Reminders { get; set; } = [];
 }

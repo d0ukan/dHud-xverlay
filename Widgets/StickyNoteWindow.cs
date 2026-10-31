@@ -106,6 +106,7 @@ public sealed class StickyNoteWindow : WidgetWindowBase
             _note.Width = Width - 16;
             _note.Height = Height - 16;
             _widgets.ScheduleSave();
+            App.Current.WidgetManager.Resolve(this);
         };
         Grid.SetRow(grip, 1);
         root.Children.Add(grip);

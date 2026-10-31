@@ -416,6 +416,11 @@ public partial class App : Application
         Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
     }
 
+    /// <summary>Overlay'in ekrandaki dikdörtgeni (gölge payı hariç); gizliyse null. Widget'lar buna binmesin diye kullanılır.</summary>
+    public Rect? OverlayRect => _overlay is { IsVisible: true, ActualWidth: > 20 } w
+        ? new Rect(w.Left + 10, w.Top + 10, w.ActualWidth - 20, w.ActualHeight - 20)
+        : null;
+
     /// <summary>Tepsi balonu göster (tepsi henüz yoksa sessizce atlanır).</summary>
     public void NotifyTray(string title, string text) => _tray?.ShowBalloon(title, text);
 

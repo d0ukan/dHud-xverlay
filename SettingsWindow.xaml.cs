@@ -224,6 +224,25 @@ public partial class SettingsWindow : Window
             () => s.Current.ToolsOptions,
             extras: panel => panel.Children.Add(WidgetCheck("S.RemindersPhone", () => s.Current.RemindersToPhone, v => s.Current.RemindersToPhone = v))));
 
+        right.Children.Add(WidgetSection("weather", "S.WidgetWeather", () => s.Current.WidgetWeather, v => s.Current.WidgetWeather = v,
+            () => s.Current.WeatherOptions,
+            extras: panel =>
+            {
+                panel.Children.Add(WidgetCheck("W.Fahrenheit", () => s.Current.WeatherFahrenheit, v => s.Current.WeatherFahrenheit = v));
+                var city = new Button { Content = Loc.T("W.ChangeCity"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+                city.SetResourceReference(StyleProperty, "DarkButton");
+                city.Click += (_, _) =>
+                {
+                    s.Current.WeatherLat = s.Current.WeatherLon = null;
+                    s.Current.WeatherPlace = string.Empty;
+                    s.NotifyChanged();
+                };
+                panel.Children.Add(city);
+                var privacy = new TextBlock { Text = Loc.T("S.WeatherPrivacy"), TextWrapping = TextWrapping.Wrap };
+                privacy.SetResourceReference(StyleProperty, "HintText");
+                panel.Children.Add(privacy);
+            }));
+
         right.Children.Add(WidgetSection("notes", "S.WidgetNotesTitle", () => s.Current.NotesVisible, v => s.Current.NotesVisible = v,
             () => s.Current.NotesOptions,
             extras: panel =>

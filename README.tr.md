@@ -106,11 +106,12 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 
 ## Widget'lar
 
-*Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar ekranın dışına çıkarılamaz.
+*Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar ekranın dışına çıkarılamaz ve birbirinin ya da overlay'in üstüne binmez: birini diğerinin üstüne bırakırsan en yakın boş yere kayar.
 
 - **Saat:** saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi (sağ tık).
 - **Yapışkan notlar:** istediğin kadar (en fazla 30). Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
 - **Kronometre:** başlat / duraklat, tur ve sıfırla.
+- **Hava durumu:** seçtiğin şehir için şimdiki sıcaklık, hissedilen, rüzgâr ve 3 günlük tahmin (°C veya °F). İnternet kullanan tek widget'tır (bkz. *Gizlilik*), varsayılan kapalıdır ve şehir seçene kadar hiçbir şey yapmaz.
 - **Zamanlayıcı, hatırlatıcı ve pomodoro:** hızlı zamanlayıcılar (5 / 10 / 15 / 25 / 45 dk veya kendi süren), saate göre hatırlatıcı (saat geçtiyse yarın) ve pomodoro (25 dk odak, 5 dk mola, 4 turdan sonra uzun mola). Süre dolunca bildirim ve ses alırsın; istersen telefona da bildirim gider.
 
 Notlar yazdıkça kaydedilir (saniyenin kesri içinde; ayrıca nottan çıkınca, dHud kapanırken ve Windows kapanırken tekrar); dosya güvenli şekilde değiştirilir ve bir `.bak` kopyası tutulur, yani elektrik kesilse bile yarım dosya kalmaz. Notlar ve hatırlatıcılar yalnızca `%AppData%\dHud\widgets.json` dosyasında saklanır. Overlay gibi widget'lar da özel tam ekran oyunların üstünde görünemez.
@@ -160,7 +161,7 @@ dHud açılışta ve çalıştığı sürece birkaç saatte bir (Ayarlar → Beh
 
 ## Gizlilik
 
-dHud telemetri göndermez. Tek internet isteği GitHub'a yapılan güncelleme denetimidir. Mobil bağlantı yerel ağında kalır ve eşleştirme anahtarı ister.
+dHud telemetri göndermez. Tek internet istekleri GitHub'a yapılan güncelleme denetimi ve yalnızca isteğe bağlı hava durumu widget'ını açarsan open-meteo.com'a yapılan hava durumu sorgusudur (aradığın şehri ve koordinatlarını alır; hesap ve anahtar yok). Mobil bağlantı yerel ağında kalır ve eşleştirme anahtarı ister.
 
 ## Katkılar ve lisans
 

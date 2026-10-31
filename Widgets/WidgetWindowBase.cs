@@ -20,6 +20,7 @@ public abstract class WidgetWindowBase : Window
 {
     private const double SnapDistance = 24;
     private const double CornerMargin = 16;
+    private const double CardPad = 8; // kartın etrafındaki gölge payı
 
     private Color _cardColor = Color.FromArgb(0xF2, 0x1A, 0x1B, 0x22);
     private IntPtr _hwnd;
@@ -69,6 +70,15 @@ public abstract class WidgetWindowBase : Window
 
         SourceInitialized += OnSourceInitialized;
         MouseLeftButtonDown += OnMouseDown;
+
+        // İçerik büyüyünce (yeni hatırlatıcı, tur listesi, not boyutu) komşunun üstüne taşmasın.
+        SizeChanged += (_, _) =>
+        {
+            if (IsLoaded)
+            {
+                Dispatcher.BeginInvoke(() => App.Current.WidgetManager?.Resolve(this), System.Windows.Threading.DispatcherPriority.Background);
+            }
+        };
         LocationChanged += (_, _) => Moved?.Invoke(new Point(Left, Top));
     }
 
@@ -102,7 +112,11 @@ public abstract class WidgetWindowBase : Window
         WindowStartupLocation = WindowStartupLocation.Manual;
         Left = valid ? left : defaultLeft;
         Top = valid ? top : defaultTop;
-        Loaded += (_, _) => KeepInsideWorkArea();
+        Loaded += (_, _) =>
+        {
+            KeepInsideWorkArea();
+            App.Current.WidgetManager?.Resolve(this);
+        };
     }
 
     /// <summary>Varsayılan konum: çalışma alanının sağ üstünden aşağı doğru, sıra numarasına göre.</summary>
@@ -133,9 +147,22 @@ public abstract class WidgetWindowBase : Window
             _ => work.Top + (work.Height - h) / 2 + offset
         };
         KeepInsideWorkArea();
+        App.Current.WidgetManager?.Resolve(this);
+    }
+
+    /// <summary>Kartın ekrandaki dikdörtgeni (gölge payı hariç); widget'ların birbirine binmemesi için kullanılır.</summary>
+    public Rect CardRect => new(Left + CardPad, Top + CardPad, Math.Max(0, ActualWidth - 2 * CardPad), Math.Max(0, ActualHeight - 2 * CardPad));
+
+    /// <summary>Kartın sol üst köşesini verilen noktaya getirir.</summary>
+    public void SetCardTopLeft(Point p)
+    {
+        Left = p.X - CardPad;
+        Top = p.Y - CardPad;
     }
 
     /// <summary>Pencerenin bulunduğu monitörün çalışma alanı (görev çubuğu hariç), DIP cinsinden.</summary>
+    public Rect? WorkAreaRect() => CurrentWorkArea();
+
     private Rect? CurrentWorkArea()
     {
         if (_hwnd == IntPtr.Zero || PresentationSource.FromVisual(this)?.CompositionTarget is not { } target)
@@ -254,6 +281,7 @@ public abstract class WidgetWindowBase : Window
         }
 
         KeepInsideWorkArea();
+        App.Current.WidgetManager?.Resolve(this); // bırakılan yerde başka widget/overlay varsa en yakın boş yere kayar
         Moved?.Invoke(new Point(Left, Top));
     }
 
