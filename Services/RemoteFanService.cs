@@ -78,12 +78,32 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
             return "disabled";
         }
 
+        var cmd = Str(command, "cmd");
+
+        // Fan kontrolünü aç/kapat (telefondaki "Fan kontrolü" anahtarı). Açmadan önce telefon PC'deki uyarının aynısını sorar.
+        if (cmd == "fanControl")
+        {
+            if (!command.TryGetProperty("enabled", out var flag) || flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                return "bad";
+            }
+
+            var enable = flag.ValueKind == JsonValueKind.True;
+            if (s.FanControlEnabled != enable)
+            {
+                s.FanControlEnabled = enable;
+                Commit(enable ? "Fan control: on" : "Fan control: off");
+            }
+
+            return null;
+        }
+
         if (!s.FanControlEnabled)
         {
             return "fanctl";
         }
 
-        switch (Str(command, "cmd"))
+        switch (cmd)
         {
             case "fan":
             {

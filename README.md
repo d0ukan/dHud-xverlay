@@ -104,6 +104,16 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 - **Game summary:** when a session of at least 2 minutes ends, a small card appears in the bottom-right corner with average FPS, 1% low FPS, lowest / highest FPS and the highest CPU / GPU temperature. Turn it off with *Show a summary card when a game session ends*.
 - Works with DirectX 10 / 11 / 12 games. DirectX 9 is experimental; Vulkan and OpenGL games are not measured.
 
+## Widgets
+
+*Settings → Behavior → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default, use almost no CPU, and everything stays on your PC.
+
+- **Clock:** time and date, optional seconds and a second time zone (right-click).
+- **Sticky notes:** as many as you like (up to 30). Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
+- **Timer, reminders and pomodoro:** quick timers (5 / 10 / 15 / 25 / 45 min or your own), reminders at a clock time (tomorrow if it has already passed) and a pomodoro (25 min focus, 5 min break, long break after 4 rounds). When time is up you get a notification and a sound, and optionally a notification on your phone.
+
+Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.
+
 ## Android companion app
 
 An Android app (phone or tablet) that mirrors dHud over your **local network** (same Wi-Fi). It has the same dark theme.
@@ -116,7 +126,7 @@ An Android app (phone or tablet) that mirrors dHud over your **local network** (
 2. On the PC: *Settings → Behavior → Mobile app* → tick **Allow the dHud mobile app to connect**. A QR code appears. If Windows Firewall asks, allow access on **private networks**.
 3. In the Android app tap **Scan QR code** and scan it. Done: the dot at the top turns green.
 
-**Fans from the phone:** the app has a separate **Fans** tab. To use it, tick **Let the mobile app change fan settings** under the QR code (off by default, so the phone only watches) and turn on fan control on the PC. The phone can only pick ready-made options: for each fan *Auto*, a built-in curve (*Quiet / Optimal / Max Cold*) or one of your saved curves, or a saved **profile** that sets all fans at once. Custom speeds cannot be set from the phone. In the PC's Fan control window every fan has an **Allow control from phone** checkbox; an unticked fan can't be changed from the phone at all (not directly, not through a saved curve or a profile). The PC's safety rules (emergency 100%, minimum speed, gradual slow-down) still apply, and the PC shows a notification for every change.
+**Fans from the phone:** the app has a separate **Fans** tab. To use it, tick **Let the mobile app change fan settings** under the QR code (off by default, so the phone only watches) and turn on fan control on the PC. The phone can only pick ready-made options: for each fan *Auto*, a built-in curve (*Quiet / Optimal / Max Cold*) or one of your saved curves, or a saved **profile** that sets all fans at once. Custom speeds cannot be set from the phone. The Fans tab also has a **Fan control** switch that turns fan control on or off on the PC (turning it on asks for the same confirmation as on the PC). In the PC's Fan control window every fan has an **Allow control from phone** checkbox; an unticked fan can't be changed from the phone at all (not directly, not through a saved curve or a profile). The PC's safety rules (emergency 100%, minimum speed, gradual slow-down) still apply, and the PC shows a notification for every change.
 
 If the PC's IP address changes, the app finds the PC again by itself. The app also checks for new versions and offers a one-tap update. **Reset pairing** (below the QR code) disconnects every device.
 

@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using DHud.Helpers;
 using DHud.Services;
+using DHud.Widgets;
 using Forms = System.Windows.Forms;
 
 namespace DHud;
@@ -47,6 +48,8 @@ public partial class App : Application
     public FpsMonitor Fps { get; } = new();
     public FanControlService FanControl { get; private set; } = null!;
     public RemoteFanService RemoteFan { get; private set; } = null!;
+    public WidgetService Widgets { get; private set; } = null!;
+    public WidgetManager WidgetManager { get; private set; } = null!;
     public GameSessionTracker GameTracker { get; } = new();
     private bool _recoveredFromCrash;
 
@@ -114,6 +117,12 @@ public partial class App : Application
         Settings.Load();
         StartupManager.MigrateLegacy();
 
+        // Widget'lar: notlar, hatırlatıcılar, saat. Hatırlatıcı zamanı gelince bildirim + ses (+ istenirse telefon).
+        Widgets = new WidgetService();
+        Widgets.Load();
+        WidgetManager = new WidgetManager(Settings, Widgets);
+        Widgets.ReminderFired += OnReminderFired;
+
         FanControl = new FanControlService(Monitor, Settings);
         // Önceki çalışma ani sonlandıysa: fanlar bekçi tarafından güvenli hıza çıkarılmış olabilir; geri devral/bırak.
         if (FanSafety.TakePreviousCrashMarker() is { Length: > 0 } crashed)
@@ -174,6 +183,7 @@ public partial class App : Application
         _tray.ClickThroughToggleRequested += (_, _) => ToggleClickThrough();
         _tray.LockToggleRequested += (_, _) => ToggleLock();
         _tray.ExitRequested += (_, _) => ExitApplication();
+        _tray.NewNoteRequested += (_, _) => WidgetManager.NewNote();
         if (_recoveredFromCrash)
         {
             _tray.ShowBalloon(Loc.T("F.Title"), Loc.T("F.Recovered"), Forms.ToolTipIcon.Warning);
@@ -406,6 +416,24 @@ public partial class App : Application
         Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
     }
 
+    /// <summary>Tepsi balonu göster (tepsi henüz yoksa sessizce atlanır).</summary>
+    public void NotifyTray(string title, string text) => _tray?.ShowBalloon(title, text);
+
+    /// <summary>Bir hatırlatıcı/zamanlayıcı/pomodoro aşaması bitti: balon, ses ve (ayarlıysa) telefona uyarı.</summary>
+    private void OnReminderFired(Reminder reminder)
+    {
+        var text = reminder.Kind == "pomodoro"
+            ? Loc.T("W.PomodoroNow." + reminder.Text)
+            : reminder.Text;
+
+        _tray?.ShowBalloon(Loc.T("W.ReminderTitle"), text);
+        System.Media.SystemSounds.Asterisk.Play();
+        if (Settings.Current.RemindersToPhone)
+        {
+            MobileLink?.SendAlert(text, "reminder");
+        }
+    }
+
     public void OpenFanControl()
     {
         if (_fanWindow is { IsLoaded: true })
@@ -432,6 +460,7 @@ public partial class App : Application
         ConfigureUpdateTimer();
         MobileLink.Apply();
         ApplyFps();
+        WidgetManager.Apply();
 
         // Kısayollar yalnızca ayar gerçekten değiştiğinde yeniden kaydedilir.
         if (_hotkeysRegisteredFor != s.HotkeysEnabled)
@@ -455,6 +484,7 @@ public partial class App : Application
         }
 
         _tray?.ApplyLanguage();
+        WidgetManager?.CloseAll(); // metinler yeni dilde yeniden oluşturulsun (OnSettingsChanged yeniden açar)
         RegisterHotkeys(Settings.Current.HotkeysEnabled); // hata iletisi dile bağlı
 
         if (_settingsWindow is { IsLoaded: true } window)
@@ -601,6 +631,7 @@ public partial class App : Application
     {
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        Widgets?.Flush();
         FanControl?.Dispose();
         Fps.Dispose();
         _fpsWindow?.Close();

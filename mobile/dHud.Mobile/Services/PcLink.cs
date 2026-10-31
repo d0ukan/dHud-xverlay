@@ -30,7 +30,7 @@ public sealed class PcLink
 	public event Action? Changed;
 
 	/// <summary>PC bir sıcaklık uyarısı gönderdiğinde (ana iş parçacığında) uyarı metniyle tetiklenir.</summary>
-	public event Action<string>? AlertReceived;
+	public event Action<string, string>? AlertReceived;
 
 	/// <summary>PC bir komutu yanıtladığında (ana iş parçacığında): komut adı, başarı, hata kodu (disabled/fanctl/nofan/bad).</summary>
 	public event Action<string, bool, string?>? CommandResult;
@@ -215,9 +215,10 @@ public sealed class PcLink
 			if (doc.RootElement.TryGetProperty("alert", out var alert))
 			{
 				var text = alert.TryGetProperty("text", out var textElement) ? textElement.GetString() : null;
+				var kind = alert.TryGetProperty("kind", out var kindElement) ? kindElement.GetString() ?? "temp" : "temp";
 				if (!string.IsNullOrEmpty(text))
 				{
-					MainThread.BeginInvokeOnMainThread(() => AlertReceived?.Invoke(text));
+					MainThread.BeginInvokeOnMainThread(() => AlertReceived?.Invoke(text, kind));
 				}
 
 				continue;

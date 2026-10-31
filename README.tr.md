@@ -104,6 +104,16 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 - **Oyun özeti:** en az 2 dakikalık bir oyun oturumu bitince sağ alt köşede küçük bir kart çıkar: ortalama FPS, %1 düşük FPS, en düşük / en yüksek FPS ve en yüksek CPU / GPU sıcaklığı. *Oyun bitince özet kartı göster* kutusuyla kapatılır.
 - DirectX 10 / 11 / 12 oyunlarında çalışır. DirectX 9 deneyseldir; Vulkan ve OpenGL oyunları ölçülmez.
 
+## Widget'lar
+
+*Ayarlar → Behavior → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır, neredeyse hiç CPU kullanmaz ve her şey bilgisayarında kalır.
+
+- **Saat:** saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi (sağ tık).
+- **Yapışkan notlar:** istediğin kadar (en fazla 30). Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
+- **Zamanlayıcı, hatırlatıcı ve pomodoro:** hızlı zamanlayıcılar (5 / 10 / 15 / 25 / 45 dk veya kendi süren), saate göre hatırlatıcı (saat geçtiyse yarın) ve pomodoro (25 dk odak, 5 dk mola, 4 turdan sonra uzun mola). Süre dolunca bildirim ve ses alırsın; istersen telefona da bildirim gider.
+
+Notlar ve hatırlatıcılar yalnızca `%AppData%\dHud\widgets.json` dosyasında saklanır. Overlay gibi widget'lar da özel tam ekran oyunların üstünde görünemez.
+
 ## Android yardımcı uygulaması
 
 Telefon veya tablette dHud'u **yerel ağında** (aynı Wi-Fi) yansıtan bir Android uygulaması. Aynı koyu temaya sahiptir.
@@ -116,7 +126,7 @@ Telefon veya tablette dHud'u **yerel ağında** (aynı Wi-Fi) yansıtan bir Andr
 2. PC'de: *Ayarlar → Behavior → Mobil uygulama* → **dHud mobil uygulamasının bağlanmasına izin ver** (Allow the dHud mobile app to connect) kutusunu işaretle. Bir QR kod görünür. Windows Güvenlik Duvarı sorarsa **özel ağlar** için izin ver.
 3. Android uygulamasında **QR kodu tara**'ya dokun ve QR'ı okut. Tamam: üstteki nokta yeşile döner.
 
-**Telefondan fan:** uygulamada ayrı bir **Fanlar** sekmesi var. Kullanmak için QR kodun altındaki **Mobil uygulama fan ayarlarını değiştirebilsin** kutusunu işaretle (varsayılan kapalı, yani telefon sadece izler) ve PC'de fan kontrolünü aç. Telefon yalnızca hazır seçenekleri seçebilir: her fan için *Otomatik*, hazır eğri (*Sessiz / Optimal / Max Cold*) veya kayıtlı eğrilerinden biri; ya da tüm fanları tek seferde ayarlayan kayıtlı bir **profil**. Telefondan elle hız verilemez. PC'deki Fan kontrolü penceresinde her fanın **Telefondan değiştirilebilsin** kutusu var; işareti kalkan fan telefondan hiç değiştirilemez (ne tek tek, ne kayıtlı eğriyle, ne profille). PC'deki güvenlik kuralları (acil %100, alt sınır, kademeli yavaşlama) aynen geçerlidir ve PC her değişiklikte bildirim gösterir.
+**Telefondan fan:** uygulamada ayrı bir **Fanlar** sekmesi var. Kullanmak için QR kodun altındaki **Mobil uygulama fan ayarlarını değiştirebilsin** kutusunu işaretle (varsayılan kapalı, yani telefon sadece izler) ve PC'de fan kontrolünü aç. Telefon yalnızca hazır seçenekleri seçebilir: her fan için *Otomatik*, hazır eğri (*Sessiz / Optimal / Max Cold*) veya kayıtlı eğrilerinden biri; ya da tüm fanları tek seferde ayarlayan kayıtlı bir **profil**. Telefondan elle hız verilemez. Fanlar sekmesinde ayrıca PC'deki fan kontrolünü açıp kapatan bir **Fan kontrolü** anahtarı vardır (açarken PC'dekiyle aynı onay sorulur). PC'deki Fan kontrolü penceresinde her fanın **Telefondan değiştirilebilsin** kutusu var; işareti kalkan fan telefondan hiç değiştirilemez (ne tek tek, ne kayıtlı eğriyle, ne profille). PC'deki güvenlik kuralları (acil %100, alt sınır, kademeli yavaşlama) aynen geçerlidir ve PC her değişiklikte bildirim gösterir.
 
 PC'nin IP adresi değişirse uygulama PC'yi kendiliğinden yeniden bulur. Uygulama yeni sürümleri de denetler ve tek dokunuşla güncelleme sunar. QR kodun altındaki **Eşleştirmeyi sıfırla** (Reset pairing) düğmesi tüm cihazların bağlantısını keser.
 

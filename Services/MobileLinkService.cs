@@ -477,7 +477,7 @@ public sealed class MobileLinkService : IDisposable
     /// Sıcaklık uyarısını bağlı cihazlara gönderir. Anlık görüntülerden farklı olarak uyarı atlanmaz:
     /// cihaz meşgulse kısa süre beklenir.
     /// </summary>
-    public void SendAlert(string text)
+    public void SendAlert(string text, string kind = "temp")
     {
         Client[] targets;
         lock (_gate)
@@ -491,7 +491,7 @@ public sealed class MobileLinkService : IDisposable
         }
 
         var data = Append(JsonSerializer.SerializeToUtf8Bytes(
-            new { alert = new { text, ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds() } }, Json));
+            new { alert = new { text, kind, ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds() } }, Json));
         foreach (var client in targets)
         {
             _ = SendReliableAsync(client, data);

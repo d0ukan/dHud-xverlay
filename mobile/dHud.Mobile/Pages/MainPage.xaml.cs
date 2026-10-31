@@ -406,6 +406,10 @@ public partial class MainPage : ContentPage
 		FanTitle.Text = Loc.T("Fans");
 		FanEmergency.IsVisible = ctl?.Emergency == true;
 		FanEmergency.Text = Loc.T("FanEmergency");
+		FanEnableLabel.Text = Loc.T("FanEnable");
+		_updatingFanSwitch = true;
+		FanEnableSwitch.IsToggled = ctl?.Enabled == true;
+		_updatingFanSwitch = false;
 		FanStatusLabel.Text = ctl is null || !ctl.Remote ? Loc.T("FanRemoteOff")
 			: !ctl.Enabled ? Loc.T("FanCtlOff")
 			: Loc.T("FanTapHint");
@@ -505,6 +509,41 @@ public partial class MainPage : ContentPage
 		row.GestureRecognizers.Add(tap);
 		_fanLabels[fan.Id] = (detail, mode);
 		return row;
+	}
+
+	private bool _updatingFanSwitch;
+
+	/// <summary>Fan kontrolünü PC'de açar/kapatır. Açmadan önce PC'deki uyarının aynısı sorulur; kapatmak her zaman güvenlidir.</summary>
+	private async void FanEnableSwitch_Toggled(object? sender, ToggledEventArgs e)
+	{
+		if (_updatingFanSwitch)
+		{
+			return;
+		}
+
+		var ctl = App.Link.Latest?.FanCtl;
+		var wanted = e.Value;
+		if (ctl is null || !ctl.Remote)
+		{
+			await DisplayAlert("dHud", Loc.T("FanRemoteOff"), Loc.T("Ok"));
+			Revert(ctl?.Enabled == true);
+			return;
+		}
+
+		if (wanted && !await DisplayAlert(Loc.T("FanEnable"), Loc.T("FanEnableConfirm"), Loc.T("Yes"), Loc.T("No")))
+		{
+			Revert(false);
+			return;
+		}
+
+		await SendAsync(new { cmd = "fanControl", enabled = wanted });
+
+		void Revert(bool value)
+		{
+			_updatingFanSwitch = true;
+			FanEnableSwitch.IsToggled = value;
+			_updatingFanSwitch = false;
+		}
 	}
 
 	/// <summary>PC'nin fan değişikliğine izin verip vermediğini denetler; vermiyorsa nedenini gösterir.</summary>
@@ -790,12 +829,12 @@ public partial class MainPage : ContentPage
 
 	// ---- Sıcaklık uyarısı ----
 
-	private void OnAlert(string text)
+	private void OnAlert(string text, string kind)
 	{
 		Wake();
 		AlertLabel.Text = text;
 		AlertBanner.IsVisible = true;
-		AlertNotifier.Notify(Loc.T("AlertTitle"), text);
+		AlertNotifier.Notify(Loc.T(kind == "reminder" ? "ReminderTitle" : "AlertTitle"), text);
 	}
 
 	private void AlertDismissButton_Clicked(object? sender, EventArgs e) => AlertBanner.IsVisible = false;

@@ -112,6 +112,10 @@ public partial class SettingsWindow : Window
         FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
         GameSummaryCheckBox.IsChecked = s.GameSummary;
         GameSummaryCheckBox.IsEnabled = s.FpsEnabled;
+        WidgetClockCheckBox.IsChecked = s.WidgetClock;
+        WidgetToolsCheckBox.IsChecked = s.WidgetTools;
+        NotesVisibleCheckBox.IsChecked = s.NotesVisible;
+        RemindersPhoneCheckBox.IsChecked = s.RemindersToPhone;
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobileFanCheckBox.IsChecked = s.MobileFanControl;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
@@ -172,6 +176,10 @@ public partial class SettingsWindow : Window
         s.FpsEnabled = FpsCheckBox.IsChecked == true;
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
         s.GameSummary = GameSummaryCheckBox.IsChecked == true;
+        s.WidgetClock = WidgetClockCheckBox.IsChecked == true;
+        s.WidgetTools = WidgetToolsCheckBox.IsChecked == true;
+        s.NotesVisible = NotesVisibleCheckBox.IsChecked == true;
+        s.RemindersToPhone = RemindersPhoneCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
@@ -193,6 +201,12 @@ public partial class SettingsWindow : Window
     private void Option_Click(object sender, RoutedEventArgs e) => SaveValues();
 
     private void OpenFanButton_Click(object sender, RoutedEventArgs e) => App.Current.OpenFanControl();
+
+    private void NewNoteButton_Click(object sender, RoutedEventArgs e)
+    {
+        App.Current.WidgetManager.NewNote();
+        NotesVisibleCheckBox.IsChecked = true;
+    }
 
     private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e) =>
         await App.Current.CheckForUpdatesAsync(manual: true);

@@ -18,6 +18,7 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.ToolStripMenuItem _settingsItem;
     private readonly Forms.ToolStripMenuItem _updateItem;
     private readonly Forms.ToolStripMenuItem _exitItem;
+    private readonly Forms.ToolStripMenuItem _noteItem;
     private bool _overlayVisible = true;
 
     public event EventHandler? ToggleOverlayRequested;
@@ -26,6 +27,7 @@ public sealed class TrayIconService : IDisposable
     public event EventHandler? LockToggleRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler? UpdateCheckRequested;
+    public event EventHandler? NewNoteRequested;
     public event EventHandler? BalloonClicked;
 
     public TrayIconService(string toggleOverlayShortcut, string clickThroughShortcut)
@@ -48,6 +50,7 @@ public sealed class TrayIconService : IDisposable
         _updateItem = new Forms.ToolStripMenuItem(Loc.T("T.CheckUpdates", UpdateService.CurrentVersionText), null,
             (_, _) => UpdateCheckRequested?.Invoke(this, EventArgs.Empty));
         _exitItem = new Forms.ToolStripMenuItem(Loc.T("T.Exit"), null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
+        _noteItem = new Forms.ToolStripMenuItem(Loc.T("W.NewNote"), null, (_, _) => NewNoteRequested?.Invoke(this, EventArgs.Empty));
 
         var menu = new Forms.ContextMenuStrip
         {
@@ -62,6 +65,7 @@ public sealed class TrayIconService : IDisposable
         menu.Items.AddRange([
             _settingsItem,
             _toggleItem,
+            _noteItem,
             new Forms.ToolStripSeparator(),
             _clickThroughItem,
             _lockItem,
@@ -98,6 +102,7 @@ public sealed class TrayIconService : IDisposable
         _lockItem.Text = Loc.T("T.Lock");
         _updateItem.Text = Loc.T("T.CheckUpdates", UpdateService.CurrentVersionText);
         _exitItem.Text = Loc.T("T.Exit");
+        _noteItem.Text = Loc.T("W.NewNote");
     }
 
     public void UpdateTooltip(string text)

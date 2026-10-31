@@ -264,6 +264,19 @@
                     <TextBlock Text="{h:Loc S.FpsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                     <TextBlock x:Name="FpsStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
 
+                    <TextBlock Text="{h:Loc S.Widgets}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="WidgetClockCheckBox" Content="{h:Loc S.WidgetClock}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="WidgetToolsCheckBox" Content="{h:Loc S.WidgetTools}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="NotesVisibleCheckBox" Content="{h:Loc S.WidgetNotes}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="RemindersPhoneCheckBox" Content="{h:Loc S.RemindersPhone}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <Button Content="{h:Loc W.NewNote}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Click="NewNoteButton_Click" />
+                    <TextBlock Text="{h:Loc S.WidgetsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+
                     <TextBlock Text="{h:Loc S.Mobile}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="MobileCheckBox" Content="{h:Loc S.MobileEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />

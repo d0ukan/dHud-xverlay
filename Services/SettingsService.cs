@@ -130,6 +130,22 @@ public sealed class AppSettings
     /// <summary>Tüm fanların ayarını saklayan profiller ("Oyun", "Gece" vb.).</summary>
     public List<FanProfile> FanProfiles { get; set; } = [];
 
+    /// <summary>Masaüstü saat widget'ı.</summary>
+    public bool WidgetClock { get; set; }
+    public bool ClockSeconds { get; set; }
+
+    /// <summary>Saat widget'ında ikinci saat dilimi (Windows saat dilimi kimliği; boş = yok).</summary>
+    public string ClockZone { get; set; } = string.Empty;
+
+    /// <summary>Zamanlayıcı / hatırlatıcı / pomodoro widget'ı.</summary>
+    public bool WidgetTools { get; set; }
+
+    /// <summary>Yapışkan notlar ekranda görünsün (notlar silinmeden gizlenebilir).</summary>
+    public bool NotesVisible { get; set; } = true;
+
+    /// <summary>Hatırlatıcılar telefona da bildirim olarak gitsin (mobil uygulama bağlıysa).</summary>
+    public bool RemindersToPhone { get; set; } = true;
+
     /// <summary>Kontrol edilen bir fan dönmeyi bırakırsa bildirim (tepsi + telefon) gönder.</summary>
     public bool FanStallAlerts { get; set; } = true;
 

@@ -207,6 +207,10 @@
                                    VerticalOptions="Center" HorizontalTextAlignment="End" LineBreakMode="TailTruncation"
                                    TextColor="{StaticResource HotColor}" />
                         </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Label x:Name="FanEnableLabel" VerticalOptions="Center" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                            <Switch x:Name="FanEnableSwitch" Grid.Column="1" Toggled="FanEnableSwitch_Toggled" />
+                        </Grid>
                         <Label x:Name="FanStatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" />
                         <VerticalStackLayout x:Name="FanRows" Spacing="2" />
                     </VerticalStackLayout>

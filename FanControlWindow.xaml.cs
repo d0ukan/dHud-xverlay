@@ -458,6 +458,8 @@ public partial class FanControlWindow : Window
     {
         if (IsLoaded)
         {
+            EnableCheckBox.IsChecked = _settings.Current.FanControlEnabled;
+            StallAlertsCheckBox.IsChecked = _settings.Current.FanStallAlerts;
             ForceRebuild();
         }
     }
