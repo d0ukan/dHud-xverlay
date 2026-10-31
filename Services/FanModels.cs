@@ -125,5 +125,20 @@ public static class FanCurve
             .Take(MaxPoints)
             .ToList();
         setting.Curve = points.Count >= 2 ? points : Default();
+        MakeNonDecreasing(setting.Curve);
+    }
+
+    /// <summary>
+    /// Sıcaklık artarken fan hızı düşmesin: her nokta bir önceki noktadan düşük olamaz.
+    /// Eski veya elle düzenlenmiş ayar dosyalarındaki ters eğrileri düzeltir.
+    /// </summary>
+    public static void MakeNonDecreasing(List<CurvePoint> points)
+    {
+        var floor = 0;
+        foreach (var point in points.OrderBy(p => p.Temp))
+        {
+            point.Percent = Math.Max(point.Percent, floor);
+            floor = point.Percent;
+        }
     }
 }

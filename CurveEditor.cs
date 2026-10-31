@@ -209,10 +209,14 @@ public sealed class CurveEditor : FrameworkElement
                 return;
             }
 
+            var addedTemp = (int)Math.Round(Math.Clamp(ToTemp(position.X), FanCurve.MinTemp, FanCurve.MaxTemp));
+            var previous = _points.LastOrDefault(p => p.Temp < addedTemp);
+            var next = _points.FirstOrDefault(p => p.Temp > addedTemp);
             var added = new CurvePoint
             {
-                Temp = (int)Math.Round(Math.Clamp(ToTemp(position.X), FanCurve.MinTemp, FanCurve.MaxTemp)),
-                Percent = (int)Math.Round(Math.Clamp(ToPercent(position.Y), 0, 100))
+                Temp = addedTemp,
+                // Yeni nokta da komşularının arasında kalır (sıcaklıkla birlikte fan hızı düşmez).
+                Percent = (int)Math.Round(Math.Clamp(ToPercent(position.Y), previous?.Percent ?? 0, next?.Percent ?? 100))
             };
 
             // Aynı sıcaklıkta zaten nokta varsa ekleme.
@@ -252,7 +256,10 @@ public sealed class CurveEditor : FrameworkElement
         var minTemp = _drag > 0 ? _points[_drag - 1].Temp + 1 : FanCurve.MinTemp;
         var maxTemp = _drag < _points.Count - 1 ? _points[_drag + 1].Temp - 1 : FanCurve.MaxTemp;
         var temp = (int)Math.Round(Math.Clamp(ToTemp(position.X), minTemp, maxTemp));
-        var percent = (int)Math.Round(Math.Clamp(ToPercent(position.Y), 0, 100));
+        // Sıcaklık artarken fan hızı düşmez: yüzde sol komşudan aşağı, sağ komşudan yukarı çıkamaz.
+        var minPercent = _drag > 0 ? _points[_drag - 1].Percent : 0;
+        var maxPercent = _drag < _points.Count - 1 ? _points[_drag + 1].Percent : 100;
+        var percent = (int)Math.Round(Math.Clamp(ToPercent(position.Y), minPercent, maxPercent));
 
         var index = _drag;
         Mutate(list =>
