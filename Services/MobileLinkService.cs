@@ -18,6 +18,9 @@ public sealed class MobileLinkService : IDisposable
 {
     public const int Port = 47821;
 
+    /// <summary>Mobil uygulamanın PC'yi ağda bulması için UDP portu (IP değiştiğinde yeniden eşleşme gerekmesin).</summary>
+    public const int DiscoveryPort = 47822;
+
     private const int ProtocolVersion = 1;
     private const int MaxClients = 8;
     private const int MaxHelloBytes = 512;
@@ -35,6 +38,7 @@ public sealed class MobileLinkService : IDisposable
     private readonly List<Client> _clients = [];
 
     private TcpListener? _listener;
+    private UdpClient? _discovery;
     private CancellationTokenSource? _cts;
 
     public MobileLinkService(HardwareMonitorService monitor, SettingsService settings)
@@ -173,6 +177,7 @@ public sealed class MobileLinkService : IDisposable
             _cts = new CancellationTokenSource();
             LastError = null;
             _ = AcceptLoopAsync(listener, _cts.Token);
+            StartDiscovery(_cts.Token);
         }
         catch (Exception ex)
         {
@@ -190,6 +195,8 @@ public sealed class MobileLinkService : IDisposable
         }
 
         _cts?.Cancel();
+        _discovery?.Dispose();
+        _discovery = null;
         try
         {
             _listener.Stop();
@@ -203,6 +210,65 @@ public sealed class MobileLinkService : IDisposable
         _cts?.Dispose();
         _cts = null;
         DisconnectAll();
+    }
+
+    /// <summary>Eşleştirme anahtarından türetilen kısa etiket. Anahtarın kendisi ağa çıkmaz.</summary>
+    public static string DiscoveryTag(string token) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes("dHud:" + token)))[..16];
+
+    /// <summary>
+    /// Yerel ağdaki "dHud nerede?" sorularına yanıt verir. Yalnızca doğru eşleştirme etiketini bilen cihaza cevap döner;
+    /// başka cihazlar PC'nin dHud çalıştırdığını öğrenemez.
+    /// </summary>
+    private void StartDiscovery(CancellationToken ct)
+    {
+        try
+        {
+            var udp = new UdpClient { ExclusiveAddressUse = false };
+            udp.Client.Bind(new IPEndPoint(IPAddress.Any, DiscoveryPort));
+            _discovery = udp;
+            _ = DiscoveryLoopAsync(udp, ct);
+        }
+        catch (Exception ex)
+        {
+            // Keşif çalışmasa da QR ile eşleşme ve bağlantı çalışır.
+            Debug.WriteLine($"Keşif dinleyicisi açılamadı: {ex.Message}");
+        }
+    }
+
+    private async Task DiscoveryLoopAsync(UdpClient udp, CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                var received = await udp.ReceiveAsync(ct).ConfigureAwait(false);
+                var text = Encoding.UTF8.GetString(received.Buffer);
+                const string prefix = "dHud? ";
+                if (!text.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var tag = text[prefix.Length..].Trim();
+                if (tag != DiscoveryTag(_settings.Current.MobileToken))
+                {
+                    continue;
+                }
+
+                var reply = JsonSerializer.SerializeToUtf8Bytes(
+                    new { ok = true, pc = Environment.MachineName, port = Port, tag }, Json);
+                await udp.SendAsync(reply, received.RemoteEndPoint, ct).ConfigureAwait(false);
+            }
+        }
+        catch (Exception) when (ct.IsCancellationRequested)
+        {
+            // Kapanış.
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Keşif dinleyicisi durdu: {ex.Message}");
+        }
     }
 
     private async Task AcceptLoopAsync(TcpListener listener, CancellationToken ct)

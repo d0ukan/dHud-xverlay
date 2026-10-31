@@ -17,9 +17,9 @@
 		<ApplicationId>com.d0ukan.dhud</ApplicationId>
 
 		<!-- Sürüm PC uygulamasıyla aynı numarayı taşır. ApplicationVersion (versionCode) her sürümde artmalıdır:
-		     1.0.20 → 10020. Release iş akışı bunları etiketten verir. -->
-		<ApplicationDisplayVersion>1.0.20</ApplicationDisplayVersion>
-		<ApplicationVersion>10020</ApplicationVersion>
+		     1.0.21 → 10021. Release iş akışı bunları etiketten verir. -->
+		<ApplicationDisplayVersion>1.0.21</ApplicationDisplayVersion>
+		<ApplicationVersion>10021</ApplicationVersion>
 
 		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
 	</PropertyGroup>

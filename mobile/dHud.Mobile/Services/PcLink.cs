@@ -47,6 +47,7 @@ public sealed class PcLink
 	private async Task RunAsync(PairingInfo info, CancellationToken ct)
 	{
 		var delay = TimeSpan.FromSeconds(1);
+		var failedRounds = 0;
 		while (!ct.IsCancellationRequested)
 		{
 			SetState(LinkState.Connecting);
@@ -76,6 +77,35 @@ public sealed class PcLink
 				if (connected)
 				{
 					break;
+				}
+			}
+
+			failedRounds = connected ? 0 : failedRounds + 1;
+
+			// Birkaç denemedir bağlanamıyorsa PC'nin IP'si değişmiş olabilir: ağda ara ve yeni adresi kaydet.
+			if (failedRounds >= 2)
+			{
+				PairingInfo? found = null;
+				try
+				{
+					found = await Discovery.FindAsync(info, ct);
+				}
+				catch (Exception) when (!ct.IsCancellationRequested)
+				{
+					// Yayın gönderilemedi (ağ yok); normal yeniden denemeye devam.
+				}
+				catch (Exception)
+				{
+					return;
+				}
+
+				if (found is not null)
+				{
+					info = found;
+					PairingStore.Save(info);
+					failedRounds = 0;
+					delay = TimeSpan.FromSeconds(1);
+					continue;
 				}
 			}
 
