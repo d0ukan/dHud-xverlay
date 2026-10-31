@@ -17,6 +17,7 @@ public partial class FanCurveWindow : Window
     public FanCurveWindow(string fanId, string fanName, FanSetting config)
     {
         InitializeComponent();
+        MaxHeight = SystemParameters.WorkArea.Height - 24; // küçük ekranda taşmasın
         _fanId = fanId;
         _config = config;
         TitleText.Text = $"{Loc.T("F.CurveTitle")} – {fanName}";
@@ -73,10 +74,25 @@ public partial class FanCurveWindow : Window
         _settings.NotifyChanged();
     }
 
-    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    private void PresetQuiet_Click(object sender, RoutedEventArgs e) => ApplyPreset(FanPreset.Quiet);
+
+    private void PresetOptimal_Click(object sender, RoutedEventArgs e) => ApplyPreset(FanPreset.Optimal);
+
+    private void PresetMax_Click(object sender, RoutedEventArgs e) => ApplyPreset(FanPreset.MaxCold);
+
+    /// <summary>Hazır eğriyi ve o eğriye uygun minimum hızı uygular; sonra elle ince ayar yapılabilir.</summary>
+    private void ApplyPreset(FanPreset preset)
     {
-        _config.Curve = FanCurve.Default();
-        Editor.Points = _config.Curve;
+        var (curve, min) = FanCurve.Preset(preset);
+        _config.Curve = curve;
+        _config.MinPercent = min;
+        Editor.Points = curve;
+
+        _loading = true;
+        MinSlider.Value = min;
+        MinValueText.Text = $"{min}%";
+        _loading = false;
+
         _settings.NotifyChanged();
     }
 

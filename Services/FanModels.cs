@@ -12,6 +12,13 @@ public enum FanMode
     Curve
 }
 
+public enum FanPreset
+{
+    Quiet,
+    Optimal,
+    MaxCold
+}
+
 public enum FanSource
 {
     Cpu,
@@ -45,14 +52,33 @@ public static class FanCurve
     public const int MaxTemp = 100;
     public const int MaxPoints = 8;
 
-    public static List<CurvePoint> Default() =>
-    [
-        new() { Temp = 30, Percent = 25 },
-        new() { Temp = 50, Percent = 35 },
-        new() { Temp = 65, Percent = 55 },
-        new() { Temp = 75, Percent = 80 },
-        new() { Temp = 85, Percent = 100 }
-    ];
+    public static List<CurvePoint> Default() => Preset(FanPreset.Optimal).Curve;
+
+    /// <summary>
+    /// Hazır eğriler. Hepsi en geç 85 °C'de %100'e ulaşır; hiçbiri sıcak bir sistemi düşük hızda bırakmaz.
+    /// </summary>
+    public static (List<CurvePoint> Curve, int MinPercent) Preset(FanPreset preset) => preset switch
+    {
+        // Sessiz: 60 °C'ye kadar çok yavaş, sonra hızlı yükselir.
+        FanPreset.Quiet =>
+        (
+            [P(30, 20), P(50, 25), P(60, 30), P(70, 45), P(78, 70), P(85, 100)], 15
+        ),
+
+        // Max Cold: düşük sıcaklıkta bile yüksek hız; en soğuk, en gürültülü.
+        FanPreset.MaxCold =>
+        (
+            [P(30, 50), P(40, 60), P(50, 75), P(60, 90), P(70, 100)], 50
+        ),
+
+        // Optimal: dengeli.
+        _ =>
+        (
+            [P(30, 25), P(50, 35), P(65, 55), P(75, 80), P(85, 100)], 20
+        )
+    };
+
+    private static CurvePoint P(int temp, int percent) => new() { Temp = temp, Percent = percent };
 
     /// <summary>Sıcaklığa karşılık gelen yüzde: noktalar arası doğrusal, uçların dışında en yakın noktanın değeri.</summary>
     public static double Interpolate(IReadOnlyList<CurvePoint> points, double temp)

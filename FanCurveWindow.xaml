@@ -55,8 +55,15 @@
                         TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,2,0,4"
                         ValueChanged="MinSlider_ValueChanged" />
 
-                <Button Content="{h:Loc F.Reset}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
-                        Margin="0,8,0,0" Click="ResetButton_Click" />
+                <TextBlock Text="{h:Loc F.Presets}" Style="{StaticResource SectionHeader}" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="{h:Loc F.PresetQuiet}" Style="{StaticResource DarkButton}" Margin="0,0,8,0"
+                            Click="PresetQuiet_Click" />
+                    <Button Content="{h:Loc F.PresetOptimal}" Style="{StaticResource DarkButton}" Margin="0,0,8,0"
+                            Click="PresetOptimal_Click" />
+                    <Button Content="{h:Loc F.PresetMax}" Style="{StaticResource DarkButton}"
+                            Click="PresetMax_Click" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Border>

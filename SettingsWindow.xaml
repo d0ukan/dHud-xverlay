@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:h="clr-namespace:DHud.Helpers"
         Title="{h:Loc S.Title}"
-        Width="400"
+        Width="820"
         SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -49,10 +49,17 @@
             </UniformGrid>
             <Rectangle Height="1" Fill="{StaticResource DividerBrush}" />
 
+            <ScrollViewer x:Name="TabScroll" VerticalScrollBarVisibility="Auto">
             <Grid Margin="16,0,16,0">
 
                 <!-- ============ GÖRÜNÜM ============ -->
-                <StackPanel Visibility="{Binding IsChecked, ElementName=AppearanceTab, Converter={StaticResource BoolToVisibility}}">
+                <Grid Visibility="{Binding IsChecked, ElementName=AppearanceTab, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
                     <TextBlock Text="{h:Loc S.Layout}" Style="{StaticResource SectionHeader}" />
                     <UniformGrid Columns="2">
                         <RadioButton x:Name="VerticalLayoutRadio" GroupName="Layout" Content="{h:Loc S.Layout.Vertical}"
@@ -70,6 +77,8 @@
                     <TextBlock Style="{StaticResource HintText}"
                                Text="{h:Loc S.AlwaysOnTop.Hint}" />
 
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
                     <TextBlock Text="{h:Loc S.SizeOpacity}" Style="{StaticResource SectionHeader}" />
                     <DockPanel Margin="0,2">
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right"
@@ -96,10 +105,17 @@
                         <RadioButton x:Name="TurkishRadio" GroupName="Language" Content="Türkçe"
                                      Style="{StaticResource DarkRadioButton}" Checked="LanguageRadio_Checked" />
                     </UniformGrid>
-                </StackPanel>
+                    </StackPanel>
+                </Grid>
 
                 <!-- ============ GÖSTERGELER ============ -->
-                <StackPanel Visibility="{Binding IsChecked, ElementName=MetricsTab, Converter={StaticResource BoolToVisibility}}">
+                <Grid Visibility="{Binding IsChecked, ElementName=MetricsTab, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
                     <TextBlock Text="{h:Loc S.CpuGpu}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="ShowCpuCheckBox" Content="{h:Loc S.ShowCpu}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
@@ -122,6 +138,8 @@
                     <CheckBox x:Name="ShowRamCheckBox" Content="{h:Loc S.Ram}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
                     <TextBlock Text="{h:Loc S.Network}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="ShowNetworkCheckBox" Content="{h:Loc S.NetSpeed}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
@@ -152,10 +170,17 @@
                             ValueChanged="Slider_ValueChanged" />
                     <TextBlock Style="{StaticResource HintText}" Margin="0,0,0,4"
                                Text="{h:Loc S.Interval.Hint}" />
-                </StackPanel>
+                    </StackPanel>
+                </Grid>
 
                 <!-- ============ DAVRANIŞ ============ -->
-                <StackPanel Visibility="{Binding IsChecked, ElementName=BehaviorTab, Converter={StaticResource BoolToVisibility}}">
+                <Grid Visibility="{Binding IsChecked, ElementName=BehaviorTab, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
                     <TextBlock Text="{h:Loc S.Startup}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="StartupCheckBox" Content="{h:Loc S.RunAtStartup}"
                               Style="{StaticResource DarkCheckBox}" Click="StartupCheckBox_Click" />
@@ -200,6 +225,27 @@
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
+                    <TextBlock Text="{h:Loc S.Version}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="AutoUpdateCheckBox" Content="{h:Loc S.AutoUpdate}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <TextBlock Text="{h:Loc S.CheckEvery}" Style="{StaticResource HintText}" Margin="0,6,0,2" />
+                    <StackPanel x:Name="UpdateHoursPanel" Orientation="Horizontal">
+                        <RadioButton Tag="1" Content="1" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="3" Content="3" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="6" Content="6" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="12" Content="12" GroupName="UpdateHours" Margin="0,0,14,0"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                        <RadioButton Tag="24" Content="24" GroupName="UpdateHours"
+                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
+                    </StackPanel>
+                    <Button Content="{h:Loc S.CheckNow}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
                     <TextBlock Text="{h:Loc S.FanControl}" Style="{StaticResource SectionHeader}" />
                     <Button Content="{h:Loc S.FanOpen}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
                             Margin="0,2,0,0" Click="OpenFanButton_Click" />
@@ -227,28 +273,17 @@
                                 HorizontalAlignment="Left" Margin="0,6,0,0" Click="MobileResetButton_Click" />
                     </StackPanel>
 
-                    <TextBlock Text="{h:Loc S.Version}" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="AutoUpdateCheckBox" Content="{h:Loc S.AutoUpdate}"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <TextBlock Text="{h:Loc S.CheckEvery}" Style="{StaticResource HintText}" Margin="0,6,0,2" />
-                    <StackPanel x:Name="UpdateHoursPanel" Orientation="Horizontal">
-                        <RadioButton Tag="1" Content="1" GroupName="UpdateHours" Margin="0,0,14,0"
-                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
-                        <RadioButton Tag="3" Content="3" GroupName="UpdateHours" Margin="0,0,14,0"
-                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
-                        <RadioButton Tag="6" Content="6" GroupName="UpdateHours" Margin="0,0,14,0"
-                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
-                        <RadioButton Tag="12" Content="12" GroupName="UpdateHours" Margin="0,0,14,0"
-                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
-                        <RadioButton Tag="24" Content="24" GroupName="UpdateHours"
-                                     Style="{StaticResource DarkRadioButton}" Checked="UpdateHoursRadio_Checked" />
                     </StackPanel>
-                    <Button Content="{h:Loc S.CheckNow}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
-                            Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
-                </StackPanel>
+                </Grid>
 
                 <!-- ============ UYARILAR ============ -->
-                <StackPanel Visibility="{Binding IsChecked, ElementName=AlertsTab, Converter={StaticResource BoolToVisibility}}">
+                <Grid Visibility="{Binding IsChecked, ElementName=AlertsTab, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
                     <TextBlock Text="{h:Loc S.TempColors}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="ColorCheckBox" Content="{h:Loc S.ColorByTemp}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
@@ -278,6 +313,8 @@
                             TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,2,0,4"
                             ValueChanged="ThresholdSlider_ValueChanged" />
 
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
                     <TextBlock Text="{h:Loc S.Gpu}" FontWeight="SemiBold" Margin="0,12,0,0" />
                     <DockPanel Margin="0,4,0,2">
                         <TextBlock DockPanel.Dock="Right" MinWidth="44" TextAlignment="Right" Foreground="{StaticResource WarnBrush}"
@@ -319,8 +356,10 @@
                     <Slider x:Name="AlertSecondsSlider" Minimum="3" Maximum="60" SmallChange="1" LargeChange="5"
                             TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,4"
                             ValueChanged="Slider_ValueChanged" />
-                </StackPanel>
+                    </StackPanel>
+                </Grid>
             </Grid>
+            </ScrollViewer>
 
             <!-- Durum (her sekmede görünür) -->
             <Border CornerRadius="8" Background="#14FFFFFF" Padding="10,8" Margin="16,14,16,0">

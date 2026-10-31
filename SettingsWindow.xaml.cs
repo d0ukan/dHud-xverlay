@@ -27,6 +27,10 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         Language = XmlLanguage.GetLanguage(Loc.CultureName);
 
+        // Küçük ekranda pencere ekrandan taşmasın: sekme içeriği kalan yüksekliğe sığar, gerekirse kaydırılır.
+        // (başlık, sekmeler, durum kutusu ve düğmeler için yaklaşık 330 px ayrılır)
+        TabScroll.MaxHeight = Math.Max(260, SystemParameters.WorkArea.Height - 330);
+
         LoadValues();
         RefreshStartupState();
         RefreshStatus();

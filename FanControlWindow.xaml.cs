@@ -18,6 +18,7 @@ public partial class FanControlWindow : Window
     public FanControlWindow()
     {
         InitializeComponent();
+        MaxHeight = SystemParameters.WorkArea.Height - 24; // küçük ekranda taşmasın
         EnableCheckBox.IsChecked = _settings.Current.FanControlEnabled;
 
         // Pencere açıkken anakart sensörleri taranır; böylece kontrol kapalıyken de fanlar listelenir.
