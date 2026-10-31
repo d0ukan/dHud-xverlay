@@ -50,6 +50,7 @@ public partial class App : Application
     public RemoteFanService RemoteFan { get; private set; } = null!;
     public WidgetService Widgets { get; private set; } = null!;
     public WidgetManager WidgetManager { get; private set; } = null!;
+    public ProfileService Profiles { get; private set; } = null!;
     public GameSessionTracker GameTracker { get; } = new();
     private bool _recoveredFromCrash;
 
@@ -121,6 +122,7 @@ public partial class App : Application
         Widgets = new WidgetService();
         Widgets.Load();
         WidgetManager = new WidgetManager(Settings, Widgets);
+        Profiles = new ProfileService(Settings, Widgets, UpdateService.CurrentVersionText);
         Widgets.ReminderFired += OnReminderFired;
 
         FanControl = new FanControlService(Monitor, Settings);
@@ -204,6 +206,8 @@ public partial class App : Application
         _tray.LockToggleRequested += (_, _) => ToggleLock();
         _tray.ExitRequested += (_, _) => ExitApplication();
         _tray.NewNoteRequested += (_, _) => WidgetManager.NewNote();
+        _tray.ProfileRequested += (_, name) => ApplyProfileByName(name);
+        RefreshTrayProfiles();
         if (_recoveredFromCrash)
         {
             _tray.ShowBalloon(Loc.T("F.Title"), Loc.T("F.Recovered"), Forms.ToolTipIcon.Warning);
@@ -443,6 +447,40 @@ public partial class App : Application
     public Rect? OverlayRect => _overlay is { IsVisible: true, ActualWidth: > 20 } w
         ? new Rect(w.Left + 10, w.Top + 10, w.ActualWidth - 20, w.ActualHeight - 20)
         : null;
+
+    /// <summary>Profili uygular; widget verisi (notlar vb.) değiştiyse widget pencerelerini yeniden kurar.</summary>
+    public void ApplyProfile(ProfileFile file, bool includeWidgetData, bool includePairingKey)
+    {
+        var widgetsReplaced = Profiles.Apply(file, includeWidgetData, includePairingKey);
+        if (widgetsReplaced)
+        {
+            WidgetManager.CloseAll();
+            WidgetManager.Apply();
+        }
+    }
+
+    /// <summary>Tepsi menüsündeki profil listesini yeniler.</summary>
+    public void RefreshTrayProfiles() => _tray?.SetProfiles(Profiles.List().Select(p => p.Name).ToList());
+
+    /// <summary>Tepsiden bir profile geçiş (notlara ve telefon anahtarına dokunmaz).</summary>
+    private void ApplyProfileByName(string name)
+    {
+        var profile = Profiles.List().FirstOrDefault(p => p.Name == name);
+        if (profile is null)
+        {
+            return;
+        }
+
+        try
+        {
+            ApplyProfile(ProfileService.Read(profile.Path), includeWidgetData: false, includePairingKey: false);
+            _tray?.ShowBalloon(Loc.T("S.Tab.Profiles"), Loc.T("P.Applied", name));
+        }
+        catch (ProfileException)
+        {
+            _tray?.ShowBalloon(Loc.T("S.Tab.Profiles"), Loc.T("P.ErrBad"), Forms.ToolTipIcon.Warning);
+        }
+    }
 
     /// <summary>Tepsi balonu göster (tepsi henüz yoksa sessizce atlanır).</summary>
     public void NotifyTray(string title, string text) => _tray?.ShowBalloon(title, text);

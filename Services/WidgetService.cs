@@ -219,6 +219,16 @@ public sealed class WidgetService
         // Ana dosya bozuksa (ör. yazarken elektrik gitti) bir önceki sağlam kopyadan (.bak) devam edilir.
         Data = TryRead(_filePath) ?? TryRead(_filePath + ".bak") ?? new WidgetData();
 
+        NormalizeData();
+
+        _saveTimer.Tick += (_, _) => Flush();
+        _tick.Tick += (_, _) => Tick();
+        UpdateTick();
+    }
+
+    /// <summary>Okunan/aktarılan verideki eksik ve sınır dışı değerleri düzeltir.</summary>
+    private void NormalizeData()
+    {
         Data.Notes ??= [];
         Data.Reminders ??= [];
         Data.Positions ??= [];
@@ -235,11 +245,25 @@ public sealed class WidgetService
             note.Height = Math.Clamp(double.IsNaN(note.Height) ? 200 : note.Height, 100, 900);
             note.Color = Math.Clamp(note.Color, 0, 5);
         }
-
-        _saveTimer.Tick += (_, _) => Flush();
-        _tick.Tick += (_, _) => Tick();
-        UpdateTick();
     }
+
+    /// <summary>Tüm widget verisini (notlar, listeler, hatırlatıcılar, konumlar) verilenle değiştirir; içe aktarma için.</summary>
+    public void ReplaceData(WidgetData data)
+    {
+        Data = data;
+        NormalizeData();
+        UpdateTick();
+        ScheduleSave();
+        Flush();
+        RemindersChanged?.Invoke();
+    }
+
+    /// <summary>Verinin bir kopyası (dışa aktarma / profil için).</summary>
+    public WidgetData CloneData() =>
+        JsonSerializer.Deserialize<WidgetData>(JsonSerializer.Serialize(Data, JsonOptions), JsonOptions) ?? new WidgetData();
+
+    /// <summary>Dışa/içe aktarmada kullanılan JSON seçenekleri (NaN konumları da yazılabilsin).</summary>
+    internal static JsonSerializerOptions TransferOptions => JsonOptions;
 
     private static WidgetData? TryRead(string path)
     {

@@ -19,6 +19,7 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.ToolStripMenuItem _updateItem;
     private readonly Forms.ToolStripMenuItem _exitItem;
     private readonly Forms.ToolStripMenuItem _noteItem;
+    private readonly Forms.ToolStripMenuItem _profilesItem;
     private bool _overlayVisible = true;
 
     public event EventHandler? ToggleOverlayRequested;
@@ -28,6 +29,7 @@ public sealed class TrayIconService : IDisposable
     public event EventHandler? ExitRequested;
     public event EventHandler? UpdateCheckRequested;
     public event EventHandler? NewNoteRequested;
+    public event EventHandler<string>? ProfileRequested;
     public event EventHandler? BalloonClicked;
 
     public TrayIconService(string toggleOverlayShortcut, string clickThroughShortcut)
@@ -51,6 +53,7 @@ public sealed class TrayIconService : IDisposable
             (_, _) => UpdateCheckRequested?.Invoke(this, EventArgs.Empty));
         _exitItem = new Forms.ToolStripMenuItem(Loc.T("T.Exit"), null, (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty));
         _noteItem = new Forms.ToolStripMenuItem(Loc.T("W.NewNote"), null, (_, _) => NewNoteRequested?.Invoke(this, EventArgs.Empty));
+        _profilesItem = new Forms.ToolStripMenuItem(Loc.T("T.Profiles"));
 
         var menu = new Forms.ContextMenuStrip
         {
@@ -66,6 +69,7 @@ public sealed class TrayIconService : IDisposable
             _settingsItem,
             _toggleItem,
             _noteItem,
+            _profilesItem,
             new Forms.ToolStripSeparator(),
             _clickThroughItem,
             _lockItem,
@@ -103,6 +107,24 @@ public sealed class TrayIconService : IDisposable
         _updateItem.Text = Loc.T("T.CheckUpdates", UpdateService.CurrentVersionText);
         _exitItem.Text = Loc.T("T.Exit");
         _noteItem.Text = Loc.T("W.NewNote");
+        _profilesItem.Text = Loc.T("T.Profiles");
+    }
+
+    /// <summary>Tepsideki "Profiller" alt menüsünü verilen adlarla doldurur; birine tıklayınca <see cref="ProfileRequested"/> tetiklenir.</summary>
+    public void SetProfiles(IReadOnlyList<string> names)
+    {
+        _profilesItem.DropDownItems.Clear();
+        if (names.Count == 0)
+        {
+            _profilesItem.DropDownItems.Add(new Forms.ToolStripMenuItem(Loc.T("T.NoProfiles")) { Enabled = false });
+            return;
+        }
+
+        foreach (var name in names)
+        {
+            var profileName = name;
+            _profilesItem.DropDownItems.Add(new Forms.ToolStripMenuItem(name, null, (_, _) => ProfileRequested?.Invoke(this, profileName)));
+        }
     }
 
     public void UpdateTooltip(string text)

@@ -222,16 +222,22 @@ public sealed class AppSettings
 /// </summary>
 public sealed class SettingsService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter() }
     };
 
-    private readonly string _filePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "dHud",
-        "settings.json");
+    private readonly string _filePath;
+
+    /// <param name="filePath">Test için; boşsa %AppData%\dHud\settings.json.</param>
+    public SettingsService(string? filePath = null)
+    {
+        _filePath = filePath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "dHud",
+            "settings.json");
+    }
 
     public AppSettings Current { get; private set; } = new();
 
@@ -290,6 +296,13 @@ public sealed class SettingsService
         {
             Debug.WriteLine($"Ayarlar kaydedilemedi: {ex}");
         }
+    }
+
+    /// <summary>Tüm ayarları verilenle değiştirir (profil uygulama / içe aktarma), kaydeder ve dinleyicilere bildirir.</summary>
+    public void Replace(AppSettings settings)
+    {
+        Current = settings;
+        NotifyChanged();
     }
 
     /// <summary>Ayarları kaydeder ve dinleyicilere değişikliği bildirir.</summary>

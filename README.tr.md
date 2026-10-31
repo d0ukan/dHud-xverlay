@@ -106,6 +106,14 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 - **Oyun özeti:** en az 2 dakikalık bir oyun oturumu bitince sağ alt köşede küçük bir kart çıkar: ortalama FPS, %1 düşük FPS, en düşük / en yüksek FPS ve en yüksek CPU / GPU sıcaklığı. *Oyun bitince özet kartı göster* kutusuyla kapatılır.
 - DirectX 10 / 11 / 12 oyunlarında çalışır. DirectX 9 deneyseldir; Vulkan ve OpenGL oyunları ölçülmez.
 
+## Profiller ve yeni bilgisayara taşıma
+
+*Ayarlar → Profiller.*
+
+- **Profiller:** tüm ayarlarını (görünüm, metrikler, widget'lar, uyarılar, fan eğrileri ...) bir ada kaydet ve tek tıkla geç; tepsi simgesinden de (**Profiller** alt menüsü). Notlar ve telefon eşleştirmesi profile dahil değildir.
+- **Yedekle / başka bilgisayara taşı:** *Her şeyi dışa aktar…* tek bir `.dhudprofile` dosyası yazar. Yeni bilgisayara dHud'u kur ve *İçe aktar…*'ı seç – kaldığın yerden aynen devam edersin. Notlarını, yapılacakları, gün sayaçlarını ve başlatıcı öğelerini; istersen telefon eşleştirme anahtarını da ekleyebilirsin (telefonun eşleşmiş kalır).
+- **Güvenlik:** içe aktarma fan kontrolünü kendiliğinden açmaz (Fan kontrolü penceresinden yeniden aç) ve telefon anahtarı yalnızca kutuyu işaretlersen dosyadan alınır. Başlatıcı yolları ve fan sensör adları eski bilgisayara aittir, taşıdıktan sonra kontrol et.
+
 ## Widget'lar
 
 *Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar ince bir **ızgaraya** oturur (yaklaşık 20 piksellik hücreler, ekranın genişliğinde 96 sütun; her çözünürlükte benzer görünür ve komşular birbirine yakın durur), macOS'taki masaüstü widget'ları gibi: sürüklerken oturacağı hücreler vurgulanır, bırakınca widget en yakın boş hücrelere yerleşir. Widget'lar birbirinin ya da üstteki bar'ın üstüne binmez ve ekranın dışına çıkarılamaz. Serbest yerleşim için bir widget'ta *Izgaraya otur* kutusunu kaldır (yine de üst üste binmez). Ayarlar → Widget'lar'da her widget küçük bir karttır, aç/kapat anahtarı vardır; kartta **Ayarlar**'a tıklayınca görünürlük, hep üstte, kilit ve taşıma düğmeleri açılır.

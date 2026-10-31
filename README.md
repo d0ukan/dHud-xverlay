@@ -106,6 +106,14 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 - **Game summary:** when a session of at least 2 minutes ends, a small card appears in the bottom-right corner with average FPS, 1% low FPS, lowest / highest FPS and the highest CPU / GPU temperature. Turn it off with *Show a summary card when a game session ends*.
 - Works with DirectX 10 / 11 / 12 games. DirectX 9 is experimental; Vulkan and OpenGL games are not measured.
 
+## Profiles and moving to a new PC
+
+*Settings → Profiles.*
+
+- **Profiles:** save all your settings (look, metrics, widgets, alerts, fan curves, ...) under a name and switch with one click, also from the tray icon (**Profiles** submenu). Notes and phone pairing are not part of a profile.
+- **Back up / move to another PC:** *Export everything…* writes one `.dhudprofile` file. On the new PC install dHud and choose *Import…* – you continue exactly where you left off. You can include your notes, to-do lists, day counters and launcher items, and (optionally) the phone pairing key so your phone stays paired.
+- **Safety:** importing never switches fan control on by itself (turn it on again in the Fan control window), and the phone pairing key is only taken from the file if you tick it. Launcher paths and fan sensor names belong to the old PC, so check them after moving.
+
 ## Widgets
 
 *Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets sit on a fine **grid** (about 20-pixel cells, 96 columns across your screen, so it looks the same at any resolution and neighbours sit close together), like desktop widgets on macOS: while you drag, the cells it will snap to are highlighted, and on release the widget settles into the nearest free cells. Widgets never overlap each other or the top bar, and can never be dragged off the screen. Untick *Snap to grid* on a widget for free placement (it still won't overlap). In Settings → Widgets each widget is a small card with an on/off switch; click **Options** on a card for visibility, always-on-top, lock and the move-to buttons.
