@@ -61,6 +61,10 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
+                    <CheckBox x:Name="ShowOverlayCheckBox" Content="{h:Loc S.ShowOverlay}" Margin="0,4,0,0"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <TextBlock Text="{h:Loc S.ShowOverlay.Hint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+
                     <TextBlock Text="{h:Loc S.Layout}" Style="{StaticResource SectionHeader}" />
                     <UniformGrid Columns="2">
                         <RadioButton x:Name="VerticalLayoutRadio" GroupName="Layout" Content="{h:Loc S.Layout.Vertical}"

@@ -142,6 +142,8 @@ public partial class MainPage : ContentPage
 		CpuClockCaption.Text = GpuClockCaption.Text = Loc.T("Clock");
 		CpuPowerCaption.Text = GpuPowerCaption.Text = Loc.T("Power");
 		CpuFanCaption.Text = GpuFanCaption.Text = Loc.T("Fan");
+		CpuCoreCaption.Text = Loc.T("CoreMax");
+		DiskCaption.Text = Loc.T("Disk");
 		GpuVramCaption.Text = Loc.T("Vram");
 		NetDownCaption.Text = Loc.T("Download");
 		NetUpCaption.Text = Loc.T("Upload");
@@ -282,6 +284,9 @@ public partial class MainPage : ContentPage
 			ShowDevice(s.Gpu, GpuName, GpuTemp, GpuLoad, GpuLoadBar, GpuClock, GpuPower, GpuFan);
 			GpuVram.Text = s.Gpu is { MemoryUsedGb: float vu, MemoryTotalGb: float vt } ? $"{vu:0.0}/{vt:0} GB" : "--";
 			ShowMemory(s.Ram?.MemoryUsedGb, s.Ram?.MemoryTotalGb, RamValue, RamBar, decimals: 1);
+			CpuCore.Text = s.Cpu?.CoreMaxLoad is float coreMax ? $"{coreMax:0}%" : "--";
+			DiskValue.Text = s.Disk is { } disk ? $"{disk.UsedPercent:0}%  ·  {disk.UsedGb:0}/{disk.TotalGb:0} GB" : "--";
+			DiskBar.Progress = Math.Clamp((s.Disk?.UsedPercent ?? 0) / 100.0, 0, 1);
 
 			NetName.Text = s.Net?.AdapterName ?? string.Empty;
 			NetDown.Text = FormatSpeed(s.Net?.DownloadBytesPerSecond);
@@ -834,7 +839,7 @@ public partial class MainPage : ContentPage
 		Wake();
 		AlertLabel.Text = text;
 		AlertBanner.IsVisible = true;
-		AlertNotifier.Notify(Loc.T(kind == "reminder" ? "ReminderTitle" : "AlertTitle"), text);
+		AlertNotifier.Notify(Loc.T(kind switch { "reminder" => "ReminderTitle", "summary" => "SummaryTitle", _ => "AlertTitle" }), text);
 	}
 
 	private void AlertDismissButton_Clicked(object? sender, EventArgs e) => AlertBanner.IsVisible = false;

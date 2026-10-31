@@ -112,6 +112,7 @@ public partial class SettingsWindow : Window
         FpsCheckBox.IsChecked = s.FpsEnabled;
         FpsOverlayCheckBox.IsChecked = s.FpsOverlay;
         FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
+        ShowOverlayCheckBox.IsChecked = s.ShowOverlay;
         GameSummaryCheckBox.IsChecked = s.GameSummary;
         GameSummaryCheckBox.IsEnabled = s.FpsEnabled;
         RefreshWidgetsTab();
@@ -174,6 +175,7 @@ public partial class SettingsWindow : Window
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
         s.FpsEnabled = FpsCheckBox.IsChecked == true;
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
+        s.ShowOverlay = ShowOverlayCheckBox.IsChecked == true;
         s.GameSummary = GameSummaryCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
@@ -204,28 +206,33 @@ public partial class SettingsWindow : Window
     private void BuildWidgetsTab()
     {
         var s = _settings;
-        var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var left = new StackPanel();
-        var right = new StackPanel();
-        Grid.SetColumn(right, 2);
-        grid.Children.Add(left);
-        grid.Children.Add(right);
+        // Kartlar üç gruba ayrılır; her grup yatay akan (WrapPanel) bir kart sırasıdır.
+        var timePanel = new WrapPanel();
+        var notesPanel = new WrapPanel();
+        var systemPanel = new WrapPanel();
+        void Add(FrameworkElement card)
+        {
+            var panel = (string)card.Tag switch
+            {
+                "clock" or "stopwatch" or "tools" or "weather" or WidgetIds.Countdown or WidgetIds.Calendar => timePanel,
+                "notes" or WidgetIds.Todo or WidgetIds.Clipboard or WidgetIds.Launcher => notesPanel,
+                _ => systemPanel
+            };
+            panel.Children.Add(card);
+        }
 
-        left.Children.Add(WidgetSection("clock", "S.WidgetClock", () => s.Current.WidgetClock, v => s.Current.WidgetClock = v,
+        Add(WidgetSection("clock", "S.WidgetClock", () => s.Current.WidgetClock, v => s.Current.WidgetClock = v,
             () => s.Current.ClockOptions,
             extras: panel => panel.Children.Add(WidgetCheck("W.Seconds", () => s.Current.ClockSeconds, v => s.Current.ClockSeconds = v))));
 
-        left.Children.Add(WidgetSection("stopwatch", "S.WidgetStopwatch", () => s.Current.WidgetStopwatch, v => s.Current.WidgetStopwatch = v,
+        Add(WidgetSection("stopwatch", "S.WidgetStopwatch", () => s.Current.WidgetStopwatch, v => s.Current.WidgetStopwatch = v,
             () => s.Current.StopwatchOptions));
 
-        right.Children.Add(WidgetSection("tools", "S.WidgetTools", () => s.Current.WidgetTools, v => s.Current.WidgetTools = v,
+        Add(WidgetSection("tools", "S.WidgetTools", () => s.Current.WidgetTools, v => s.Current.WidgetTools = v,
             () => s.Current.ToolsOptions,
             extras: panel => panel.Children.Add(WidgetCheck("S.RemindersPhone", () => s.Current.RemindersToPhone, v => s.Current.RemindersToPhone = v))));
 
-        right.Children.Add(WidgetSection("weather", "S.WidgetWeather", () => s.Current.WidgetWeather, v => s.Current.WidgetWeather = v,
+        Add(WidgetSection("weather", "S.WidgetWeather", () => s.Current.WidgetWeather, v => s.Current.WidgetWeather = v,
             () => s.Current.WeatherOptions,
             extras: panel =>
             {
@@ -244,10 +251,11 @@ public partial class SettingsWindow : Window
                 panel.Children.Add(privacy);
             }));
 
-        right.Children.Add(WidgetSection("notes", "S.WidgetNotesTitle", () => s.Current.NotesVisible, v => s.Current.NotesVisible = v,
+        Add(WidgetSection("notes", "S.WidgetNotesTitle", () => s.Current.NotesVisible, v => s.Current.NotesVisible = v,
             () => s.Current.NotesOptions,
             extras: panel =>
             {
+                panel.Children.Add(WidgetCheck("S.NotesStacked", () => s.Current.NotesStacked, v => s.Current.NotesStacked = v));
                 var button = new Button { Content = Loc.T("W.NewNote"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
                 button.SetResourceReference(StyleProperty, "DarkButton");
                 button.Click += (_, _) => App.Current.WidgetManager.NewNote();
@@ -257,14 +265,14 @@ public partial class SettingsWindow : Window
 
         // Genel widget'lar: açma/kapama WidgetOptions.Enabled üzerinden.
         WidgetOptions Extra(string id) => s.Current.Extra(id);
-        StackPanel Generic(string id, string titleKey, Action<StackPanel>? extras = null) =>
+        FrameworkElement Generic(string id, string titleKey, Action<StackPanel>? extras = null) =>
             WidgetSection(id, titleKey, () => Extra(id).Enabled, v => Extra(id).Enabled = v, () => Extra(id), extras);
 
-        left.Children.Add(Generic(WidgetIds.SysInfo, "S.WidgetSysInfo"));
-        left.Children.Add(Generic(WidgetIds.Todo, "S.WidgetTodo"));
-        left.Children.Add(Generic(WidgetIds.Countdown, "S.WidgetCountdown"));
-        left.Children.Add(Generic(WidgetIds.Launcher, "S.WidgetLauncher"));
-        right.Children.Add(Generic(WidgetIds.Clipboard, "S.WidgetClipboard", panel =>
+        Add(Generic(WidgetIds.SysInfo, "S.WidgetSysInfo"));
+        Add(Generic(WidgetIds.Todo, "S.WidgetTodo"));
+        Add(Generic(WidgetIds.Countdown, "S.WidgetCountdown"));
+        Add(Generic(WidgetIds.Launcher, "S.WidgetLauncher"));
+        Add(Generic(WidgetIds.Clipboard, "S.WidgetClipboard", panel =>
         {
             var clear = new Button { Content = Loc.T("W.ClipClear"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
             clear.SetResourceReference(StyleProperty, "DarkButton");
@@ -274,8 +282,8 @@ public partial class SettingsWindow : Window
             note.SetResourceReference(StyleProperty, "HintText");
             panel.Children.Add(note);
         }));
-        right.Children.Add(Generic(WidgetIds.Audio, "S.WidgetAudio"));
-        right.Children.Add(Generic(WidgetIds.Calendar, "S.WidgetCalendar", panel =>
+        Add(Generic(WidgetIds.Audio, "S.WidgetAudio"));
+        Add(Generic(WidgetIds.Calendar, "S.WidgetCalendar", panel =>
         {
             var label = new TextBlock { Text = Loc.T("S.CalendarSource"), Margin = new Thickness(0, 6, 0, 2) };
             label.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
@@ -314,17 +322,19 @@ public partial class SettingsWindow : Window
             panel.Children.Add(browse);
             panel.Children.Add(hintText);
         }));
-        var hint = new TextBlock { Text = Loc.T("S.WidgetsHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 14, 0, 8) };
-        hint.SetResourceReference(StyleProperty, "HintText");
-        Grid.SetColumnSpan(hint, 3);
-        Grid.SetRow(hint, 1);
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        Grid.SetRow(left, 0);
-        Grid.SetRow(right, 0);
-        grid.Children.Add(hint);
+        var root = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
+        foreach (var (titleKey, panel) in new[] { ("S.GroupTime", timePanel), ("S.GroupNotes", notesPanel), ("S.GroupSystem", systemPanel) })
+        {
+            var title = new TextBlock { Text = Loc.T(titleKey) };
+            title.SetResourceReference(StyleProperty, "SectionHeader");
+            root.Children.Add(title);
+            root.Children.Add(panel);
+        }
 
-        WidgetsTabContent.Children.Add(grid);
+        var hint = new TextBlock { Text = Loc.T("S.WidgetsHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 8) };
+        hint.SetResourceReference(StyleProperty, "HintText");
+        root.Children.Add(hint);
+        WidgetsTabContent.Children.Add(root);
     }
 
     private void RefreshWidgetsTab()
@@ -354,17 +364,16 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>Bir widget'ın bölümü: aç/kapat, (isteğe bağlı) ek seçenekler, görünürlük, hep üstte, kilit, kenara yapış ve konum.</summary>
-    private StackPanel WidgetSection(string key, string titleKey, Func<bool> getOn, Action<bool> setOn, Func<WidgetOptions> options,
+    private FrameworkElement WidgetSection(string key, string titleKey, Func<bool> getOn, Action<bool> setOn, Func<WidgetOptions> options,
         Action<StackPanel>? extras = null, Action<bool>? onTopChanged = null)
     {
-        var panel = new StackPanel();
-        var header = new TextBlock { Text = Loc.T(titleKey) };
-        header.SetResourceReference(StyleProperty, "SectionHeader");
-        panel.Children.Add(header);
-
+        var panel = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 4, 0, 0) }; // ayrıntılar (kartta "Ayarlar" ile açılır)
         var dependents = new List<UIElement>();
-
-        panel.Children.Add(WidgetCheck("S.WidgetShow", getOn, setOn));
+        var enable = WidgetCheck("S.WidgetShow", getOn, setOn);
+        enable.Content = null;
+        enable.ToolTip = Loc.T("S.WidgetShow");
+        enable.HorizontalAlignment = HorizontalAlignment.Right;
+        enable.VerticalAlignment = VerticalAlignment.Center;
         if (extras is not null)
         {
             var extraPanel = new StackPanel();
@@ -405,7 +414,7 @@ public partial class SettingsWindow : Window
             onTopChanged?.Invoke(v);
         });
         var lockBox = WidgetCheck("S.Lock", () => options().LockPosition, v => options().LockPosition = v);
-        var snap = WidgetCheck("S.Snap", () => options().SnapToEdges, v => options().SnapToEdges = v);
+        var snap = WidgetCheck("S.SnapGrid", () => options().SnapToEdges, v => options().SnapToEdges = v);
         foreach (var check in new[] { top, lockBox, snap })
         {
             panel.Children.Add(check);
@@ -448,8 +457,42 @@ public partial class SettingsWindow : Window
             }
         });
 
-        panel.Margin = new Thickness(0, 0, 0, 14);
-        return panel;
+        // Kart: başlık + aç/kapat anahtarı, altında "Ayarlar" düğmesi ve açılır ayrıntılar.
+        var title = new TextBlock { Text = Loc.T(titleKey), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+        var headerRow = new Grid();
+        headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(enable, 1);
+        headerRow.Children.Add(title);
+        headerRow.Children.Add(enable);
+
+        var toggle = new Button { Margin = new Thickness(0, 8, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Padding = new Thickness(10, 3, 10, 3), FontSize = 12 };
+        toggle.SetResourceReference(StyleProperty, "DarkButton");
+        void SetToggleText() => toggle.Content = (panel.Visibility == Visibility.Visible ? "⚙  ▴  " : "⚙  ▾  ") + Loc.T("S.WidgetOptions");
+        SetToggleText();
+        toggle.Click += (_, _) =>
+        {
+            panel.Visibility = panel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            SetToggleText();
+        };
+
+        var body = new StackPanel();
+        body.Children.Add(headerRow);
+        body.Children.Add(toggle);
+        body.Children.Add(panel);
+        return new Border
+        {
+            Tag = key,
+            Width = 246,
+            Margin = new Thickness(0, 0, 10, 10),
+            Padding = new Thickness(12, 10, 12, 10),
+            CornerRadius = new CornerRadius(10),
+            Background = new SolidColorBrush(Color.FromArgb(0x1C, 255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0x26, 255, 255, 255)),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Top,
+            Child = body
+        };
     }
 
     private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e) =>

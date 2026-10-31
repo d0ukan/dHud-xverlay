@@ -43,6 +43,8 @@ Overlay'e ek olarak dHud şunları da yapabilir:
 
 **Düzenler:** dikey (satırlar alt alta, sütunlar hizalı) veya yatay (tek satır, ekranın üstü için ideal). **Kompakt mod** yazıyı ve boşlukları küçültür. Her şey isteğe bağlıdır: overlay'e sağ tık → **Metrics** ile öğeleri anında açıp kapatabilirsin.
 
+Üstteki ince bar isteğe bağlıdır: sağ tıkla → **Bar'ı kapat**, ya da Ayarlar → Görünüm'de *Üstteki monitör bar'ını göster* kutusunu kaldır (aynı değerleri gösteren Sistem widget'ını tercih edersen işe yarar). Ayarlardan, tepsi simgesinden veya Ctrl+Shift+F9 ile geri gelir. Kapalıyken dHud yalnızca bar'ın gerektirdiği değerleri okumayı bırakır.
+
 ## Kontroller ve kısayollar
 
 | İşlem | Nasıl |
@@ -106,10 +108,10 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 
 ## Widget'lar
 
-*Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar ekranın dışına çıkarılamaz ve birbirinin ya da overlay'in üstüne binmez: birini diğerinin üstüne bırakırsan en yakın boş yere kayar.
+*Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar bir **ızgaraya** oturur (ekranın genişliğinde 24 sütun; her çözünürlükte benzer görünür), macOS'taki masaüstü widget'ları gibi: sürüklerken oturacağı hücreler vurgulanır, bırakınca widget en yakın boş hücrelere yerleşir. Widget'lar birbirinin ya da üstteki bar'ın üstüne binmez ve ekranın dışına çıkarılamaz. Serbest yerleşim için bir widget'ta *Izgaraya otur* kutusunu kaldır (yine de üst üste binmez). Ayarlar → Widget'lar'da her widget küçük bir karttır, aç/kapat anahtarı vardır; kartta **Ayarlar**'a tıklayınca görünürlük, hep üstte, kilit ve taşıma düğmeleri açılır.
 
 - **Saat:** saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi (sağ tık).
-- **Yapışkan notlar:** istediğin kadar (en fazla 30). Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
+- **Yapışkan notlar:** istediğin kadar (en fazla 30), **klasör sekmeleri** gibi üst üste dizilir: her notun başlık şeridi (ilk satırı) bir sonrakinin üstünden görünür; bir sekmeye tıklayınca o not öne gelir, bir sekmeyi sürüklemek tüm yığını taşır. Her notun ayrı yüzmesini istersen *Notları klasör sekmesi gibi üst üste diz* kutusunu kaldır. Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
 - **Kronometre:** başlat / duraklat, tur ve sıfırla.
 - **Sistem özeti:** CPU, GPU, VRAM, RAM, disk ve ağ değerleri ince çubuklarla tek büyük kartta (overlay'den bağımsız).
 - **Yapılacaklar listesi:** Enter ile iş ekle, tik at, bitenleri temizle.
@@ -127,7 +129,7 @@ Notlar yazdıkça kaydedilir (saniyenin kesri içinde; ayrıca nottan çıkınca
 
 Telefon veya tablette dHud'u **yerel ağında** (aynı Wi-Fi) yansıtan bir Android uygulaması. Aynı koyu temaya sahiptir.
 
-**Ne yapar:** canlı CPU / GPU / RAM / ağ değerleri, 5 dakikalık sıcaklık grafiği, yüksek sıcaklık uyarıları (titreşim ve bildirim), oyun FPS'i ve tabletler için **tam ekran gösterge paneli modu** (şarjdayken ekran kapanmaz). Tam ekran modunda ekranı korumak için içerik birkaç pikseli yavaşça kayar ve 3 dakika dokunulmazsa kararır (uyandırmak için dokun); uygulama menüsünden (⋮) kapatılabilir. Ayrıca **ana ekran widget'ı** ekleyebilirsin (CPU / GPU sıcaklığı ve FPS): ana ekrana uzun bas → Widget'lar → dHud. Uygulama açıkken canlı, kapalıyken yaklaşık 30 dakikada bir (Android sınırı) veya ⟳'ya dokununca yenilenir.
+**Ne yapar:** canlı CPU / GPU / RAM / disk / ağ değerleri (ve en yoğun CPU çekirdeği), 5 dakikalık sıcaklık grafiği, yüksek sıcaklık uyarıları (titreşim ve bildirim), zamanlayıcı / hatırlatıcı bildirimleri ve oyun bitince kısa bir özet, oyun FPS'i ve tabletler için **tam ekran gösterge paneli modu** (şarjdayken ekran kapanmaz). Tam ekran modunda ekranı korumak için içerik birkaç pikseli yavaşça kayar ve 3 dakika dokunulmazsa kararır (uyandırmak için dokun); uygulama menüsünden (⋮) kapatılabilir. Ayrıca **ana ekran widget'ı** ekleyebilirsin (CPU / GPU sıcaklığı ve FPS): ana ekrana uzun bas → Widget'lar → dHud. Uygulama açıkken canlı, kapalıyken yaklaşık 30 dakikada bir (Android sınırı) veya ⟳'ya dokununca yenilenir.
 
 **Kurulum (bir kez):**
 

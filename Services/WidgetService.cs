@@ -121,6 +121,11 @@ public sealed class WidgetData
     public WidgetPos? ClockPos { get; set; }
     public WidgetPos? ToolsPos { get; set; }
     public WidgetPos? StopwatchPos { get; set; }
+
+    /// <summary>Not yığınının (klasör) sol üst köşesi ve ortak boyutu.</summary>
+    public WidgetPos? NotesStackPos { get; set; }
+    public double StackWidth { get; set; } = 260;
+    public double StackHeight { get; set; } = 210;
     public WidgetPos? WeatherPos { get; set; }
     public List<StickyNote> Notes { get; set; } = [];
     public List<Reminder> Reminders { get; set; } = [];
@@ -217,6 +222,8 @@ public sealed class WidgetService
         Data.Notes ??= [];
         Data.Reminders ??= [];
         Data.Positions ??= [];
+        Data.StackWidth = Math.Clamp(double.IsNaN(Data.StackWidth) ? 260 : Data.StackWidth, 176, 900);
+        Data.StackHeight = Math.Clamp(double.IsNaN(Data.StackHeight) ? 210 : Data.StackHeight, 116, 900);
         Data.Todos = (Data.Todos ?? []).Take(MaxTodos).ToList();
         Data.Countdowns = (Data.Countdowns ?? []).Take(MaxCountdowns).ToList();
         Data.Launchers = (Data.Launchers ?? []).Where(l => !string.IsNullOrWhiteSpace(l.Path)).Take(MaxLaunchers).ToList();

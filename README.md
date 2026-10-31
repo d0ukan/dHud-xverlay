@@ -43,6 +43,8 @@ On top of the overlay, dHud can:
 
 **Layouts:** vertical (rows stacked, columns aligned) or horizontal (one single row, great for the top of the screen). **Compact mode** shrinks text and spacing. Everything is optional: right-click the overlay → **Metrics** to switch items on or off instantly.
 
+The thin bar at the top is optional: right-click it → **Turn off the bar**, or untick *Show the monitor bar* in Settings → Appearance (handy if you prefer the System widget, which shows the same values). Bring it back from Settings, the tray icon or Ctrl+Shift+F9. While it is off, dHud stops reading values only the bar needed.
+
 ## Controls and shortcuts
 
 | Action | How |
@@ -106,10 +108,10 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 
 ## Widgets
 
-*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets can never be dragged off the screen, and they never overlap each other or the overlay: if you drop one on another, it slides to the nearest free spot.
+*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets sit on a **grid** (24 columns across your screen, so it looks the same at any resolution), like desktop widgets on macOS: while you drag, the cells it will snap to are highlighted, and on release the widget settles into the nearest free cells. Widgets never overlap each other or the top bar, and can never be dragged off the screen. Untick *Snap to grid* on a widget for free placement (it still won't overlap). In Settings → Widgets each widget is a small card with an on/off switch; click **Options** on a card for visibility, always-on-top, lock and the move-to buttons.
 
 - **Clock:** time and date, optional seconds and a second time zone (right-click).
-- **Sticky notes:** as many as you like (up to 30). Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
+- **Sticky notes:** as many as you like (up to 30), stacked like **folder tabs**: each note's title strip (its first line) peeks out above the next one; click a tab to bring that note to the front, drag a tab to move the whole stack. Untick *Stack notes like folder tabs* to let every note float on its own. Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
 - **Stopwatch:** start / pause, laps and reset.
 - **System summary:** CPU, GPU, VRAM, RAM, disk and network on thin bars in one big card (independent from the overlay).
 - **To-do list:** add a task with Enter, tick it off, clear the finished ones.
@@ -127,7 +129,7 @@ Notes are saved as you type (within a fraction of a second, and again when you l
 
 An Android app (phone or tablet) that mirrors dHud over your **local network** (same Wi-Fi). It has the same dark theme.
 
-**What it does:** live CPU / GPU / RAM / network values, a 5-minute temperature graph, high-temperature alerts (vibration and notification), the game FPS, and a **full-screen dashboard mode** for tablets (the screen stays on while charging). In full-screen mode the content slowly shifts by a few pixels and dims after 3 minutes without touch (tap to wake) to protect the screen; turn this off in the app menu (â‹®). You can also add a **home-screen widget** (CPU / GPU temperature and FPS): long-press the home screen â†’ Widgets â†’ dHud. It updates live while the app is open and otherwise about every 30 minutes (Android's limit) or when you tap âŸ³.
+**What it does:** live CPU / GPU / RAM / disk / network values (and the busiest CPU core), a 5-minute temperature graph, high-temperature alerts (vibration and notification), your timer / reminder notifications and a short game summary when a game ends, the game FPS, and a **full-screen dashboard mode** for tablets (the screen stays on while charging). In full-screen mode the content slowly shifts by a few pixels and dims after 3 minutes without touch (tap to wake) to protect the screen; turn this off in the app menu (â‹®). You can also add a **home-screen widget** (CPU / GPU temperature and FPS): long-press the home screen â†’ Widgets â†’ dHud. It updates live while the app is open and otherwise about every 30 minutes (Android's limit) or when you tap âŸ³.
 
 **Setup (once):**
 

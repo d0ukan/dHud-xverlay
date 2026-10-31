@@ -24,6 +24,7 @@ public abstract class WidgetWindowBase : Window
 
     private Color _cardColor = Color.FromArgb(0xF2, 0x1A, 0x1B, 0x22);
     private IntPtr _hwnd;
+    private bool _dragging;
 
     /// <summary>Kartın kendisi; alt sınıflar içeriği buraya koyar.</summary>
     protected Border Card { get; }
@@ -33,6 +34,9 @@ public abstract class WidgetWindowBase : Window
 
     /// <summary>Hep üstte durup durmayacağı. Notlar kendi iğne ayarını kullanır.</summary>
     protected virtual bool WantsTopmost => Options.AlwaysOnTop;
+
+    /// <summary>true: widget bir ızgaraya oturur (üst üste binmez); false: serbest konum.</summary>
+    public bool SnapToGrid => Options.SnapToEdges;
 
     /// <summary>Pencere taşındı (konum kaydedilmeli).</summary>
     public event Action<Point>? Moved;
@@ -79,7 +83,14 @@ public abstract class WidgetWindowBase : Window
                 Dispatcher.BeginInvoke(() => App.Current.WidgetManager?.Resolve(this), System.Windows.Threading.DispatcherPriority.Background);
             }
         };
-        LocationChanged += (_, _) => Moved?.Invoke(new Point(Left, Top));
+        LocationChanged += (_, _) =>
+        {
+            Moved?.Invoke(new Point(Left, Top));
+            if (_dragging && SnapToGrid)
+            {
+                App.Current.WidgetManager?.Preview(this); // sürüklerken oturacağı hücreleri göster
+            }
+        };
     }
 
     // ---- Ayarlar ----
@@ -199,6 +210,19 @@ public abstract class WidgetWindowBase : Window
         if (Top < work.Top) Top = work.Top;
     }
 
+    /// <summary>Sürükleme bitti. true dönerse taban sınıf ek yerleştirme yapmaz.</summary>
+    protected virtual bool OnDragCompleted(Point before) => false;
+
+    /// <summary>Pencereyi odağı çalmadan z sırasında öne alır (not yığınında sekme sırası için).</summary>
+    public void BringToTop()
+    {
+        if (_hwnd != IntPtr.Zero)
+        {
+            NativeMethods.SetWindowPos(_hwnd, WantsTopmost ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_TOP, 0, 0, 0, 0,
+                NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+        }
+    }
+
     private void SnapToEdges()
     {
         if (CurrentWorkArea() is not Rect work)
@@ -266,6 +290,8 @@ public abstract class WidgetWindowBase : Window
             return;
         }
 
+        var before = new Point(Left, Top);
+        _dragging = true;
         try
         {
             DragMove(); // fare bırakılana kadar bloklar
@@ -274,10 +300,20 @@ public abstract class WidgetWindowBase : Window
         {
             return; // fare zaten bırakılmış
         }
-
-        if (Options.SnapToEdges)
+        finally
         {
-            SnapToEdges();
+            _dragging = false;
+            App.Current.WidgetManager?.HidePreview();
+        }
+
+        if (OnDragCompleted(before))
+        {
+            return; // alt sınıf (ör. not yığını) yerleşimi kendisi yönetti
+        }
+
+        if (!SnapToGrid)
+        {
+            SnapToEdges(); // ızgara kapalıyken yalnızca ekran kenarına yapışma
         }
 
         KeepInsideWorkArea();

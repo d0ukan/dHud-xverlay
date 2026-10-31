@@ -166,6 +166,23 @@ public partial class App : Application
             if (Settings.Current.FpsEnabled && Settings.Current.GameSummary)
             {
                 new GameSummaryWindow(summary).Show();
+
+                // Telefona da kısa bir özet bildirimi (mobil uygulama bağlıysa).
+                var parts = new List<string>
+                {
+                    Loc.T("G.PhoneMain", (int)Math.Round(summary.Duration.TotalMinutes), $"{summary.AvgFps:0}", $"{summary.OnePercentLow:0}")
+                };
+                if (summary.MaxCpuTemp is float cpuMax)
+                {
+                    parts.Add($"CPU {cpuMax:0}°C");
+                }
+
+                if (summary.MaxGpuTemp is float gpuMax)
+                {
+                    parts.Add($"GPU {gpuMax:0}°C");
+                }
+
+                MobileLink?.SendAlert(string.Join(" · ", parts), "summary");
             }
         });
         Fps.Changed += fps =>
@@ -175,7 +192,10 @@ public partial class App : Application
         };
 
         _overlay = new MainWindow();
-        _overlay.Show();
+        if (Settings.Current.ShowOverlay)
+        {
+            _overlay.Show();
+        }
 
         _tray = new TrayIconService(ToggleOverlayShortcut, ToggleClickThroughShortcut);
         _tray.SettingsRequested += (_, _) => OpenSettings();
@@ -411,10 +431,12 @@ public partial class App : Application
     public void ApplyMonitorFlags()
     {
         var s = Settings.Current;
-        var sysInfo = s.Extra(WidgetIds.SysInfo).Enabled;
-        Monitor.CpuEnabled = s.ShowCpu || s.ShowCores || s.FanControlEnabled || sysInfo;
-        Monitor.GpuEnabled = s.ShowGpu || s.FanControlEnabled || sysInfo;
-        Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
+        // Bar kapalıyken yalnızca bar için gereken okumalar durur; sistem özeti, telefon ve fan kontrolü kendi verisini yine ister.
+        var bar = s.ShowOverlay;
+        var others = s.Extra(WidgetIds.SysInfo).Enabled || s.MobileEnabled;
+        Monitor.CpuEnabled = (bar && (s.ShowCpu || s.ShowCores)) || s.FanControlEnabled || others;
+        Monitor.GpuEnabled = (bar && s.ShowGpu) || s.FanControlEnabled || others;
+        Monitor.FanEnabled = (bar && s.ShowFan) || s.FanControlEnabled || FanWindowOpen;
     }
 
     /// <summary>Overlay'in ekrandaki dikdörtgeni (gölge payı hariç); gizliyse null. Widget'lar buna binmesin diye kullanılır.</summary>
@@ -460,8 +482,10 @@ public partial class App : Application
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
         ApplyMonitorFlags();
-        Monitor.Network.Enabled = s.ShowNetwork || s.Extra(WidgetIds.SysInfo).Enabled;
-        Monitor.Network.PingEnabled = s.ShowPing;
+        var needOthers = s.Extra(WidgetIds.SysInfo).Enabled || s.MobileEnabled;
+        Monitor.Network.Enabled = (s.ShowOverlay && s.ShowNetwork) || needOthers;
+        Monitor.Network.PingEnabled = (s.ShowOverlay && s.ShowPing) || s.MobileEnabled;
+        ApplyOverlayVisibility();
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
         ConfigureUpdateTimer();
         MobileLink.Apply();
@@ -589,6 +613,10 @@ public partial class App : Application
         _settingsWindow.Activate();
     }
 
+    /// <summary>
+    /// Üstteki ince bar'ı açar/kapatır. Seçim KALICIDIR (ayarlardaki "Barı göster" kutusuyla aynı); bar kapalıyken CPU/GPU/ağ okumaları
+    /// yalnızca başka bir özellik (sistem özeti, telefon, fan kontrolü) istiyorsa sürer.
+    /// </summary>
     public void ToggleOverlay()
     {
         if (_overlay is null)
@@ -596,16 +624,35 @@ public partial class App : Application
             return;
         }
 
-        if (_overlay.IsVisible)
+        var turnOff = _overlay.IsVisible;
+        Settings.Current.ShowOverlay = !turnOff;
+        Settings.NotifyChanged(); // -> OnSettingsChanged -> ApplyOverlayVisibility
+
+        if (turnOff)
+        {
+            // Sağ tıkla kapatınca bar'ı geri getirmenin yolunu bir kez hatırlat.
+            _tray?.ShowBalloon(Loc.T("M.BarOffTitle"), Loc.T("M.BarOffText", ToggleOverlayShortcut));
+        }
+    }
+
+    /// <summary>Bar'ın görünürlüğünü ayara göre uygular; geri gelirse widget'lar bar'ın yerinden kayar.</summary>
+    private void ApplyOverlayVisibility()
+    {
+        if (_overlay is null)
+        {
+            return;
+        }
+
+        var want = Settings.Current.ShowOverlay;
+        if (want && !_overlay.IsVisible)
+        {
+            _overlay.Show();
+            Dispatcher.BeginInvoke(() => WidgetManager?.ResolveAll(), DispatcherPriority.Background);
+        }
+        else if (!want && _overlay.IsVisible)
         {
             _overlay.Hide();
         }
-        else
-        {
-            _overlay.Show();
-        }
-
-        OnSettingsChanged();
     }
 
     public void ToggleClickThrough()

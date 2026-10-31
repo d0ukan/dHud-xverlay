@@ -543,6 +543,7 @@ public sealed class MobileLinkService : IDisposable
                 gpu = s.Gpu,
                 ram = s.Memory,
                 net = s.Network,
+                disk = s.Disk,
                 fps = FpsProvider?.Invoke(),
                 fans = fan?.Fans,
                 fanCtl = fan?.State

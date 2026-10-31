@@ -78,7 +78,7 @@
                             <Label x:Name="CpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
                         </Grid>
                         <ui:BarView x:Name="CpuLoadBar" />
-                        <Grid ColumnDefinitions="*,*,*">
+                        <Grid ColumnDefinitions="*,*,*,*">
                             <VerticalStackLayout>
                                 <Label x:Name="CpuClockCaption" Style="{StaticResource CaptionLabel}" />
                                 <Label x:Name="CpuClock" Text="--" Style="{StaticResource ValueLabel}" />
@@ -90,6 +90,10 @@
                             <VerticalStackLayout Grid.Column="2">
                                 <Label x:Name="CpuFanCaption" Style="{StaticResource CaptionLabel}" />
                                 <Label x:Name="CpuFan" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="3">
+                                <Label x:Name="CpuCoreCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="CpuCore" Text="--" Style="{StaticResource ValueLabel}" />
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
@@ -154,6 +158,11 @@
                         <Label Text="RAM" Style="{StaticResource TitleLabel}" />
                         <Label x:Name="RamValue" Text="--" Style="{StaticResource BigLabel}" FontSize="26" />
                         <ui:BarView x:Name="RamBar" />
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,4,0,0">
+                            <Label x:Name="DiskCaption" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                            <Label x:Name="DiskValue" Grid.Column="1" Text="--" Style="{StaticResource ValueLabel}" HorizontalTextAlignment="End" />
+                        </Grid>
+                        <ui:BarView x:Name="DiskBar" />
                     </VerticalStackLayout>
                 </Border>
 

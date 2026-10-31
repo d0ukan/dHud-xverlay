@@ -12,6 +12,19 @@ public sealed class DeviceReading
 	public float? FanRpm { get; set; }
 	public float? MemoryUsedGb { get; set; }
 	public float? MemoryTotalGb { get; set; }
+
+	/// <summary>En yoğun CPU çekirdeğinin yükü (%) ve tüm çekirdeklerin ortalaması.</summary>
+	public float? CoreMaxLoad { get; set; }
+	public float? CoreAvgLoad { get; set; }
+}
+
+/// <summary>Sistem sürücüsünün doluluğu.</summary>
+public sealed class DiskReading
+{
+	public string? Drive { get; set; }
+	public float UsedPercent { get; set; }
+	public float UsedGb { get; set; }
+	public float TotalGb { get; set; }
 }
 
 public sealed class NetReading
@@ -71,6 +84,7 @@ public sealed class PcSnapshot
 	public DeviceReading? Gpu { get; set; }
 	public DeviceReading? Ram { get; set; }
 	public NetReading? Net { get; set; }
+	public DiskReading? Disk { get; set; }
 
 	/// <summary>PC'de tam ekran bir oyun açıkken oyunun FPS değeri; yoksa null.</summary>
 	public float? Fps { get; set; }

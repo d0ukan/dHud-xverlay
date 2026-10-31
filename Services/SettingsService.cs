@@ -181,6 +181,12 @@ public sealed class AppSettings
     /// <summary>Yapışkan notlar ekranda görünsün (notlar silinmeden gizlenebilir).</summary>
     public bool NotesVisible { get; set; } = true;
 
+    /// <summary>Üstteki ince monitör bar'ı görünsün. Kapalıyken yalnızca widget'lar (ör. sistem özeti) kullanılabilir.</summary>
+    public bool ShowOverlay { get; set; } = true;
+
+    /// <summary>Notlar klasör sekmeleri gibi üst üste dizilir (sekmeye tıklayınca öne gelir). Kapalıysa her not ayrı yüzer.</summary>
+    public bool NotesStacked { get; set; } = true;
+
     /// <summary>Hatırlatıcılar telefona da bildirim olarak gitsin (mobil uygulama bağlıysa).</summary>
     public bool RemindersToPhone { get; set; } = true;
 
