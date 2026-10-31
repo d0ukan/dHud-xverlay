@@ -3,18 +3,19 @@ using System.Windows;
 namespace DHud.Widgets;
 
 /// <summary>
-/// Widget'ların oturduğu ince ızgara (macOS masaüstü widget'ları gibi). Izgara, monitörün çalışma alanının genişliğine oranlıdır
-/// (96 sütun, yaklaşık 20 piksellik hücreler), böylece her çözünürlükte benzer ve sıkı görünür. Bir kart, kapladığı hücrelere göre
-/// yerleşir ve başka bir widget'ın (veya bar'ın) hücrelerine girmez. Saf hesaplardır; pencerelere dokunmaz.
+/// Widget'ların oturduğu çok ince ızgara (macOS masaüstü widget'ları gibi). Hücre 6–8 DIP'tir (ekran genişliğine göre), böylece komşu
+/// kartlar arasında yalnızca ~6–14 DIP boşluk kalır: ızgara kaba olsaydı her komşu, hücre kadar fazladan boşlukla otururdu.
+/// Bir kart, kapladığı hücrelere göre yerleşir ve başka bir widget'ın (veya bar'ın) hücrelerine girmez. Saf hesaplardır; pencerelere dokunmaz.
 /// </summary>
 public static class WidgetGrid
 {
     /// <summary>Kart ile hücre kenarı arasındaki boşluk (iki komşu kart arasında en az 2×Inset boşluk kalır).</summary>
-    public const double Inset = 4;
+    public const double Inset = 3;
 
-    public const int Columns = 96;
-
-    private const double MinCell = 14;
+    /// <summary>Hücre boyutu (DIP): ekran genişliği / <see cref="Divisor"/>, bu sınırlar arasında.</summary>
+    public const double MinCell = 6;
+    public const double MaxCell = 8;
+    private const double Divisor = 240;
 
     public sealed record Spec(Rect Work, double Cell, int Cols, int Rows, double OffsetX, double OffsetY);
 
@@ -77,7 +78,7 @@ public static class WidgetGrid
 
     public static Spec Make(Rect work)
     {
-        var cell = Math.Max(MinCell, Math.Round(work.Width / Columns));
+        var cell = Math.Clamp(Math.Round(work.Width / Divisor), MinCell, MaxCell);
         var cols = Math.Max(1, (int)Math.Floor(work.Width / cell));
         var rows = Math.Max(1, (int)Math.Floor(work.Height / cell));
         return new Spec(work, cell, cols, rows, (work.Width - cols * cell) / 2, (work.Height - rows * cell) / 2);
