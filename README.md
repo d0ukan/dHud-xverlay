@@ -37,6 +37,8 @@ On top of the overlay, dHud can:
 | **CPU** | temperature, usage, clock, power, fan |
 | **GPU** | temperature, usage, clock, power, fan, VRAM |
 | **RAM** | usage and used / total memory |
+| **DISK** | system drive: used % and used / total space (optional) |
+| **CORE** | busiest CPU core and the average over all cores (optional) |
 | **NET** | download, upload and ping (ping can be shown on its own) |
 
 **Layouts:** vertical (rows stacked, columns aligned) or horizontal (one single row, great for the top of the screen). **Compact mode** shrinks text and spacing. Everything is optional: right-click the overlay → **Metrics** to switch items on or off instantly.
@@ -88,7 +90,7 @@ dHud lists every fan it can control (CPU fan, pump, case fans, GPU fans). For ea
 - If a curve's temperature sensor can't be read for a few seconds, the fan goes to 100%.
 - Fans slow down gradually (never abruptly) to avoid constant speed hunting. A curve can only go up: a point can't be lower than the one on its left.
 - Every risky action (enabling control, applying a preset to all fans, loading a profile, testing a fan) asks for confirmation in your language.
-- When dHud exits or crashes, fans are handed back to the BIOS / driver. *If dHud is killed abruptly (for example from Task Manager), fans keep their last speed until you start dHud again or restart the PC.*
+- When dHud exits or crashes, fans are handed back to the BIOS / driver. *If dHud is killed abruptly (for example from Task Manager), a tiny helper process (the same dHud.exe, started with `--fan-watchdog`, no window) notices and sets the fans it controlled to a safe fixed 70%. The next time dHud starts it takes them back (or returns them to automatic) and tells you about it. The helper only runs while dHud controls fans, and it does nothing after a normal exit.*
 
 Not every motherboard allows software fan control; dHud shows "no controllable fans found" in that case.
 
@@ -99,13 +101,14 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 - Measures the FPS of the **fullscreen / borderless** game in front, without injecting anything into the game (it only listens to Windows' own frame events).
 - Shows a small counter in the top-left corner of the game's monitor, only while a game is running. Colour changes with the frame rate.
 - The same value appears on the Android app.
+- **Game summary:** when a session of at least 2 minutes ends, a small card appears in the bottom-right corner with average FPS, 1% low FPS, lowest / highest FPS and the highest CPU / GPU temperature. Turn it off with *Show a summary card when a game session ends*.
 - Works with DirectX 10 / 11 / 12 games. DirectX 9 is experimental; Vulkan and OpenGL games are not measured.
 
 ## Android companion app
 
 An Android app (phone or tablet) that mirrors dHud over your **local network** (same Wi-Fi). It has the same dark theme.
 
-**What it does:** live CPU / GPU / RAM / network values, a 5-minute temperature graph, high-temperature alerts (vibration and notification), the game FPS, and a **full-screen dashboard mode** for tablets (the screen stays on while charging).
+**What it does:** live CPU / GPU / RAM / network values, a 5-minute temperature graph, high-temperature alerts (vibration and notification), the game FPS, and a **full-screen dashboard mode** for tablets (the screen stays on while charging). In full-screen mode the content slowly shifts by a few pixels and dims after 3 minutes without touch (tap to wake) to protect the screen; turn this off in the app menu (â‹®). You can also add a **home-screen widget** (CPU / GPU temperature and FPS): long-press the home screen â†’ Widgets â†’ dHud. It updates live while the app is open and otherwise about every 30 minutes (Android's limit) or when you tap âŸ³.
 
 **Setup (once):**
 

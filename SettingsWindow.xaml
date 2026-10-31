@@ -137,6 +137,10 @@
                     <TextBlock Text="{h:Loc S.System}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="ShowRamCheckBox" Content="{h:Loc S.Ram}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="ShowDiskCheckBox" Content="{h:Loc S.Disk}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="ShowCoresCheckBox" Content="{h:Loc S.Cores}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
 
                     </StackPanel>
                     <StackPanel Grid.Column="2">
@@ -254,6 +258,8 @@
                     <CheckBox x:Name="FpsCheckBox" Content="{h:Loc S.FpsEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <CheckBox x:Name="FpsOverlayCheckBox" Content="{h:Loc S.FpsOverlay}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="GameSummaryCheckBox" Content="{h:Loc S.GameSummary}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                     <TextBlock Text="{h:Loc S.FpsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                     <TextBlock x:Name="FpsStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />

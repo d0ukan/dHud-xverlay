@@ -256,6 +256,7 @@ public sealed class PcLink
 	private void OnSnapshot(PcSnapshot snapshot)
 	{
 		Latest = snapshot;
+		WidgetBridge.Push(snapshot);
 		AddHistory(CpuTemp, snapshot.Cpu?.Temperature);
 		AddHistory(GpuTemp, snapshot.Gpu?.Temperature);
 		State = LinkState.Connected;

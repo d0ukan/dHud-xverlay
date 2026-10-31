@@ -82,6 +82,8 @@ public partial class SettingsWindow : Window
         ShowFanCheckBox.IsChecked = s.ShowFan;
         ShowVramCheckBox.IsChecked = s.ShowVram;
         ShowRamCheckBox.IsChecked = s.ShowRam;
+        ShowDiskCheckBox.IsChecked = s.ShowDisk;
+        ShowCoresCheckBox.IsChecked = s.ShowCores;
         ShowNetworkCheckBox.IsChecked = s.ShowNetwork;
         NetworkInBitsCheckBox.IsChecked = s.NetworkInBits;
         ShowPingCheckBox.IsChecked = s.ShowPing;
@@ -108,6 +110,8 @@ public partial class SettingsWindow : Window
         FpsCheckBox.IsChecked = s.FpsEnabled;
         FpsOverlayCheckBox.IsChecked = s.FpsOverlay;
         FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
+        GameSummaryCheckBox.IsChecked = s.GameSummary;
+        GameSummaryCheckBox.IsEnabled = s.FpsEnabled;
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobileFanCheckBox.IsChecked = s.MobileFanControl;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
@@ -152,6 +156,8 @@ public partial class SettingsWindow : Window
         s.ShowFan = ShowFanCheckBox.IsChecked == true;
         s.ShowVram = ShowVramCheckBox.IsChecked == true;
         s.ShowRam = ShowRamCheckBox.IsChecked == true;
+        s.ShowDisk = ShowDiskCheckBox.IsChecked == true;
+        s.ShowCores = ShowCoresCheckBox.IsChecked == true;
         s.ShowNetwork = ShowNetworkCheckBox.IsChecked == true;
         s.NetworkInBits = NetworkInBitsCheckBox.IsChecked == true;
         s.ShowPing = ShowPingCheckBox.IsChecked == true;
@@ -165,6 +171,7 @@ public partial class SettingsWindow : Window
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
         s.FpsEnabled = FpsCheckBox.IsChecked == true;
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
+        s.GameSummary = GameSummaryCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)

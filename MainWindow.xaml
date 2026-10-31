@@ -226,6 +226,8 @@
                     <MenuItem x:Name="FanMenuItem" Tag="Fan" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="VramMenuItem" Tag="Vram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="RamMenuItem" Tag="Ram" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="DiskMenuItem" Tag="Disk" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
+                    <MenuItem x:Name="CoresMenuItem" Tag="Cores" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="NetworkMenuItem" Tag="Network" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                     <MenuItem x:Name="PingMenuItem" Tag="Ping" IsCheckable="True" StaysOpenOnClick="True" Click="MetricMenu_Click" />
                 </MenuItem>
@@ -326,6 +328,44 @@
                 <TextBlock Grid.Column="0" Text="RAM" Style="{StaticResource LabelText}" />
                 <TextBlock Grid.Column="3" x:Name="RamLoadText" Text="--%" Style="{StaticResource SmallText}" />
                 <TextBlock Grid.Column="6" x:Name="RamMemText" Text="--" Style="{StaticResource SmallText}" />
+            </Grid>
+
+            <Rectangle x:Name="RamDiskSeparator" Style="{StaticResource GroupSeparator}" />
+
+            <!-- DISK: sistem sürücüsü doluluğu -->
+            <Grid x:Name="DiskGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="DISK" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="3" x:Name="DiskLoadText" Text="--%" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="6" x:Name="DiskMemText" Text="--" Style="{StaticResource SmallText}" />
+            </Grid>
+
+            <Rectangle x:Name="DiskCoreSeparator" Style="{StaticResource GroupSeparator}" />
+
+            <!-- CORE: en yoğun ve ortalama CPU çekirdeği -->
+            <Grid x:Name="CoreGroup">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Temp" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Spark" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Load" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Clock" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Power" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Mem" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Fan" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="CORE" Style="{StaticResource LabelText}" />
+                <TextBlock Grid.Column="3" x:Name="CoreMaxText" Text="--%" Style="{StaticResource SmallText}" />
+                <TextBlock Grid.Column="6" x:Name="CoreAvgText" Text="--" Style="{StaticResource SmallText}" />
             </Grid>
 
             <Rectangle x:Name="RamNetSeparator" Style="{StaticResource GroupSeparator}" />

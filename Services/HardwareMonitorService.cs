@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using LibreHardwareMonitor.Hardware;
 
 namespace DHud.Services;
@@ -12,7 +13,12 @@ public sealed record HardwareReading(
     float? PowerWatts = null,
     float? FanRpm = null,
     float? MemoryUsedGb = null,
-    float? MemoryTotalGb = null);
+    float? MemoryTotalGb = null,
+    float? CoreMaxLoad = null,
+    float? CoreAvgLoad = null);
+
+/// <summary>Sistem sürücüsünün doluluğu.</summary>
+public sealed record DiskReading(string Drive, float UsedPercent, float UsedGb, float TotalGb);
 
 /// <summary>Yazılımla kontrol edilebilen bir fan kanalı (anakart başlığı veya GPU fanı).</summary>
 public sealed record FanChannel(string Id, string Name, bool IsGpu, ISensor Control, ISensor? Rpm);
@@ -21,7 +27,8 @@ public sealed record SensorSnapshot(
     HardwareReading? Cpu,
     HardwareReading? Gpu,
     HardwareReading? Memory,
-    NetworkReading? Network = null);
+    NetworkReading? Network = null,
+    DiskReading? Disk = null);
 
 /// <summary>
 /// LibreHardwareMonitor ile CPU, GPU ve RAM sensörlerini arka plan thread'inde periyodik olarak okur.
@@ -189,8 +196,41 @@ public sealed class HardwareMonitorService : IDisposable
             Debug.WriteLine($"Ağ okuma hatası: {ex}");
         }
 
+        snapshot = snapshot with { Disk = SampleDisk() };
+
         Latest = snapshot;
         SnapshotUpdated?.Invoke(snapshot);
+    }
+
+    private DiskReading? _disk;
+    private DateTime _diskAt = DateTime.MinValue;
+
+    /// <summary>Sistem sürücüsünün doluluğu. Yavaş değiştiği için en fazla 10 saniyede bir okunur.</summary>
+    private DiskReading? SampleDisk()
+    {
+        if (DateTime.UtcNow - _diskAt < TimeSpan.FromSeconds(10))
+        {
+            return _disk;
+        }
+
+        _diskAt = DateTime.UtcNow;
+        try
+        {
+            var root = Path.GetPathRoot(Environment.SystemDirectory);
+            if (!string.IsNullOrEmpty(root) && new DriveInfo(root) is { IsReady: true } drive && drive.TotalSize > 0)
+            {
+                const double gb = 1024.0 * 1024 * 1024;
+                var total = drive.TotalSize / gb;
+                var used = total - drive.TotalFreeSpace / gb;
+                _disk = new DiskReading(root.TrimEnd('\\'), (float)(used / total * 100), (float)used, (float)total);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Disk okuma hatası: {ex.Message}");
+        }
+
+        return _disk;
     }
 
     /// <summary>
@@ -284,13 +324,33 @@ public sealed class HardwareMonitorService : IDisposable
             .Select(s => s.Value!.Value)
             .ToList();
 
+        // Çekirdek başına yük: "CPU Core #n" (thread satırları hariç); en yoğun ve ortalama çekirdek.
+        var coreLoads = sensors
+            .Where(s => s.SensorType == SensorType.Load
+                        && s.Name.StartsWith("CPU Core #", StringComparison.OrdinalIgnoreCase)
+                        && !s.Name.Contains("Thread", StringComparison.OrdinalIgnoreCase)
+                        && s.Value.HasValue)
+            .Select(s => s.Value!.Value)
+            .ToList();
+        if (coreLoads.Count == 0)
+        {
+            coreLoads = sensors
+                .Where(s => s.SensorType == SensorType.Load
+                            && s.Name.StartsWith("CPU Core #", StringComparison.OrdinalIgnoreCase)
+                            && s.Value.HasValue)
+                .Select(s => s.Value!.Value)
+                .ToList();
+        }
+
         return new HardwareReading(
             cpu.Name,
             Temperature: PickTemperature(sensors, CpuTemperatureNames),
             Load: PickValue(sensors, SensorType.Load, CpuLoadNames),
             ClockMhz: coreClocks.Count > 0 ? coreClocks.Average() : null,
             PowerWatts: PickValue(sensors, SensorType.Power, CpuPowerNames),
-            FanRpm: motherboard is null ? null : PickCpuFan(AllSensors(motherboard)));
+            FanRpm: motherboard is null ? null : PickCpuFan(AllSensors(motherboard)),
+            CoreMaxLoad: coreLoads.Count > 0 ? coreLoads.Max() : null,
+            CoreAvgLoad: coreLoads.Count > 0 ? coreLoads.Average() : null);
     }
 
     private static HardwareReading ReadGpu(IHardware gpu)

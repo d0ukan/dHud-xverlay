@@ -60,6 +60,12 @@ public sealed class AppSettings
     public bool ShowVram { get; set; }
     public bool ShowRam { get; set; }
 
+    /// <summary>Sistem sürücüsünün doluluğu (overlay'de "DISK" satırı).</summary>
+    public bool ShowDisk { get; set; }
+
+    /// <summary>En yoğun ve ortalama CPU çekirdeği yükü (overlay'de "CORE" satırı).</summary>
+    public bool ShowCores { get; set; }
+
     public bool ShowNetwork { get; set; }
     public bool ShowPing { get; set; } = true;
 
@@ -135,6 +141,9 @@ public sealed class AppSettings
 
     /// <summary>Oyun açıkken ekranın köşesinde küçük bir FPS sayacı göster.</summary>
     public bool FpsOverlay { get; set; } = true;
+
+    /// <summary>Oyun oturumu bitince (en az 2 dakika) ortalama FPS, %1 düşük ve sıcaklık özetini göster.</summary>
+    public bool GameSummary { get; set; } = true;
 
     /// <summary>Mobil uygulamanın yerel ağdan bağlanmasına izin ver. Varsayılan kapalı.</summary>
     public bool MobileEnabled { get; set; }

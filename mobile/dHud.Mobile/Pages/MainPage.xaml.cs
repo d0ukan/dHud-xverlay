@@ -34,6 +34,14 @@ public partial class MainPage : ContentPage
 		App.Link.Changed += Refresh;
 		App.Link.AlertReceived += OnAlert;
 		App.Link.CommandResult += OnCommandResult;
+
+		// Ekran koruyucu: herhangi bir dokunuş (karartılmışken karartma katmanı dahil) paneli uyandırır.
+		var wakeTap = new TapGestureRecognizer();
+		wakeTap.Tapped += (_, _) => Wake();
+		Root.GestureRecognizers.Add(wakeTap);
+		var wakeDimTap = new TapGestureRecognizer();
+		wakeDimTap.Tapped += (_, _) => Wake();
+		SaverDim.GestureRecognizers.Add(wakeDimTap);
 		Dashboard.SizeChanged += Dashboard_SizeChanged;
 
 		// Tablet şarjdayken (dock/duvar standı) ekran kapanmasın; pilde normal uyku süresi geçerli.
@@ -639,10 +647,15 @@ public partial class MainPage : ContentPage
 
 	private async void MenuButton_Clicked(object? sender, EventArgs e)
 	{
+		var saver = Loc.T(SaverEnabled ? "SaverOn" : "SaverOff");
 		var action = await DisplayActionSheet(Loc.T("Menu"), Loc.T("Cancel"), null,
-			Loc.T("Repair"), Loc.T("CheckUpdate"), Loc.T("Forget"));
+			saver, Loc.T("Repair"), Loc.T("CheckUpdate"), Loc.T("Forget"));
 
-		if (action == Loc.T("Repair"))
+		if (action == saver)
+		{
+			Preferences.Set(SaverKey, !SaverEnabled);
+		}
+		else if (action == Loc.T("Repair"))
 		{
 			await Navigation.PushAsync(new ScanPage());
 		}
@@ -669,6 +682,15 @@ public partial class MainPage : ContentPage
 		}
 
 		TabBar.IsVisible = !_fullscreen;
+		if (_fullscreen && SaverEnabled)
+		{
+			StartSaver();
+		}
+		else
+		{
+			StopSaver();
+		}
+
 		MenuButton.IsVisible = TitleBox.IsVisible = !_fullscreen;
 		UpdateKeepAwake();
 
@@ -693,10 +715,84 @@ public partial class MainPage : ContentPage
 #endif
 	}
 
+	// ---- Ekran koruyucu (tam ekran panel) ----
+
+	private const string SaverKey = "screensaver";
+	private static readonly TimeSpan SaverIdle = TimeSpan.FromMinutes(3);
+	private static readonly (double X, double Y)[] SaverShifts = [(0, 0), (10, 6), (-8, 10), (6, -10), (-10, -4), (8, 8)];
+
+	private IDispatcherTimer? _saverTimer;
+	private DateTime _lastTouch = DateTime.UtcNow;
+	private int _saverTick;
+	private bool _dimmed;
+
+	private static bool SaverEnabled => Preferences.Get(SaverKey, true);
+
+	/// <summary>Tam ekran panelde: içerik dakikada bir birkaç piksel kayar (ekranda iz kalmasın), 3 dakika dokunulmazsa kararır.</summary>
+	private void StartSaver()
+	{
+		_lastTouch = DateTime.UtcNow;
+		if (_saverTimer is null)
+		{
+			_saverTimer = Dispatcher.CreateTimer();
+			_saverTimer.Interval = TimeSpan.FromSeconds(30);
+			_saverTimer.Tick += (_, _) => SaverTick();
+		}
+
+		_saverTimer.Start();
+	}
+
+	private void StopSaver()
+	{
+		_saverTimer?.Stop();
+		Wake();
+		Dashboard.TranslationX = Dashboard.TranslationY = 0;
+	}
+
+	private void SaverTick()
+	{
+		if (!_fullscreen || !SaverEnabled)
+		{
+			StopSaver();
+			return;
+		}
+
+		// 30 sn'de bir çağrılır; her ikinci çağrıda (dakikada bir) kaydır.
+		if (++_saverTick % 2 == 0)
+		{
+			var (x, y) = SaverShifts[_saverTick / 2 % SaverShifts.Length];
+			_ = Dashboard.TranslateTo(x, y, 2000, Easing.CubicInOut);
+		}
+
+		if (!_dimmed && DateTime.UtcNow - _lastTouch >= SaverIdle)
+		{
+			_dimmed = true;
+			SaverDim.IsVisible = true;
+			SaverDim.InputTransparent = false; // karartılmışken ilk dokunuş yalnızca uyandırır
+			_ = SaverDim.FadeTo(0.7, 1500);
+		}
+	}
+
+	/// <summary>Ekrana dokunuldu (veya uyarı geldi): karartmayı kaldırır, boşta sayacını sıfırlar.</summary>
+	private void Wake()
+	{
+		_lastTouch = DateTime.UtcNow;
+		if (!_dimmed)
+		{
+			return;
+		}
+
+		_dimmed = false;
+		SaverDim.InputTransparent = true;
+		SaverDim.Opacity = 0;
+		SaverDim.IsVisible = false;
+	}
+
 	// ---- Sıcaklık uyarısı ----
 
 	private void OnAlert(string text)
 	{
+		Wake();
 		AlertLabel.Text = text;
 		AlertBanner.IsVisible = true;
 		AlertNotifier.Notify(Loc.T("AlertTitle"), text);

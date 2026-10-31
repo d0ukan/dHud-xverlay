@@ -94,6 +94,14 @@ public partial class MainWindow : Window
         RamLoadText.Text = Format.Load(ram?.Load);
         RamMemText.Text = Format.Memory(ram?.MemoryUsedGb, ram?.MemoryTotalGb, compact);
 
+        var disk = snapshot.Disk;
+        DiskLoadText.Text = disk is null ? "--%" : $"{disk.UsedPercent:0}%";
+        DiskMemText.Text = disk is null ? "--" : Format.Memory(disk.UsedGb, disk.TotalGb, compact);
+        DiskGroup.ToolTip = disk is null ? null : $"{disk.Drive}  {Loc.T("Tip.Disk")}";
+        CoreMaxText.Text = cpu?.CoreMaxLoad is float coreMax ? $"{coreMax:0}%" : "--%";
+        CoreAvgText.Text = cpu?.CoreAvgLoad is float coreAvg ? Loc.T("Tip.CoreAvg", $"{coreAvg:0}") : "--";
+        CoreGroup.ToolTip = Loc.T("Tip.Cores");
+
         var net = snapshot.Network;
         var bits = _settings.Current.NetworkInBits;
         NetDownText.Text = "↓ " + Format.Speed(net?.DownloadBytesPerSecond, bits, compact);
@@ -231,6 +239,8 @@ public partial class MainWindow : Window
         SetVisible(s.ShowFan, CpuFanText, GpuFanText);
         SetVisible(s.ShowVram, GpuMemText);
         SetVisible(s.ShowRam, RamGroup);
+        SetVisible(s.ShowDisk, DiskGroup);
+        SetVisible(s.ShowCores, CoreGroup);
         // Ağ satırı: indirme/yükleme hızı ve ping birbirinden bağımsız açılıp kapanır.
         SetVisible(s.ShowNetwork || s.ShowPing, NetGroup);
         SetVisible(s.ShowNetwork, NetDownText, NetUpText);
@@ -239,7 +249,9 @@ public partial class MainWindow : Window
         var netVisible = s.ShowNetwork || s.ShowPing;
         SetVisible(horizontal && s.ShowCpu && s.ShowGpu, CpuGpuSeparator);
         SetVisible(horizontal && s.ShowRam && (s.ShowCpu || s.ShowGpu), GpuRamSeparator);
-        SetVisible(horizontal && netVisible && (s.ShowCpu || s.ShowGpu || s.ShowRam), RamNetSeparator);
+        SetVisible(horizontal && s.ShowDisk && (s.ShowCpu || s.ShowGpu || s.ShowRam), RamDiskSeparator);
+        SetVisible(horizontal && s.ShowCores && (s.ShowCpu || s.ShowGpu || s.ShowRam || s.ShowDisk), DiskCoreSeparator);
+        SetVisible(horizontal && netVisible && (s.ShowCpu || s.ShowGpu || s.ShowRam || s.ShowDisk || s.ShowCores), RamNetSeparator);
 
         SettingsMenuItem.Header = Loc.T("M.Settings");
         LayoutMenuItem.Header = Loc.T(horizontal ? "M.ToVertical" : "M.ToHorizontal");
@@ -261,6 +273,10 @@ public partial class MainWindow : Window
         FanMenuItem.Header = Loc.T("S.Fan");
         VramMenuItem.Header = Loc.T("S.Vram");
         RamMenuItem.Header = Loc.T("S.Ram");
+        DiskMenuItem.Header = Loc.T("S.Disk");
+        CoresMenuItem.Header = Loc.T("S.Cores");
+        DiskMenuItem.IsChecked = s.ShowDisk;
+        CoresMenuItem.IsChecked = s.ShowCores;
         NetworkMenuItem.Header = Loc.T("S.NetSpeed");
         PingMenuItem.Header = Loc.T("S.Ping");
         UsageMenuItem.IsChecked = s.ShowUsage;
@@ -572,6 +588,8 @@ public partial class MainWindow : Window
             case "Fan": s.ShowFan = on; break;
             case "Vram": s.ShowVram = on; break;
             case "Ram": s.ShowRam = on; break;
+            case "Disk": s.ShowDisk = on; break;
+            case "Cores": s.ShowCores = on; break;
             case "Network": s.ShowNetwork = on; break;
             case "Ping": s.ShowPing = on; break;
         }

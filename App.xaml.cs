@@ -47,6 +47,8 @@ public partial class App : Application
     public FpsMonitor Fps { get; } = new();
     public FanControlService FanControl { get; private set; } = null!;
     public RemoteFanService RemoteFan { get; private set; } = null!;
+    public GameSessionTracker GameTracker { get; } = new();
+    private bool _recoveredFromCrash;
 
     /// <summary>Fan penceresi açıkken anakart sensörleri (fan listesi) kontrol kapalı olsa da taranır.</summary>
     public bool FanWindowOpen { get; set; }
@@ -59,6 +61,13 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Fan bekçisi: pencere/tepsi açmayan yardımcı mod (bkz. FanSafety). Tek örnek denetiminden önce çalışır.
+        if (e.Args.Contains(FanSafety.WatchdogArgument))
+        {
+            Shutdown(FanSafety.RunWatchdog(e.Args));
+            return;
+        }
 
         UpdateService.CleanupOldFiles();
 
@@ -106,6 +115,13 @@ public partial class App : Application
         StartupManager.MigrateLegacy();
 
         FanControl = new FanControlService(Monitor, Settings);
+        // Önceki çalışma ani sonlandıysa: fanlar bekçi tarafından güvenli hıza çıkarılmış olabilir; geri devral/bırak.
+        if (FanSafety.TakePreviousCrashMarker() is { Length: > 0 } crashed)
+        {
+            FanControl.RecoverAfterCrash(crashed);
+            _recoveredFromCrash = true;
+        }
+
         // Kontrol edilen bir fan dönmeyi bırakırsa tepsi bildirimi ve (bağlıysa) mobil uyarı.
         FanControl.FanStalled += stalled => Dispatcher.BeginInvoke(() =>
         {
@@ -135,6 +151,20 @@ public partial class App : Application
         };
         Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
 
+        // Oyun oturumu bitince özet kartı (ayardan kapatılabilir).
+        GameTracker.Finished += summary => Dispatcher.BeginInvoke(() =>
+        {
+            if (Settings.Current.FpsEnabled && Settings.Current.GameSummary)
+            {
+                new GameSummaryWindow(summary).Show();
+            }
+        });
+        Fps.Changed += fps =>
+        {
+            var latest = Monitor.Latest;
+            GameTracker.Sample(fps, latest?.Cpu?.Temperature, latest?.Gpu?.Temperature);
+        };
+
         _overlay = new MainWindow();
         _overlay.Show();
 
@@ -144,6 +174,11 @@ public partial class App : Application
         _tray.ClickThroughToggleRequested += (_, _) => ToggleClickThrough();
         _tray.LockToggleRequested += (_, _) => ToggleLock();
         _tray.ExitRequested += (_, _) => ExitApplication();
+        if (_recoveredFromCrash)
+        {
+            _tray.ShowBalloon(Loc.T("F.Title"), Loc.T("F.Recovered"), Forms.ToolTipIcon.Warning);
+        }
+
         _tray.UpdateCheckRequested += (_, _) => _ = CheckForUpdatesAsync(manual: true);
         _tray.BalloonClicked += (_, _) =>
         {
@@ -366,7 +401,7 @@ public partial class App : Application
     public void ApplyMonitorFlags()
     {
         var s = Settings.Current;
-        Monitor.CpuEnabled = s.ShowCpu || s.FanControlEnabled;
+        Monitor.CpuEnabled = s.ShowCpu || s.ShowCores || s.FanControlEnabled;
         Monitor.GpuEnabled = s.ShowGpu || s.FanControlEnabled;
         Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
     }

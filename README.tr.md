@@ -37,6 +37,8 @@ Overlay'e ek olarak dHud şunları da yapabilir:
 | **CPU** | sıcaklık, kullanım, frekans, güç, fan |
 | **GPU** | sıcaklık, kullanım, frekans, güç, fan, VRAM |
 | **RAM** | kullanım ve kullanılan / toplam bellek |
+| **DISK** | sistem sürücüsü: dolu % ve dolu / toplam alan (isteğe bağlı) |
+| **CORE** | en yoğun CPU çekirdeği ve tüm çekirdeklerin ortalaması (isteğe bağlı) |
 | **NET** | indirme, yükleme ve ping (ping tek başına da gösterilebilir) |
 
 **Düzenler:** dikey (satırlar alt alta, sütunlar hizalı) veya yatay (tek satır, ekranın üstü için ideal). **Kompakt mod** yazıyı ve boşlukları küçültür. Her şey isteğe bağlıdır: overlay'e sağ tık → **Metrics** ile öğeleri anında açıp kapatabilirsin.
@@ -88,7 +90,7 @@ dHud kontrol edebildiği tüm fanları listeler (CPU fanı, pompa, kasa fanları
 - Eğrinin sıcaklık sensörü birkaç saniye okunamazsa fan %100'e çıkar.
 - Fanlar ani değil kademeli yavaşlar (sürekli inip çıkmasın diye). Eğri sadece yukarı gidebilir: bir nokta solundaki noktadan düşük olamaz.
 - Riskli her işlem (kontrolü açma, tüm fanlara hazır ayar uygulama, profil yükleme, fan testi) seçili dilde onay ister.
-- dHud kapanırken veya çökerken fanlar BIOS / sürücüye geri verilir. *dHud aniden sonlandırılırsa (örneğin Görev Yöneticisi'nden), fanlar dHud'u yeniden açana veya bilgisayarı yeniden başlatana kadar son hızında kalır.*
+- dHud kapanırken veya çökerken fanlar BIOS / sürücüye geri verilir. *dHud aniden sonlandırılırsa (örneğin Görev Yöneticisi'nden), küçük bir yardımcı süreç (aynı dHud.exe, `--fan-watchdog` ile başlar, penceresi yok) bunu fark eder ve kontrol ettiği fanları güvenli sabit %70'e çıkarır. dHud bir sonraki açılışta fanları geri devralır (veya otomatiğe verir) ve sana haber verir. Yardımcı yalnızca dHud fan kontrol ederken çalışır; normal kapanışta hiçbir şey yapmaz.*
 
 Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edilebilir fan bulunamadı" der.
 
@@ -99,13 +101,14 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 - Önde duran **tam ekran / kenarlıksız** oyunun FPS'ini ölçer; oyuna hiçbir şey enjekte etmez (yalnızca Windows'un kendi kare olaylarını dinler).
 - Oyunun bulunduğu monitörün sol üst köşesinde küçük bir sayaç gösterir, yalnızca oyun çalışırken. Renk, kare hızına göre değişir.
 - Aynı değer Android uygulamasında da görünür.
+- **Oyun özeti:** en az 2 dakikalık bir oyun oturumu bitince sağ alt köşede küçük bir kart çıkar: ortalama FPS, %1 düşük FPS, en düşük / en yüksek FPS ve en yüksek CPU / GPU sıcaklığı. *Oyun bitince özet kartı göster* kutusuyla kapatılır.
 - DirectX 10 / 11 / 12 oyunlarında çalışır. DirectX 9 deneyseldir; Vulkan ve OpenGL oyunları ölçülmez.
 
 ## Android yardımcı uygulaması
 
 Telefon veya tablette dHud'u **yerel ağında** (aynı Wi-Fi) yansıtan bir Android uygulaması. Aynı koyu temaya sahiptir.
 
-**Ne yapar:** canlı CPU / GPU / RAM / ağ değerleri, 5 dakikalık sıcaklık grafiği, yüksek sıcaklık uyarıları (titreşim ve bildirim), oyun FPS'i ve tabletler için **tam ekran gösterge paneli modu** (şarjdayken ekran kapanmaz).
+**Ne yapar:** canlı CPU / GPU / RAM / ağ değerleri, 5 dakikalık sıcaklık grafiği, yüksek sıcaklık uyarıları (titreşim ve bildirim), oyun FPS'i ve tabletler için **tam ekran gösterge paneli modu** (şarjdayken ekran kapanmaz). Tam ekran modunda ekranı korumak için içerik birkaç pikseli yavaşça kayar ve 3 dakika dokunulmazsa kararır (uyandırmak için dokun); uygulama menüsünden (⋮) kapatılabilir. Ayrıca **ana ekran widget'ı** ekleyebilirsin (CPU / GPU sıcaklığı ve FPS): ana ekrana uzun bas → Widget'lar → dHud. Uygulama açıkken canlı, kapalıyken yaklaşık 30 dakikada bir (Android sınırı) veya ⟳'ya dokununca yenilenir.
 
 **Kurulum (bir kez):**
 

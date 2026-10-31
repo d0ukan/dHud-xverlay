@@ -6,7 +6,7 @@
              xmlns:ui="clr-namespace:dHud.Mobile.Controls"
              NavigationPage.HasNavigationBar="False">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16,12" RowSpacing="10">
+    <Grid x:Name="Root" RowDefinitions="Auto,Auto,*,Auto" Padding="16,12" RowSpacing="10">
 
         <!-- Üst çubuk -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto">
@@ -219,5 +219,8 @@
             <Button x:Name="TabPanelButton" Style="{StaticResource PrimaryButton}" HeightRequest="42" Clicked="TabPanelButton_Clicked" />
             <Button x:Name="TabFansButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabFansButton_Clicked" />
         </Grid>
+
+        <!-- Ekran koruyucu: tam ekran panel bir süre dokunulmazsa kararır (dokununca geri gelir) -->
+        <BoxView x:Name="SaverDim" Grid.RowSpan="4" Color="Black" Opacity="0" IsVisible="False" InputTransparent="True" />
     </Grid>
 </ContentPage>

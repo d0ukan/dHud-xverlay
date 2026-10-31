@@ -51,6 +51,7 @@ public sealed class FanControlService : IDisposable
     /// <summary>İki bildirim arasındaki en kısa süre (tüm fanlar için ortak); bekleyenler sonra tek mesajla gider.</summary>
     private static readonly TimeSpan StallGlobalGap = TimeSpan.FromMinutes(30);
 
+    private readonly HashSet<string> _recoverIds = [];
     private readonly List<(string Name, int Percent)> _pendingStalls = [];
     private DateTime _pendingSince;
     private DateTime _lastStallBroadcast = DateTime.MinValue;
@@ -210,12 +211,14 @@ public sealed class FanControlService : IDisposable
             }
             else if (mode == FanMode.Auto || cfg is null)
             {
-                if (state.Taken)
+                if (state.Taken || _recoverIds.Contains(channel.Id))
                 {
                     control.SetDefault();
                     state.Taken = false;
                     state.Last = null;
                 }
+
+                _recoverIds.Remove(channel.Id);
             }
             else
             {
@@ -235,6 +238,9 @@ public sealed class FanControlService : IDisposable
 
         _status = statuses;
         FlushStalls(now);
+
+        // Devralınan fanlar diske yazılır; dHud ani ölürse bekçi bu fanları güvenli hıza çıkarır.
+        FanSafety.Update(_states.Where(p => p.Value.Taken).Select(p => p.Key).ToList());
     }
 
     /// <summary>Bekleyen "fan durdu" bildirimlerini tek mesajda gönderir (toplama penceresi ve ortak bekleme süresi dolunca).</summary>
@@ -404,6 +410,24 @@ public sealed class FanControlService : IDisposable
                 state.Taken = false;
                 state.Last = null;
                 state.TestEnd = null;
+            }
+        }
+
+        // Tüm fanlar geri verildi: temiz kapanış işareti.
+        FanSafety.Clear();
+    }
+
+    /// <summary>
+    /// Önceki çalışma temiz kapanmadıysa o oturumda kontrol edilen fanlar (bekçi onları güvenli hıza çıkarmış olabilir).
+    /// Kontrol kapalı kalan fanlar ilk fırsatta otomatiğe geri verilir; kontrol açıksa ayarlara göre zaten yeniden devralınır.
+    /// </summary>
+    public void RecoverAfterCrash(IEnumerable<string> ids)
+    {
+        lock (_gate)
+        {
+            foreach (var id in ids)
+            {
+                _recoverIds.Add(id);
             }
         }
     }
