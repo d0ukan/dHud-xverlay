@@ -91,7 +91,7 @@
                             <Label x:Name="GpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
                         </Grid>
                         <ProgressBar x:Name="GpuLoadBar" ProgressColor="{StaticResource AccentColor}" />
-                        <Grid ColumnDefinitions="*,*,*">
+                        <Grid ColumnDefinitions="*,*,*,*">
                             <VerticalStackLayout>
                                 <Label x:Name="GpuClockCaption" Style="{StaticResource CaptionLabel}" />
                                 <Label x:Name="GpuClock" Text="--" Style="{StaticResource ValueLabel}" />
@@ -104,18 +104,17 @@
                                 <Label x:Name="GpuFanCaption" Style="{StaticResource CaptionLabel}" />
                                 <Label x:Name="GpuFan" Text="--" Style="{StaticResource ValueLabel}" />
                             </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="3">
+                                <Label x:Name="GpuVramCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="GpuVram" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
                         </Grid>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Label x:Name="GpuVramCaption" Style="{StaticResource CaptionLabel}" />
-                            <Label x:Name="GpuVram" Grid.Column="1" Text="--" Style="{StaticResource ValueLabel}" FontSize="13" />
-                        </Grid>
-                        <ProgressBar x:Name="GpuVramBar" ProgressColor="{StaticResource AccentColor}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Sıcaklık grafiği -->
                 <Border x:Name="GraphCard" Style="{StaticResource CardStyle}">
-                    <VerticalStackLayout Spacing="8">
+                    <Grid RowDefinitions="Auto,*" RowSpacing="8">
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
                             <Label x:Name="GraphTitle" Style="{StaticResource TitleLabel}" />
                             <HorizontalStackLayout Grid.Column="1" Spacing="6">
@@ -127,8 +126,8 @@
                                 <Label x:Name="GpuLegend" Text="GPU" FontSize="12" TextColor="{StaticResource TextColor}" />
                             </HorizontalStackLayout>
                         </Grid>
-                        <GraphicsView x:Name="Graph" HeightRequest="220" />
-                    </VerticalStackLayout>
+                        <GraphicsView x:Name="Graph" Grid.Row="1" MinimumHeightRequest="120" />
+                    </Grid>
                 </Border>
 
                 <!-- RAM -->

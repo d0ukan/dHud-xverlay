@@ -5,13 +5,22 @@ namespace dHud.Mobile.Pages;
 public partial class MainPage : ContentPage
 {
 	private const double WideLayoutWidth = 700;
+	private const double CompactHeight = 600;
+
+	private enum LayoutMode
+	{
+		Narrow,
+		Wide,
+		CompactWide
+	}
+
 	private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(12);
 
 	private readonly TempGraph _graph = new();
 	private IDispatcherTimer? _updateTimer;
 	private AppUpdate? _update;
 	private bool _fullscreen;
-	private bool? _wide;
+	private LayoutMode? _mode;
 
 	public MainPage()
 	{
@@ -21,6 +30,7 @@ public partial class MainPage : ContentPage
 		ApplyTexts();
 
 		App.Link.Changed += Refresh;
+		Dashboard.SizeChanged += Dashboard_SizeChanged;
 	}
 
 	protected override void OnAppearing()
@@ -41,15 +51,37 @@ public partial class MainPage : ContentPage
 	{
 		base.OnSizeAllocated(width, height);
 
-		var wide = width >= WideLayoutWidth;
-		if (wide != _wide)
+		// Dar: dikey telefon. Alçak geniş: yatay telefon. Geniş: tablet.
+		var mode = width < WideLayoutWidth ? LayoutMode.Narrow
+			: height < CompactHeight ? LayoutMode.CompactWide
+			: LayoutMode.Wide;
+		if (mode != _mode)
 		{
-			_wide = wide;
-			ArrangeCards(wide);
+			_mode = mode;
+			ArrangeCards(mode);
+		}
+	}
+
+	private void Dashboard_SizeChanged(object? sender, EventArgs e) => FitToViewport();
+
+	/// <summary>
+	/// Geniş düzenlerde kartlar görünür alanı tam doldurur (grafik kalan yüksekliği alır) ve kaydırma gerekmez.
+	/// Dar düzende içerik kendi boyunda kalır ve kaydırılır.
+	/// </summary>
+	private void FitToViewport() =>
+		Cards.MinimumHeightRequest = _mode == LayoutMode.Narrow ? 0 : Dashboard.Height;
+
+	private void ApplyDensity(bool compact)
+	{
+		var padding = new Thickness(compact ? 10 : 16);
+		foreach (var card in new[] { CpuCard, GpuCard, GraphCard, RamCard, NetCard })
+		{
+			card.Padding = padding;
 		}
 
-		// Tablette grafik daha yüksek olsun.
-		Graph.HeightRequest = wide ? Math.Clamp(height * 0.34, 220, 420) : 220;
+		CpuTemp.FontSize = GpuTemp.FontSize = compact ? 32 : 46;
+		RamValue.FontSize = compact ? 22 : 30;
+		Cards.ColumnSpacing = Cards.RowSpacing = compact ? 8 : 12;
 	}
 
 	private void ApplyTexts()
@@ -74,41 +106,68 @@ public partial class MainPage : ContentPage
 		NetPingCaption.Text = Loc.T("Ping");
 	}
 
-	/// <summary>Geniş ekranda (tablet) iki sütun, dar ekranda (telefon) tek sütun.</summary>
-	private void ArrangeCards(bool wide)
+	/// <summary>Ekran boyutuna göre kart yerleşimi: tek sütun / iki sütun / üç sütun.</summary>
+	private void ArrangeCards(LayoutMode mode)
 	{
 		Cards.ColumnDefinitions.Clear();
 		Cards.RowDefinitions.Clear();
+		ApplyDensity(mode == LayoutMode.CompactWide);
 
-		if (wide)
+		switch (mode)
 		{
-			Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-			Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-			for (var i = 0; i < 3; i++)
-			{
+			case LayoutMode.Wide:
+				// CPU | GPU / grafik (kalan yükseklik) / RAM | NET
+				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-			}
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+				Place(CpuCard, 0, 0);
+				Place(GpuCard, 0, 1);
+				Place(GraphCard, 1, 0, columnSpan: 2);
+				Place(RamCard, 2, 0);
+				Place(NetCard, 2, 1);
+				break;
 
-			Place(CpuCard, 0, 0);
-			Place(GpuCard, 0, 1);
-			Place(GraphCard, 1, 0, columnSpan: 2);
-			Place(RamCard, 2, 0);
-			Place(NetCard, 2, 1);
+			case LayoutMode.CompactWide:
+				// CPU | GPU | RAM   üst sıra
+				// grafik (2 sütun) | NET   alt sıra (kalan yükseklik)
+				for (var i = 0; i < 3; i++)
+				{
+					Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				}
+
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+				Place(CpuCard, 0, 0);
+				Place(GpuCard, 0, 1);
+				Place(RamCard, 0, 2);
+				Place(GraphCard, 1, 0, columnSpan: 2);
+				Place(NetCard, 1, 2);
+				break;
+
+			default:
+				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				for (var i = 0; i < 5; i++)
+				{
+					Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+				}
+
+				Graph.MinimumHeightRequest = 220;
+				Place(CpuCard, 0, 0);
+				Place(GpuCard, 1, 0);
+				Place(GraphCard, 2, 0);
+				Place(RamCard, 3, 0);
+				Place(NetCard, 4, 0);
+				break;
 		}
-		else
+
+		if (mode != LayoutMode.Narrow)
 		{
-			Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-			for (var i = 0; i < 5; i++)
-			{
-				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-			}
-
-			Place(CpuCard, 0, 0);
-			Place(GpuCard, 1, 0);
-			Place(GraphCard, 2, 0);
-			Place(RamCard, 3, 0);
-			Place(NetCard, 4, 0);
+			Graph.MinimumHeightRequest = mode == LayoutMode.Wide ? 200 : 90;
 		}
+
+		FitToViewport();
 	}
 
 	private static void Place(View view, int row, int column, int columnSpan = 1)
@@ -148,7 +207,7 @@ public partial class MainPage : ContentPage
 		{
 			ShowDevice(s.Cpu, CpuName, CpuTemp, CpuLoad, CpuLoadBar, CpuClock, CpuPower, CpuFan);
 			ShowDevice(s.Gpu, GpuName, GpuTemp, GpuLoad, GpuLoadBar, GpuClock, GpuPower, GpuFan);
-			ShowMemory(s.Gpu?.MemoryUsedGb, s.Gpu?.MemoryTotalGb, GpuVram, GpuVramBar, decimals: 1);
+			GpuVram.Text = s.Gpu is { MemoryUsedGb: float vu, MemoryTotalGb: float vt } ? $"{vu:0.0}/{vt:0} GB" : "--";
 			ShowMemory(s.Ram?.MemoryUsedGb, s.Ram?.MemoryTotalGb, RamValue, RamBar, decimals: 1);
 
 			NetName.Text = s.Net?.AdapterName ?? string.Empty;
