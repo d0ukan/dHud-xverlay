@@ -136,6 +136,9 @@ public sealed class AppSettings
     /// <summary>QR ile paylaşılan eşleştirme anahtarı; ilk açılışta üretilir.</summary>
     public string MobileToken { get; set; } = string.Empty;
 
+    /// <summary>Eşleşmiş mobil uygulama fan ayarlarını değiştirebilsin. Varsayılan kapalı (yalnızca izleme).</summary>
+    public bool MobileFanControl { get; set; }
+
     public StartupMethod PreferredStartupMethod { get; set; } = StartupMethod.TaskScheduler;
 }
 

@@ -17,6 +17,8 @@ public sealed class PcLink
 	private static readonly TimeSpan DataTimeout = TimeSpan.FromSeconds(8);
 
 	private CancellationTokenSource? _cts;
+	private volatile NetworkStream? _stream;
+	private readonly SemaphoreSlim _writeLock = new(1, 1);
 
 	public LinkState State { get; private set; } = LinkState.Idle;
 	public PcSnapshot? Latest { get; private set; }
@@ -29,6 +31,9 @@ public sealed class PcLink
 
 	/// <summary>PC bir sıcaklık uyarısı gönderdiğinde (ana iş parçacığında) uyarı metniyle tetiklenir.</summary>
 	public event Action<string>? AlertReceived;
+
+	/// <summary>PC bir komutu yanıtladığında (ana iş parçacığında): komut adı, başarı, hata kodu (disabled/fanctl/nofan/bad).</summary>
+	public event Action<string, bool, string?>? CommandResult;
 
 	public void Start(PairingInfo info)
 	{
@@ -146,7 +151,45 @@ public sealed class PcLink
 		var stream = tcp.GetStream();
 		var hello = JsonSerializer.Serialize(new { hello = "dHud", token = info.Token }) + "\n";
 		await stream.WriteAsync(Encoding.UTF8.GetBytes(hello), ct);
+		_stream = stream;
+		try
+		{
+			return await ReadLoopAsync(stream, ct);
+		}
+		finally
+		{
+			_stream = null;
+		}
+	}
 
+	/// <summary>PC'ye bir komut satırı yollar (ör. fan değişikliği). Bağlı değilse false. Sonuç <see cref="CommandResult"/> ile gelir.</summary>
+	public async Task<bool> SendCommandAsync(object command)
+	{
+		var stream = _stream;
+		if (stream is null)
+		{
+			return false;
+		}
+
+		var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, Json) + "\n");
+		await _writeLock.WaitAsync();
+		try
+		{
+			await stream.WriteAsync(bytes);
+			return true;
+		}
+		catch (Exception)
+		{
+			return false;
+		}
+		finally
+		{
+			_writeLock.Release();
+		}
+	}
+
+	private async Task<SessionResult> ReadLoopAsync(NetworkStream stream, CancellationToken ct)
+	{
 		using var reader = new StreamReader(stream, Encoding.UTF8);
 		var gotData = false;
 		while (true)
@@ -177,6 +220,15 @@ public sealed class PcLink
 					MainThread.BeginInvokeOnMainThread(() => AlertReceived?.Invoke(text));
 				}
 
+				continue;
+			}
+
+			if (doc.RootElement.TryGetProperty("ack", out var ack))
+			{
+				var cmd = ack.TryGetProperty("cmd", out var c) ? c.GetString() ?? string.Empty : string.Empty;
+				var success = ack.TryGetProperty("ok", out var o) && o.ValueKind == JsonValueKind.True;
+				var err = ack.TryGetProperty("err", out var e) && e.ValueKind == JsonValueKind.String ? e.GetString() : null;
+				MainThread.BeginInvokeOnMainThread(() => CommandResult?.Invoke(cmd, success, err));
 				continue;
 			}
 

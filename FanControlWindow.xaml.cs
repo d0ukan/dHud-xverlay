@@ -427,6 +427,15 @@ public partial class FanControlWindow : Window
         ForceRebuild();
     }
 
+    /// <summary>Ayarlar dışarıdan (ör. mobil uygulamadan) değişti: fan kartlarını yeniden oluşturur.</summary>
+    public void Reload()
+    {
+        if (IsLoaded)
+        {
+            ForceRebuild();
+        }
+    }
+
     private void ForceRebuild()
     {
         _builtFor = string.Empty;

@@ -33,6 +33,7 @@ public partial class MainPage : ContentPage
 
 		App.Link.Changed += Refresh;
 		App.Link.AlertReceived += OnAlert;
+		App.Link.CommandResult += OnCommandResult;
 		Dashboard.SizeChanged += Dashboard_SizeChanged;
 
 		// Tablet şarjdayken (dock/duvar standı) ekran kapanmasın; pilde normal uyku süresi geçerli.
@@ -106,7 +107,7 @@ public partial class MainPage : ContentPage
 	private void ApplyDensity(bool compact)
 	{
 		var padding = new Thickness(compact ? 10 : 14);
-		foreach (var card in new[] { CpuCard, GpuCard, GraphCard, RamCard, NetCard })
+		foreach (var card in new[] { CpuCard, GpuCard, GraphCard, RamCard, NetCard, FanCard })
 		{
 			card.Padding = padding;
 		}
@@ -155,11 +156,13 @@ public partial class MainPage : ContentPage
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 0, 1);
 				Place(GraphCard, 1, 0, columnSpan: 2);
 				Place(RamCard, 2, 0);
 				Place(NetCard, 2, 1);
+				Place(FanCard, 3, 0, columnSpan: 2);
 				break;
 
 			case LayoutMode.CompactWide:
@@ -172,16 +175,18 @@ public partial class MainPage : ContentPage
 
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 0, 1);
 				Place(RamCard, 0, 2);
 				Place(GraphCard, 1, 0, columnSpan: 2);
 				Place(NetCard, 1, 2);
+				Place(FanCard, 2, 0, columnSpan: 3);
 				break;
 
 			default:
 				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-				for (var i = 0; i < 5; i++)
+				for (var i = 0; i < 6; i++)
 				{
 					Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				}
@@ -189,9 +194,10 @@ public partial class MainPage : ContentPage
 				Graph.MinimumHeightRequest = 220;
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 1, 0);
-				Place(GraphCard, 2, 0);
-				Place(RamCard, 3, 0);
-				Place(NetCard, 4, 0);
+				Place(FanCard, 2, 0);
+				Place(GraphCard, 3, 0);
+				Place(RamCard, 4, 0);
+				Place(NetCard, 5, 0);
 				break;
 		}
 
@@ -254,6 +260,7 @@ public partial class MainPage : ContentPage
 			NetDown.Text = FormatSpeed(s.Net?.DownloadBytesPerSecond);
 			NetUp.Text = FormatSpeed(s.Net?.UploadBytesPerSecond);
 			NetPing.Text = s.Net?.PingMs is long ms ? $"{ms} ms" : "--";
+			RefreshFans(s);
 		}
 
 		_graph.Cpu = link.CpuTemp.ToList();
@@ -334,6 +341,194 @@ public partial class MainPage : ContentPage
 		}
 
 		return (v < 10 && i > 0 ? $"{v:0.0}" : $"{v:0}") + " " + units[i];
+	}
+
+	// ---- Fanlar ----
+
+	private string _fanKey = string.Empty;
+	private readonly Dictionary<string, (Label Detail, Label Mode)> _fanLabels = [];
+
+	private static readonly (string Key, string Label)[] FanPresets =
+	[
+		("quiet", "FanQuiet"), ("optimal", "FanOptimal"), ("max", "FanMax")
+	];
+
+	private void RefreshFans(PcSnapshot s)
+	{
+		var fans = s.Fans ?? [];
+		FanCard.IsVisible = fans.Count > 0;
+		FanTitle.Text = Loc.T("Fans");
+		FanAllButton.Text = Loc.T("FanAll");
+		FanAllButton.IsVisible = s.FanCtl is { Remote: true, Enabled: true };
+		FanEmergency.IsVisible = s.FanCtl?.Emergency == true;
+		FanEmergency.Text = Loc.T("FanEmergency");
+
+		var key = string.Join("|", fans.Select(f => f.Id));
+		if (key != _fanKey)
+		{
+			_fanKey = key;
+			_fanLabels.Clear();
+			FanRows.Children.Clear();
+			foreach (var fan in fans)
+			{
+				FanRows.Children.Add(BuildFanRow(fan));
+			}
+		}
+
+		foreach (var fan in fans)
+		{
+			if (!_fanLabels.TryGetValue(fan.Id, out var labels))
+			{
+				continue;
+			}
+
+			var rpm = fan.Rpm is float r ? $"{r:0} RPM" : "-- RPM";
+			var pct = fan.Pct is float p ? $"{p:0}%" : "--%";
+			labels.Detail.Text = $"{rpm} · {pct}" + (fan.Stalled ? " · " + Loc.T("FanStalled") : string.Empty);
+			labels.Detail.TextColor = fan.Stalled ? Color.FromArgb("#F87171") : Color.FromArgb("#9CA3AF");
+			labels.Mode.Text = fan.Mode switch
+			{
+				"manual" => Loc.T("FanModeManual", fan.Manual),
+				"curve" => Loc.T("FanModeCurve", fan.Curve ?? string.Empty),
+				_ => Loc.T("FanAuto")
+			};
+		}
+	}
+
+	private View BuildFanRow(FanInfo fan)
+	{
+		var name = new Label { Text = fan.Name, FontAttributes = FontAttributes.Bold, FontSize = 14, TextColor = Color.FromArgb("#F1F2F6"), LineBreakMode = LineBreakMode.TailTruncation };
+		var detail = new Label { FontSize = 12 };
+		var mode = new Label { FontSize = 12, HorizontalTextAlignment = TextAlignment.End, VerticalOptions = LayoutOptions.Center, TextColor = Color.FromArgb("#60A5FA") };
+		var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], Padding = new Thickness(0, 8), MinimumHeightRequest = 44 };
+		row.Add(new VerticalStackLayout { Children = { name, detail } }, 0, 0);
+		row.Add(mode, 1, 0);
+
+		var tap = new TapGestureRecognizer();
+		var id = fan.Id;
+		tap.Tapped += async (_, _) => await EditFanAsync(id);
+		row.GestureRecognizers.Add(tap);
+		_fanLabels[fan.Id] = (detail, mode);
+		return row;
+	}
+
+	/// <summary>PC'nin fan değişikliğine izin verip vermediğini denetler; vermiyorsa nedenini gösterir.</summary>
+	private async Task<bool> CanControlFansAsync()
+	{
+		var ctl = App.Link.Latest?.FanCtl;
+		if (ctl is null || !ctl.Remote)
+		{
+			await DisplayAlert("dHud", Loc.T("FanRemoteOff"), Loc.T("Ok"));
+			return false;
+		}
+
+		if (!ctl.Enabled)
+		{
+			await DisplayAlert("dHud", Loc.T("FanCtlOff"), Loc.T("Ok"));
+			return false;
+		}
+
+		return true;
+	}
+
+	private async Task EditFanAsync(string id)
+	{
+		var fan = App.Link.Latest?.Fans?.FirstOrDefault(f => f.Id == id);
+		if (fan is null || !await CanControlFansAsync())
+		{
+			return;
+		}
+
+		var choices = new List<string> { Loc.T("FanAuto"), Loc.T("FanManual") };
+		choices.AddRange(FanPresets.Select(p => Loc.T(p.Label)));
+		var action = await DisplayActionSheet(fan.Name, Loc.T("Cancel"), null, [.. choices]);
+		if (action is null || action == Loc.T("Cancel"))
+		{
+			return;
+		}
+
+		if (action == Loc.T("FanAuto"))
+		{
+			await SendAsync(new { cmd = "fan", id, mode = "auto" });
+			return;
+		}
+
+		// Pompa veya sabit hız: sıcaklığa tepki vermediği için önce onay.
+		var risky = fan.Pump || action == Loc.T("FanManual");
+		if (risky && !await DisplayAlert(fan.Name, Loc.T(fan.Pump ? "FanPumpWarn" : "FanManualWarn"), Loc.T("Yes"), Loc.T("No")))
+		{
+			return;
+		}
+
+		if (action == Loc.T("FanManual"))
+		{
+			string[] steps = ["30", "40", "50", "60", "70", "80", "90", "100"];
+			var picked = await DisplayActionSheet(Loc.T("FanPercent"), Loc.T("Cancel"), null, steps.Select(x => x + "%").ToArray());
+			if (picked is null || picked == Loc.T("Cancel"))
+			{
+				return;
+			}
+
+			await SendAsync(new { cmd = "fan", id, mode = "manual", percent = int.Parse(picked.TrimEnd('%')) });
+			return;
+		}
+
+		var preset = FanPresets.First(p => Loc.T(p.Label) == action).Key;
+		await SendAsync(new { cmd = "fan", id, mode = "curve", preset });
+	}
+
+	private async void FanAllButton_Clicked(object? sender, EventArgs e)
+	{
+		if (!await CanControlFansAsync())
+		{
+			return;
+		}
+
+		var choices = FanPresets.Select(p => Loc.T(p.Label)).Append(Loc.T("FanAllAuto")).ToArray();
+		var action = await DisplayActionSheet(Loc.T("FanAll"), Loc.T("Cancel"), null, choices);
+		if (action is null || action == Loc.T("Cancel"))
+		{
+			return;
+		}
+
+		if (!await DisplayAlert(Loc.T("FanAll"), Loc.T("FanAllConfirm", action), Loc.T("Yes"), Loc.T("No")))
+		{
+			return;
+		}
+
+		if (action == Loc.T("FanAllAuto"))
+		{
+			await SendAsync(new { cmd = "fanAll", mode = "auto" });
+		}
+		else
+		{
+			var preset = FanPresets.First(p => Loc.T(p.Label) == action).Key;
+			await SendAsync(new { cmd = "fanAll", mode = "curve", preset });
+		}
+	}
+
+	private async Task SendAsync(object command)
+	{
+		if (!await App.Link.SendCommandAsync(command))
+		{
+			await DisplayAlert("dHud", Loc.T("FanSendFailed"), Loc.T("Ok"));
+		}
+	}
+
+	private async void OnCommandResult(string cmd, bool ok, string? error)
+	{
+		if (ok)
+		{
+			return;
+		}
+
+		var key = error switch
+		{
+			"disabled" => "FanRemoteOff",
+			"fanctl" => "FanCtlOff",
+			_ => "FanSendFailed"
+		};
+		await DisplayAlert("dHud", Loc.T(key), Loc.T("Ok"));
 	}
 
 	// ---- Eşleştirme ----

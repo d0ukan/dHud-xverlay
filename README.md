@@ -113,6 +113,8 @@ An Android app (phone or tablet) that mirrors dHud over your **local network** (
 2. On the PC: *Settings → Behavior → Mobile app* → tick **Allow the dHud mobile app to connect**. A QR code appears. If Windows Firewall asks, allow access on **private networks**.
 3. In the Android app tap **Scan QR code** and scan it. Done: the dot at the top turns green.
 
+**Fans from the phone:** the app lists every fan (RPM, %, mode, curve name). To change them, tick **Let the mobile app change fan settings** under the QR code (off by default, so the phone only watches) and turn on fan control on the PC. Then tap a fan to pick *Auto*, *Manual %* or a curve (*Quiet / Optimal / Max Cold*), or use **All fans**. The phone only sends the choice: the PC's safety rules (emergency 100%, minimum speed, gradual slow-down) still apply, and the PC shows a notification for every change.
+
 If the PC's IP address changes, the app finds the PC again by itself. The app also checks for new versions and offers a one-tap update. **Reset pairing** (below the QR code) disconnects every device.
 
 Only devices that know the pairing key can connect; nothing is sent over the internet. dHud uses TCP port `47821` and UDP port `47822` on your local network.

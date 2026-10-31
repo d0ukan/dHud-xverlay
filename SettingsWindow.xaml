@@ -269,6 +269,9 @@
                                    RenderOptions.BitmapScalingMode="NearestNeighbor" />
                         </Border>
                         <TextBlock x:Name="MobileStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                        <CheckBox x:Name="MobileFanCheckBox" Content="{h:Loc S.MobileFan}" Margin="0,8,0,0"
+                                  Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                        <TextBlock Text="{h:Loc S.MobileFanHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                         <Button Content="{h:Loc S.MobileReset}" Style="{StaticResource DarkButton}"
                                 HorizontalAlignment="Left" Margin="0,6,0,0" Click="MobileResetButton_Click" />
                     </StackPanel>

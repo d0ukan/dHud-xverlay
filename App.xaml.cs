@@ -46,6 +46,7 @@ public partial class App : Application
     public MobileLinkService MobileLink { get; private set; } = null!;
     public FpsMonitor Fps { get; } = new();
     public FanControlService FanControl { get; private set; } = null!;
+    public RemoteFanService RemoteFan { get; private set; } = null!;
 
     /// <summary>Fan penceresi açıkken anakart sensörleri (fan listesi) kontrol kapalı olsa da taranır.</summary>
     public bool FanWindowOpen { get; set; }
@@ -117,7 +118,18 @@ public partial class App : Application
         AppDomain.CurrentDomain.ProcessExit += (_, _) => FanControl?.ReleaseAll();
         SessionEnding += (_, _) => FanControl?.ReleaseAll();
 
-        MobileLink = new MobileLinkService(Monitor, Settings) { FpsProvider = () => Fps.Fps };
+        RemoteFan = new RemoteFanService(Monitor, Settings, FanControl);
+        RemoteFan.Changed += summary =>
+        {
+            _tray?.ShowBalloon(Loc.T("F.Title"), Loc.T("F.RemoteChanged", summary), Forms.ToolTipIcon.Info);
+            _fanWindow?.Reload();
+        };
+        MobileLink = new MobileLinkService(Monitor, Settings)
+        {
+            FpsProvider = () => Fps.Fps,
+            FanProvider = () => RemoteFan.BuildState(),
+            CommandHandler = command => Dispatcher.InvokeAsync(() => RemoteFan.Apply(command)).Task
+        };
         Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
 
         _overlay = new MainWindow();

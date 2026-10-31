@@ -24,6 +24,7 @@ public sealed class MobileLinkService : IDisposable
     private const int ProtocolVersion = 1;
     private const int MaxClients = 8;
     private const int MaxHelloBytes = 512;
+    private const int MaxCommandBytes = 1024;
     private static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(3);
 
@@ -50,6 +51,12 @@ public sealed class MobileLinkService : IDisposable
 
     /// <summary>Ölçülen oyun FPS'i (yoksa null). Anlık görüntüyle birlikte cihazlara gönderilir.</summary>
     public Func<float?>? FpsProvider { get; set; }
+
+    /// <summary>Fan durumu: (fan listesi, genel durum). Anlık görüntüye eklenir.</summary>
+    public Func<(object Fans, object State)>? FanProvider { get; set; }
+
+    /// <summary>Cihazdan gelen komutu uygular (ana iş parçacığına taşır). Dönüş: null = başarılı, aksi halde hata kodu.</summary>
+    public Func<JsonElement, Task<string?>>? CommandHandler { get; set; }
 
     /// <summary>Dinleme başlatılamadıysa nedeni (ör. port başka uygulamada kullanımda).</summary>
     public string? LastError { get; private set; }
@@ -326,10 +333,25 @@ public sealed class MobileLinkService : IDisposable
                 await WriteAsync(stream, Serialize(latest), ct).ConfigureAwait(false);
             }
 
-            // İstemci bağlantıyı kapatana kadar bekle; veri OnSnapshot ile gönderilir.
-            var buffer = new byte[64];
-            while (await stream.ReadAsync(buffer, ct).ConfigureAwait(false) > 0)
+            // İstemci bağlantıyı kapatana kadar bekle; veri OnSnapshot ile gönderilir, gelen satırlar komuttur.
+            var buffer = new byte[512];
+            var line = new List<byte>();
+            int read;
+            while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
             {
+                for (var i = 0; i < read; i++)
+                {
+                    if (buffer[i] == (byte)'\n')
+                    {
+                        var text = Encoding.UTF8.GetString(line.ToArray());
+                        line.Clear();
+                        _ = HandleCommandAsync(client, text);
+                    }
+                    else if (line.Count < MaxCommandBytes)
+                    {
+                        line.Add(buffer[i]);
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -348,6 +370,32 @@ public sealed class MobileLinkService : IDisposable
 
             tcp.Dispose();
         }
+    }
+
+    /// <summary>Eşleşmiş cihazdan gelen bir komut satırını işler ve sonucu <c>ack</c> olarak yanıtlar.</summary>
+    private async Task HandleCommandAsync(Client client, string text)
+    {
+        string cmd = string.Empty;
+        string? error = "bad";
+        try
+        {
+            using var doc = JsonDocument.Parse(text);
+            var root = doc.RootElement.Clone();
+            cmd = root.TryGetProperty("cmd", out var c) ? c.GetString() ?? string.Empty : string.Empty;
+            if (CommandHandler is { } handler && cmd.Length > 0)
+            {
+                error = await handler(root).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Mobil komut işlenemedi: {ex.Message}");
+            error = "bad";
+        }
+
+        var ack = Append(JsonSerializer.SerializeToUtf8Bytes(
+            new { ack = new { cmd, ok = error is null, err = error } }, Json));
+        await SendReliableAsync(client, ack).ConfigureAwait(false);
     }
 
     private bool IsValidHello(string? line)
@@ -482,8 +530,10 @@ public sealed class MobileLinkService : IDisposable
         }
     }
 
-    private byte[] Serialize(SensorSnapshot s) =>
-        Append(JsonSerializer.SerializeToUtf8Bytes(
+    private byte[] Serialize(SensorSnapshot s)
+    {
+        var fan = FanProvider?.Invoke();
+        return Append(JsonSerializer.SerializeToUtf8Bytes(
             new
             {
                 v = ProtocolVersion,
@@ -493,8 +543,11 @@ public sealed class MobileLinkService : IDisposable
                 gpu = s.Gpu,
                 ram = s.Memory,
                 net = s.Network,
-                fps = FpsProvider?.Invoke()
+                fps = FpsProvider?.Invoke(),
+                fans = fan?.Fans,
+                fanCtl = fan?.State
             }, Json));
+    }
 
     private static byte[] Append(byte[] json)
     {

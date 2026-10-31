@@ -109,6 +109,7 @@ public partial class SettingsWindow : Window
         FpsOverlayCheckBox.IsChecked = s.FpsOverlay;
         FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
         MobileCheckBox.IsChecked = s.MobileEnabled;
+        MobileFanCheckBox.IsChecked = s.MobileFanControl;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
         RefreshMobile();
         VersionText.Text = UpdateService.CurrentVersionText;
@@ -165,6 +166,7 @@ public partial class SettingsWindow : Window
         s.FpsEnabled = FpsCheckBox.IsChecked == true;
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
+        s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
         {
             s.UpdateCheckHours = int.Parse((string)hours.Tag);

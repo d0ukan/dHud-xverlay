@@ -22,8 +22,41 @@ public sealed class NetReading
 	public long? PingMs { get; set; }
 }
 
+/// <summary>PC'deki bir fan kanalı. Mode: auto / manual / curve.</summary>
+public sealed class FanInfo
+{
+	public string Id { get; set; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
+	public bool Gpu { get; set; }
+	public bool Pump { get; set; }
+	public float? Rpm { get; set; }
+	public float? Pct { get; set; }
+	public string Mode { get; set; } = "auto";
+
+	/// <summary>Eğri modundaysa eğrinin adı (PC'nin dilinde).</summary>
+	public string? Curve { get; set; }
+
+	public int Manual { get; set; } = 50;
+	public bool Stalled { get; set; }
+}
+
+/// <summary>PC'de fan kontrolünün genel durumu.</summary>
+public sealed class FanCtl
+{
+	/// <summary>PC'de fan kontrolü açık mı.</summary>
+	public bool Enabled { get; set; }
+
+	/// <summary>PC, telefondan fan değişikliğine izin veriyor mu.</summary>
+	public bool Remote { get; set; }
+
+	public bool Emergency { get; set; }
+}
+
 public sealed class PcSnapshot
 {
+	public List<FanInfo>? Fans { get; set; }
+	public FanCtl? FanCtl { get; set; }
+
 	public string? Pc { get; set; }
 	public DeviceReading? Cpu { get; set; }
 	public DeviceReading? Gpu { get; set; }
