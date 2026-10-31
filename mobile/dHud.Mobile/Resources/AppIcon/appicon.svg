@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="dHud">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23252E"/>
+      <stop offset="1" stop-color="#14151A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cam panel -->
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <rect x="4.5" y="4.5" width="119" height="119" rx="27.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+
+  <!-- HUD köşe çerçevesi -->
+  <g fill="none" stroke="#3B82F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 46 V30 H44"/>
+    <path d="M84 30 H100 V46"/>
+    <path d="M100 82 V98 H84"/>
+    <path d="M44 98 H28 V82"/>
+  </g>
+
+  <!-- Nabız / sıcaklık çizgisi -->
+  <polyline points="36,70 50,70 57,56 66,80 74,62 80,70 92,70"
+            fill="none" stroke="#4ADE80" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

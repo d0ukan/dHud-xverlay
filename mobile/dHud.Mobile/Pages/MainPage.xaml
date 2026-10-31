@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dHud.Mobile.Pages.MainPage"
+             BackgroundColor="{StaticResource BgColor}"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16,12" RowSpacing="10">
+
+        <!-- Üst çubuk -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+            <VerticalStackLayout x:Name="TitleBox" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="8">
+                    <BoxView x:Name="StatusDot" WidthRequest="10" HeightRequest="10" CornerRadius="5"
+                             VerticalOptions="Center" Color="{StaticResource SubtleColor}" />
+                    <Label Text="dHud" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                </HorizontalStackLayout>
+                <Label x:Name="StatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" />
+            </VerticalStackLayout>
+            <Button x:Name="FullscreenButton" Grid.Column="1" Text="⛶" Style="{StaticResource IconButton}"
+                    Clicked="FullscreenButton_Clicked" />
+            <Button x:Name="MenuButton" Grid.Column="2" Text="⋮" Style="{StaticResource IconButton}"
+                    Clicked="MenuButton_Clicked" />
+        </Grid>
+
+        <!-- Güncelleme çubuğu -->
+        <Border x:Name="UpdateBanner" Grid.Row="1" IsVisible="False" Style="{StaticResource CardStyle}" Padding="12,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label x:Name="UpdateLabel" VerticalOptions="Center" TextColor="{StaticResource TextColor}" />
+                <Button x:Name="InstallButton" Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                        HeightRequest="38" Padding="16,0" Clicked="InstallButton_Clicked" />
+            </Grid>
+        </Border>
+
+        <!-- Eşleşme yokken karşılama -->
+        <VerticalStackLayout x:Name="EmptyState" Grid.Row="2" IsVisible="False" Spacing="14"
+                             VerticalOptions="Center" HorizontalOptions="Center" MaximumWidthRequest="420">
+            <Label x:Name="EmptyTitle" FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center"
+                   TextColor="{StaticResource TextColor}" />
+            <Label x:Name="EmptyText" HorizontalTextAlignment="Center" TextColor="{StaticResource SubtleColor}" />
+            <Button x:Name="ScanButton" Style="{StaticResource PrimaryButton}" Clicked="ScanButton_Clicked" />
+            <Button x:Name="ManualButton" Style="{StaticResource SecondaryButton}" Clicked="ManualButton_Clicked" />
+        </VerticalStackLayout>
+
+        <!-- Göstergeler -->
+        <ScrollView x:Name="Dashboard" Grid.Row="2">
+            <Grid x:Name="Cards" ColumnSpacing="12" RowSpacing="12">
+
+                <!-- CPU -->
+                <Border x:Name="CpuCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Label Text="CPU" Style="{StaticResource TitleLabel}" />
+                            <Label x:Name="CpuName" Grid.Column="1" FontSize="12" LineBreakMode="TailTruncation"
+                                   HorizontalTextAlignment="End" TextColor="{StaticResource SubtleColor}" />
+                        </Grid>
+                        <Label x:Name="CpuTemp" Text="--°C" Style="{StaticResource BigLabel}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label x:Name="CpuUsageCaption" Style="{StaticResource CaptionLabel}" />
+                            <Label x:Name="CpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
+                        </Grid>
+                        <ProgressBar x:Name="CpuLoadBar" ProgressColor="{StaticResource AccentColor}" />
+                        <Grid ColumnDefinitions="*,*,*">
+                            <VerticalStackLayout>
+                                <Label x:Name="CpuClockCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="CpuClock" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label x:Name="CpuPowerCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="CpuPower" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2">
+                                <Label x:Name="CpuFanCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="CpuFan" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- GPU -->
+                <Border x:Name="GpuCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Label Text="GPU" Style="{StaticResource TitleLabel}" />
+                            <Label x:Name="GpuName" Grid.Column="1" FontSize="12" LineBreakMode="TailTruncation"
+                                   HorizontalTextAlignment="End" TextColor="{StaticResource SubtleColor}" />
+                        </Grid>
+                        <Label x:Name="GpuTemp" Text="--°C" Style="{StaticResource BigLabel}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label x:Name="GpuUsageCaption" Style="{StaticResource CaptionLabel}" />
+                            <Label x:Name="GpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
+                        </Grid>
+                        <ProgressBar x:Name="GpuLoadBar" ProgressColor="{StaticResource AccentColor}" />
+                        <Grid ColumnDefinitions="*,*,*">
+                            <VerticalStackLayout>
+                                <Label x:Name="GpuClockCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="GpuClock" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label x:Name="GpuPowerCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="GpuPower" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2">
+                                <Label x:Name="GpuFanCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="GpuFan" Text="--" Style="{StaticResource ValueLabel}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label x:Name="GpuVramCaption" Style="{StaticResource CaptionLabel}" />
+                            <Label x:Name="GpuVram" Grid.Column="1" Text="--" Style="{StaticResource ValueLabel}" FontSize="13" />
+                        </Grid>
+                        <ProgressBar x:Name="GpuVramBar" ProgressColor="{StaticResource AccentColor}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Sıcaklık grafiği -->
+                <Border x:Name="GraphCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
+                            <Label x:Name="GraphTitle" Style="{StaticResource TitleLabel}" />
+                            <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                                <BoxView WidthRequest="10" HeightRequest="10" CornerRadius="5" Color="#3B82F6" VerticalOptions="Center" />
+                                <Label x:Name="CpuLegend" Text="CPU" FontSize="12" TextColor="{StaticResource TextColor}" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Grid.Column="2" Spacing="6">
+                                <BoxView WidthRequest="10" HeightRequest="10" CornerRadius="5" Color="#A78BFA" VerticalOptions="Center" />
+                                <Label x:Name="GpuLegend" Text="GPU" FontSize="12" TextColor="{StaticResource TextColor}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                        <GraphicsView x:Name="Graph" HeightRequest="220" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- RAM -->
+                <Border x:Name="RamCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="RAM" Style="{StaticResource TitleLabel}" />
+                        <Label x:Name="RamValue" Text="--" Style="{StaticResource BigLabel}" FontSize="30" />
+                        <ProgressBar x:Name="RamBar" ProgressColor="{StaticResource AccentColor}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Ağ -->
+                <Border x:Name="NetCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Label Text="NET" Style="{StaticResource TitleLabel}" />
+                            <Label x:Name="NetName" Grid.Column="1" FontSize="12" LineBreakMode="TailTruncation"
+                                   HorizontalTextAlignment="End" TextColor="{StaticResource SubtleColor}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*">
+                            <VerticalStackLayout>
+                                <Label x:Name="NetDownCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="NetDown" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label x:Name="NetUpCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="NetUp" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2">
+                                <Label x:Name="NetPingCaption" Style="{StaticResource CaptionLabel}" />
+                                <Label x:Name="NetPing" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentPage>

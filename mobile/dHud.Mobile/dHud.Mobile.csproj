@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Yalnızca Android: PC'deki dHud'a bağlanan izleme/gösterge paneli uygulaması. -->
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+
+		<OutputType>Exe</OutputType>
+		<RootNamespace>dHud.Mobile</RootNamespace>
+		<AssemblyName>dHud.Mobile</AssemblyName>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<MauiXamlInflator>SourceGen</MauiXamlInflator>
+
+		<ApplicationTitle>dHud</ApplicationTitle>
+		<ApplicationId>com.d0ukan.dhud</ApplicationId>
+
+		<!-- Sürüm PC uygulamasıyla aynı numarayı taşır. ApplicationVersion (versionCode) her sürümde artmalıdır:
+		     1.0.15 → 10015. Release iş akışı bunları etiketten verir. -->
+		<ApplicationDisplayVersion>1.0.15</ApplicationDisplayVersion>
+		<ApplicationVersion>10015</ApplicationVersion>
+
+		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<!-- GitHub Releases'e .apk olarak konur (Play Store paketi .aab değil). -->
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<!-- Boyutu küçültmek için yalnızca gerçek cihaz mimarileri (telefon/tablet). -->
+		<RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+		<DebugType>none</DebugType>
+		<!-- Android araçlarındaki "missing native code generation state" hatasını önler. -->
+		<AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#141418" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#141418" BaseSize="128,128" />
+		<MauiFont Include="Resources\Fonts\*" />
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<!-- QR kod tarama (Google ML Kit, kamera izni ister) -->
+		<PackageReference Include="BarcodeScanning.Native.Maui" Version="3.0.2" />
+	</ItemGroup>
+
+</Project>

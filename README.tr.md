@@ -20,6 +20,7 @@
 - Koyu temalı sistem tepsisi menüsü ve Windows başlangıcında çalıştırma
 - İngilizce ve Türkçe arayüz (varsayılan İngilizce, Ayarlar → Görünüm'den değiştirilir)
 - GitHub Releases üzerinden otomatik güncelleme denetimi (açılışta ve çalıştığı sürece 1–24 saatte bir; bildirim gelir, tek tıkla güncellenir)
+- Android yardımcı uygulaması (Releases içinde APK): yerel ağda canlı değerler, sıcaklık grafiği ve tablet için tam ekran gösterge paneli. Ayarlar → Behavior → Mobil uygulama bölümündeki QR kodu okutarak eşleşir
 
 ## Gereksinimler
 

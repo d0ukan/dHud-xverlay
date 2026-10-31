@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- PC uygulamasındaki (dHud) koyu temanın renkleri -->
+    <Color x:Key="BgColor">#FF141418</Color>
+    <Color x:Key="CardColor">#FF1C1D25</Color>
+    <Color x:Key="StrokeColor">#22FFFFFF</Color>
+    <Color x:Key="TextColor">#FFF1F2F6</Color>
+    <Color x:Key="SubtleColor">#FF9CA3AF</Color>
+    <Color x:Key="AccentColor">#FF3B82F6</Color>
+    <Color x:Key="GoodColor">#FF4ADE80</Color>
+    <Color x:Key="WarnColor">#FFFACC15</Color>
+    <Color x:Key="HotColor">#FFF87171</Color>
+
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource CardColor}" />
+        <Setter Property="Stroke" Value="{StaticResource StrokeColor}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="TitleLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource SubtleColor}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="BigLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource TextColor}" />
+        <Setter Property="FontSize" Value="46" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="ValueLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource TextColor}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="CaptionLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource SubtleColor}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <Style x:Key="IconButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource SubtleColor}" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource AccentColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource TextColor}" />
+        <Setter Property="BorderColor" Value="{StaticResource StrokeColor}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+
+</ResourceDictionary>

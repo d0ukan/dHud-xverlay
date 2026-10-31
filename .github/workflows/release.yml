@@ -1,6 +1,6 @@
 name: Release
 
-# `v1.0.0` gibi bir etiket (tag) push'landığında tek dosyalık exe ve kurulum dosyası derlenir,
+# `v1.0.0` gibi bir etiket (tag) push'landığında tek dosyalık exe, kurulum dosyası ve Android APK derlenir,
 # GitHub Release olarak yayınlanır.
 on:
   push:
@@ -10,7 +10,63 @@ permissions:
   contents: write
 
 jobs:
+  # Android uygulaması (mobile/dHud.Mobile). Bu iş başarısız olsa bile Windows sürümü yayınlanır.
+  android:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Android iş yükünü kur
+        run: dotnet workload install android
+
+      - name: APK derle ve imzala
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
+          # versionCode her sürümde artmalı: 1.0.14 -> 10014
+          CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
+          # Anahtar dosyası depoda tutulmaz; GitHub gizli anahtarından üretilir.
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/dhud.keystore"
+
+          dotnet publish mobile/dHud.Mobile/dHud.Mobile.csproj -f net10.0-android -c Release \
+            -p:ApplicationDisplayVersion="$VERSION" -p:ApplicationVersion="$CODE" \
+            -p:InstallAndroidDependencies=true -p:AcceptAndroidSDKLicenses=True \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore="$RUNNER_TEMP/dhud.keystore" \
+            -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
+            -p:AndroidSigningKeyPass=env:ANDROID_KEY_PASSWORD \
+            -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD
+
+          # Uygulama içi güncelleme dHud-<sürüm>.apk adını arar.
+          mkdir -p apk
+          APK=$(find mobile/dHud.Mobile/bin/Release -name '*-Signed.apk' | head -n 1)
+          cp "$APK" "apk/dHud-$VERSION.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: apk/*.apk
+
   release:
+    needs: android
+    # Android işi başarısız olsa da Windows sürümü yayınlanır.
+    if: ${{ !cancelled() }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +79,7 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          dotnet publish -c Release -p:Version="$VERSION"
+          dotnet publish dHud.csproj -c Release -p:Version="$VERSION"
           # Release dosyasında sürüm görünsün (uygulama içi güncelleme dHud-<sürüm>.exe adını arar).
           cp bin/Release/publish/dHud.exe "bin/Release/publish/dHud-$VERSION.exe"
 
@@ -38,13 +94,22 @@ jobs:
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" installer\dHud.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: APK indir
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: apk
+
       - name: Release oluştur
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          gh release create "$GITHUB_REF_NAME" \
-            "bin/Release/publish/dHud-$VERSION.exe" \
-            "bin/Release/installer/dHud-Setup-$VERSION.exe" \
+          FILES=("bin/Release/publish/dHud-$VERSION.exe" "bin/Release/installer/dHud-Setup-$VERSION.exe")
+          if [ -f "apk/dHud-$VERSION.apk" ]; then
+            FILES+=("apk/dHud-$VERSION.apk")
+          fi
+          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" \
             --title "dHud $GITHUB_REF_NAME" --generate-notes

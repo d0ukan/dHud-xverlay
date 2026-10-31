@@ -20,6 +20,7 @@
 - Dark-themed system tray menu and run at Windows startup
 - English and Turkish UI (English by default, switch in Settings → Appearance)
 - Automatic update checks via GitHub Releases (on startup and every 1–24 hours while running; you get a notification and update with one click)
+- Android companion app (APK in Releases): live stats, temperature graph and a full-screen tablet dashboard over your local network. Pair by scanning the QR code in Settings → Behavior → Mobile app
 
 ## Requirements
 
