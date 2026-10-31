@@ -112,6 +112,12 @@ public sealed class AppSettings
 
     public static readonly int[] UpdateCheckChoices = [1, 3, 6, 12, 24];
 
+    /// <summary>Fan hızlarını yazılımla kontrol et. Varsayılan kapalı; kapalıyken fanlara dokunulmaz.</summary>
+    public bool FanControlEnabled { get; set; }
+
+    /// <summary>Fan kanalı başına ayar (anahtar: sensör kimliği). Kayıt olmayan fan "Otomatik"tir.</summary>
+    public Dictionary<string, FanSetting> Fans { get; set; } = [];
+
     /// <summary>Oyun FPS'ini ölç (ETW). Mobil uygulamaya da gönderilir. Yönetici yetkisi gerekir.</summary>
     public bool FpsEnabled { get; set; }
 
@@ -230,6 +236,12 @@ public sealed class SettingsService
         s.GpuWarnTemperature = Math.Clamp(s.GpuWarnTemperature, 30, 100);
         s.GpuHotTemperature = Math.Clamp(s.GpuHotTemperature, s.GpuWarnTemperature + 1, 110);
         s.UpdateIntervalMs = Math.Clamp(s.UpdateIntervalMs, 500, 5000);
+        s.Fans ??= [];
+        foreach (var fan in s.Fans.Values)
+        {
+            FanCurve.Sanitize(fan);
+        }
+
         s.AlertSeconds = Math.Clamp(s.AlertSeconds, 3, 120);
         if (!AppSettings.UpdateCheckChoices.Contains(s.UpdateCheckHours))
         {

@@ -179,6 +179,8 @@ public partial class SettingsWindow : Window
 
     private void Option_Click(object sender, RoutedEventArgs e) => SaveValues();
 
+    private void OpenFanButton_Click(object sender, RoutedEventArgs e) => App.Current.OpenFanControl();
+
     private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e) =>
         await App.Current.CheckForUpdatesAsync(manual: true);
 

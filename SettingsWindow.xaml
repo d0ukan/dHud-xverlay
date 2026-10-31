@@ -200,6 +200,10 @@
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
+                    <TextBlock Text="{h:Loc S.FanControl}" Style="{StaticResource SectionHeader}" />
+                    <Button Content="{h:Loc S.FanOpen}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
+                            Margin="0,2,0,0" Click="OpenFanButton_Click" />
+
                     <TextBlock Text="{h:Loc S.Fps}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="FpsCheckBox" Content="{h:Loc S.FpsEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />

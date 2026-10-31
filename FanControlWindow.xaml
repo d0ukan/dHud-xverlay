@@ -1,0 +1,57 @@
+<Window x:Class="DHud.FanControlWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:h="clr-namespace:DHud.Helpers"
+        Title="{h:Loc F.Title}"
+        Width="480"
+        SizeToContent="Height"
+        MaxHeight="720"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        Foreground="{StaticResource TextBrush}">
+
+    <Border Margin="12" CornerRadius="12" Background="#F21A1B22" BorderThickness="1">
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#40FFFFFF" Offset="0" />
+                <GradientStop Color="#14FFFFFF" Offset="1" />
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="18" ShadowDepth="0" Opacity="0.55" />
+        </Border.Effect>
+
+        <StackPanel>
+            <Grid Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <StackPanel Orientation="Horizontal" Margin="16,12,0,8">
+                    <TextBlock Text="&#x2699;" FontFamily="Segoe UI Symbol" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{h:Loc F.Title}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <Button Content="&#x2715;" Style="{StaticResource TitleCloseButton}" HorizontalAlignment="Right"
+                        VerticalAlignment="Top" Margin="0,8,8,0" Click="CloseButton_Click" />
+            </Grid>
+
+            <StackPanel Margin="16,0,16,16">
+                <TextBlock Text="{h:Loc F.Warning}" Style="{StaticResource HintText}" TextWrapping="Wrap"
+                           Foreground="{StaticResource WarnBrush}" />
+                <CheckBox x:Name="EnableCheckBox" Content="{h:Loc F.Enable}" Style="{StaticResource DarkCheckBox}"
+                          Margin="0,10,0,0" Click="EnableCheckBox_Click" />
+                <TextBlock x:Name="EmergencyText" Text="{h:Loc F.Emergency}" Foreground="{StaticResource HotBrush}"
+                           FontWeight="SemiBold" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap" />
+                <TextBlock x:Name="NoFansText" Text="{h:Loc F.NoFans}" Style="{StaticResource HintText}"
+                           TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed" />
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="440" Margin="0,8,0,0">
+                    <StackPanel x:Name="FanList" />
+                </ScrollViewer>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

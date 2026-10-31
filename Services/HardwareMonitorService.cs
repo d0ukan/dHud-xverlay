@@ -14,6 +14,9 @@ public sealed record HardwareReading(
     float? MemoryUsedGb = null,
     float? MemoryTotalGb = null);
 
+/// <summary>Yazılımla kontrol edilebilen bir fan kanalı (anakart başlığı veya GPU fanı).</summary>
+public sealed record FanChannel(string Id, string Name, bool IsGpu, ISensor Control, ISensor? Rpm);
+
 public sealed record SensorSnapshot(
     HardwareReading? Cpu,
     HardwareReading? Gpu,
@@ -72,6 +75,11 @@ public sealed class HardwareMonitorService : IDisposable
     private IHardware? _memory;
     private IHardware? _motherboard;
     private bool _opened;
+    private volatile IReadOnlyList<FanChannel> _fanChannels = [];
+    private volatile bool _fanDirty = true;
+
+    /// <summary>Kontrol edilebilir fanlar. Anakart taraması açıkken (<see cref="FanEnabled"/>) ve ilk ölçümden sonra dolar.</summary>
+    public IReadOnlyList<FanChannel> FanChannels => _fanChannels;
 
     /// <summary>Ağ hızı ve ping ölçümü; sensör okumalarıyla aynı döngüde örneklenir.</summary>
     public NetworkMonitor Network { get; } = new();
@@ -154,6 +162,12 @@ public sealed class HardwareMonitorService : IDisposable
             UpdateHardware(_gpu);
             UpdateHardware(_memory);
             UpdateHardware(_motherboard);
+            if (_fanDirty)
+            {
+                DiscoverFans();
+                _fanDirty = false;
+            }
+
 
             snapshot = new SensorSnapshot(
                 _cpu is null ? null : ReadCpu(_cpu, _motherboard),
@@ -200,12 +214,44 @@ public sealed class HardwareMonitorService : IDisposable
         {
             _computer.IsGpuEnabled = GpuEnabled;
             _gpu = GpuEnabled ? SelectGpu(_computer.Hardware) : null;
+            _fanDirty = true;
         }
 
         if (_computer.IsMotherboardEnabled != FanEnabled)
         {
             _computer.IsMotherboardEnabled = FanEnabled;
             _motherboard = FanEnabled ? FindMotherboard() : null;
+            _fanDirty = true;
+        }
+    }
+
+    /// <summary>Kontrol sensörü olan (yazılımla ayarlanabilen) tüm fanları listeler ve devir sensörleriyle eşler.</summary>
+    private void DiscoverFans()
+    {
+        var channels = new List<FanChannel>();
+        foreach (var hardware in _computer.Hardware)
+        {
+            Walk(hardware);
+        }
+
+        _fanChannels = channels;
+
+        void Walk(IHardware h)
+        {
+            var isGpu = h.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
+            foreach (var sensor in h.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Control && sensor.Control is not null)
+                {
+                    var rpm = h.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Fan && s.Name == sensor.Name);
+                    channels.Add(new FanChannel(sensor.Identifier.ToString(), sensor.Name, isGpu, sensor, rpm));
+                }
+            }
+
+            foreach (var sub in h.SubHardware)
+            {
+                Walk(sub);
+            }
         }
     }
 

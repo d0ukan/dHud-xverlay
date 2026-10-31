@@ -32,6 +32,7 @@ public partial class App : Application
     private HotkeyService? _hotkeys;
     private MainWindow? _overlay;
     private SettingsWindow? _settingsWindow;
+    private FanControlWindow? _fanWindow;
     private FpsWindow? _fpsWindow;
     private bool? _hotkeysRegisteredFor;
     private AppLanguage? _appliedLanguage;
@@ -44,6 +45,10 @@ public partial class App : Application
     public HardwareMonitorService Monitor { get; } = new();
     public MobileLinkService MobileLink { get; private set; } = null!;
     public FpsMonitor Fps { get; } = new();
+    public FanControlService FanControl { get; private set; } = null!;
+
+    /// <summary>Fan penceresi açıkken anakart sensörleri (fan listesi) kontrol kapalı olsa da taranır.</summary>
+    public bool FanWindowOpen { get; set; }
     public bool IsElevated { get; private set; }
     public bool IsPawnIoInstalled { get; private set; }
 
@@ -98,6 +103,12 @@ public partial class App : Application
 
         Settings.Load();
         StartupManager.MigrateLegacy();
+
+        FanControl = new FanControlService(Monitor, Settings);
+        // Uygulama nasıl kapanırsa kapansın fanlar BIOS denetimine geri verilir.
+        AppDomain.CurrentDomain.UnhandledException += (_, _) => FanControl?.ReleaseAll();
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => FanControl?.ReleaseAll();
+        SessionEnding += (_, _) => FanControl?.ReleaseAll();
 
         MobileLink = new MobileLinkService(Monitor, Settings) { FpsProvider = () => Fps.Fps };
         Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
@@ -329,6 +340,27 @@ public partial class App : Application
         _fpsWindow.Update(fps);
     }
 
+    /// <summary>Okunacak donanımları ayara göre belirler. Fan kontrolü sıcaklık kaynaklarına ve anakart sensörlerine ihtiyaç duyar.</summary>
+    public void ApplyMonitorFlags()
+    {
+        var s = Settings.Current;
+        Monitor.CpuEnabled = s.ShowCpu || s.FanControlEnabled;
+        Monitor.GpuEnabled = s.ShowGpu || s.FanControlEnabled;
+        Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
+    }
+
+    public void OpenFanControl()
+    {
+        if (_fanWindow is { IsLoaded: true })
+        {
+            _fanWindow.Activate();
+            return;
+        }
+
+        _fanWindow = new FanControlWindow();
+        _fanWindow.Show();
+    }
+
     private void OnSettingsChanged()
     {
         var s = Settings.Current;
@@ -336,9 +368,7 @@ public partial class App : Application
         ApplyLanguageChange(s.Language);
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
-        Monitor.CpuEnabled = s.ShowCpu;
-        Monitor.GpuEnabled = s.ShowGpu;
-        Monitor.FanEnabled = s.ShowFan;
+        ApplyMonitorFlags();
         Monitor.Network.Enabled = s.ShowNetwork;
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
@@ -514,6 +544,7 @@ public partial class App : Application
     {
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        FanControl?.Dispose();
         Fps.Dispose();
         _fpsWindow?.Close();
         MobileLink?.Dispose();
