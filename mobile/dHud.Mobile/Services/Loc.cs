@@ -53,7 +53,7 @@ public static class Loc
 		["Profiles"] = ("PROFILES", "PROFİLLER"),
 		["ProfileHint"] = ("Tap a profile to apply it to all fans. Profiles are saved on the PC.", "Bir profile dokun, tüm fanlara uygulanır. Profiller PC'de kaydedilir."),
 		["NoProfiles"] = ("No profiles yet. Save one in dHud's Fan control window on the PC.", "Henüz profil yok. PC'de dHud'un Fan kontrolü penceresinden kaydet."),
-		["ProfileConfirm"] = ("Apply profile \"{0}\" to all fans?", "\"{0}\" profili tüm fanlara uygulansın mı?"),
+		["ProfileConfirm"] = ("Apply profile \"{0}\" to all fans? (Fans marked 🔒 stay unchanged.)", "\"{0}\" profili tüm fanlara uygulansın mı? (🔒 işaretli fanlar değişmez.)"),
 		["FanTapHint"] = ("Tap a fan to pick Auto, a ready-made curve or one of your saved curves.", "Bir fana dokun: Otomatik, hazır eğri veya kayıtlı eğrilerinden birini seç."),
 		["FanSaved"] = ("Saved: {0}", "Kayıtlı: {0}"),
 		["FanAuto"] = ("Auto", "Otomatik"),
@@ -70,6 +70,8 @@ public static class Loc
 			"Telefondan fan değişikliği kapalı. PC'deki dHud'da \"Mobil uygulama fan ayarlarını değiştirebilsin\" seçeneğini aç (Ayarlar → Behavior → Mobil uygulama)."),
 		["FanCtlOff"] = ("Fan control is off on the PC. Turn it on in dHud's Fan control window first.",
 			"PC'de fan kontrolü kapalı. Önce dHud'un Fan kontrolü penceresinden aç."),
+		["FanLocked"] = ("🔒 This fan can't be changed from the phone. Allow it in dHud's Fan control window on the PC.",
+			"🔒 Bu fan telefondan değiştirilemez. PC'de dHud'un Fan kontrolü penceresinden izin ver."),
 		["FanSendFailed"] = ("The change could not be applied.", "Değişiklik uygulanamadı."),
 		["Ok"] = ("OK", "Tamam")
 	};

@@ -38,6 +38,9 @@ public sealed class FanInfo
 
 	public int Manual { get; set; } = 50;
 	public bool Stalled { get; set; }
+
+	/// <summary>PC bu fanın telefondan değiştirilmesine izin veriyor mu.</summary>
+	public bool Remote { get; set; } = true;
 }
 
 /// <summary>PC'de fan kontrolünün genel durumu.</summary>

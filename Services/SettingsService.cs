@@ -124,6 +124,9 @@ public sealed class AppSettings
     /// <summary>Tüm fanların ayarını saklayan profiller ("Oyun", "Gece" vb.).</summary>
     public List<FanProfile> FanProfiles { get; set; } = [];
 
+    /// <summary>Mobil uygulamanın değiştirmesine İZİN VERİLMEYEN fanların kimlikleri (boşsa hepsine izin var).</summary>
+    public List<string> MobileBlockedFans { get; set; } = [];
+
     /// <summary>Oyun FPS'ini ölç (ETW). Mobil uygulamaya da gönderilir. Yönetici yetkisi gerekir.</summary>
     public bool FpsEnabled { get; set; }
 
@@ -250,6 +253,8 @@ public sealed class SettingsService
         {
             FanCurve.Sanitize(fan);
         }
+
+        s.MobileBlockedFans = (s.MobileBlockedFans ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
 
         s.FanProfiles ??= [];
         s.FanProfiles = s.FanProfiles

@@ -343,6 +343,24 @@ public partial class FanControlWindow : Window
         radios.Margin = new Thickness(0, 6, 0, 0);
         var topLine = radios;
 
+        // Bu fan telefondan (tek tek, kayıtlı eğri veya profil ile) değiştirilebilsin mi.
+        var remote = new CheckBox
+        {
+            Content = Loc.T("F.Remote"), Style = (Style)FindResource("DarkCheckBox"), Margin = new Thickness(0, 8, 0, 0),
+            IsChecked = !_settings.Current.MobileBlockedFans.Contains(id), ToolTip = Loc.T("F.RemoteTip")
+        };
+        remote.Click += (_, _) =>
+        {
+            var blocked = _settings.Current.MobileBlockedFans;
+            blocked.Remove(id);
+            if (remote.IsChecked != true)
+            {
+                blocked.Add(id);
+            }
+
+            _settings.NotifyChanged();
+        };
+
         var content = new StackPanel();
         content.Children.Add(header);
         content.Children.Add(topLine);
@@ -350,6 +368,7 @@ public partial class FanControlWindow : Window
         content.Children.Add(curvePanel);
         content.Children.Add(warn);
         content.Children.Add(testLabel);
+        content.Children.Add(remote);
 
         return new Border
         {

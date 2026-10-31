@@ -42,7 +42,8 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
                     curve = mode == FanMode.Curve && cfg is not null ? FanCurve.Describe(cfg.Curve, s.CurvePresets) : null,
                     manual = cfg?.ManualPercent ?? 50,
                     stalled = f.Stalled,
-                    pump = IsPump(f.Name)
+                    pump = IsPump(f.Name),
+                    remote = !s.MobileBlockedFans.Contains(f.Id)
                 });
             }
 
@@ -93,6 +94,11 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
                     return "nofan";
                 }
 
+                if (s.MobileBlockedFans.Contains(id))
+                {
+                    return "blocked";
+                }
+
                 if (!Configure(channel, command, out var summary))
                 {
                     return "bad";
@@ -111,7 +117,17 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
                     return "bad";
                 }
 
-                s.Fans = profile.Fans.ToDictionary(pair => pair.Key, pair => pair.Value.Clone());
+                // PC'de "telefondan değiştirilemez" işaretli fanlar profilde olsa bile olduğu gibi kalır.
+                var merged = s.Fans.ToDictionary(pair => pair.Key, pair => pair.Value);
+                foreach (var (fanId, setting) in profile.Fans)
+                {
+                    if (!s.MobileBlockedFans.Contains(fanId))
+                    {
+                        merged[fanId] = setting.Clone();
+                    }
+                }
+
+                s.Fans = merged;
                 Commit(profile.Name);
                 return null;
             }

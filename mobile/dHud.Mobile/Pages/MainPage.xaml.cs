@@ -452,7 +452,7 @@ public partial class MainPage : ContentPage
 			var pct = fan.Pct is float p ? $"{p:0}%" : "--%";
 			labels.Detail.Text = $"{rpm} · {pct}" + (fan.Stalled ? " · " + Loc.T("FanStalled") : string.Empty);
 			labels.Detail.TextColor = fan.Stalled ? Color.FromArgb("#F87171") : Color.FromArgb("#9CA3AF");
-			labels.Mode.Text = fan.Mode switch
+			labels.Mode.Text = (fan.Remote ? string.Empty : "🔒 ") + fan.Mode switch
 			{
 				"manual" => Loc.T("FanModeManual", fan.Manual),
 				"curve" => Loc.T("FanModeCurve", fan.Curve ?? string.Empty),
@@ -503,6 +503,12 @@ public partial class MainPage : ContentPage
 		var fan = App.Link.Latest?.Fans?.FirstOrDefault(f => f.Id == id);
 		if (fan is null || !await CanControlFansAsync())
 		{
+			return;
+		}
+
+		if (!fan.Remote)
+		{
+			await DisplayAlert(fan.Name, Loc.T("FanLocked"), Loc.T("Ok"));
 			return;
 		}
 
@@ -567,6 +573,7 @@ public partial class MainPage : ContentPage
 		{
 			"disabled" => "FanRemoteOff",
 			"fanctl" => "FanCtlOff",
+			"blocked" => "FanLocked",
 			_ => "FanSendFailed"
 		};
 		await DisplayAlert("dHud", Loc.T(key), Loc.T("Ok"));
