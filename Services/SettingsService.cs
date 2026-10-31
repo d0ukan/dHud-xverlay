@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using DHud.Helpers;
+
 namespace DHud.Services;
 
 public enum StartupMethod
@@ -229,14 +231,13 @@ public sealed class SettingsService
     };
 
     private readonly string _filePath;
+    private readonly bool _isDefaultPath;
 
     /// <param name="filePath">Test için; boşsa %AppData%\dHud\settings.json.</param>
     public SettingsService(string? filePath = null)
     {
-        _filePath = filePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "dHud",
-            "settings.json");
+        _isDefaultPath = filePath is null && !AppPaths.IsCustom;
+        _filePath = filePath ?? AppPaths.File("settings.json");
     }
 
     public AppSettings Current { get; private set; } = new();
@@ -269,6 +270,11 @@ public sealed class SettingsService
     /// <summary>Eski ad (CpuGpuOverlay) klasöründeki ayarları, yeni dosya yoksa kopyalar.</summary>
     private void MigrateLegacySettings()
     {
+        if (!_isDefaultPath)
+        {
+            return; // özel veri klasöründe (test / ekran görüntüsü) eski kurulumun ayarları taşınmaz
+        }
+
         try
         {
             var legacy = Path.Combine(

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DHud.Services;
 using NAudio.CoreAudioApi;
@@ -31,7 +32,7 @@ public sealed class AudioWidgetWindow : WidgetWindowBase
         speaker.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         speaker.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         speaker.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        _speakerButton = new Button { Content = "🔊", Width = 34, Margin = new Thickness(0, 0, 8, 0), ToolTip = Loc.T("W.Mute") };
+        _speakerButton = new Button { Content = "\uE767", Width = 38, FontSize = 16, FontFamily = new FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 8, 0), ToolTip = Loc.T("W.Mute") };
         _speakerButton.SetResourceReference(StyleProperty, "DarkButton");
         _speakerButton.Click += (_, _) => ToggleMute(DataFlow.Render);
         _slider = new Slider { Minimum = 0, Maximum = 100, SmallChange = 1, LargeChange = 5, VerticalAlignment = VerticalAlignment.Center };
@@ -48,7 +49,7 @@ public sealed class AudioWidgetWindow : WidgetWindowBase
         var mic = new Grid { Margin = new Thickness(0, 10, 0, 0) };
         mic.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         mic.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        _micButton = new Button { Content = "🎤", Width = 34, Margin = new Thickness(0, 0, 8, 0), ToolTip = Loc.T("W.MicMute") };
+        _micButton = new Button { Content = "\uE720", Width = 38, FontSize = 16, FontFamily = new FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 8, 0), ToolTip = Loc.T("W.MicMute") };
         _micButton.SetResourceReference(StyleProperty, "DarkButton");
         _micButton.Click += (_, _) => ToggleMute(DataFlow.Capture);
         _micState = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
@@ -118,7 +119,7 @@ public sealed class AudioWidgetWindow : WidgetWindowBase
                     }
 
                     _percent.Text = volume.Mute ? Loc.T("W.Muted") : $"{Math.Round(volume.MasterVolumeLevelScalar * 100)}%";
-                    _speakerButton.Content = volume.Mute ? "🔇" : "🔊";
+                    _speakerButton.Content = volume.Mute ? "\uE74F" : "\uE767";
                 }
             }
 
@@ -132,7 +133,7 @@ public sealed class AudioWidgetWindow : WidgetWindowBase
             {
                 var muted = capture.AudioEndpointVolume.Mute;
                 _micState.Text = muted ? Loc.T("W.MicOff") : Loc.T("W.MicOn");
-                _micButton.Content = muted ? "🚫" : "🎤";
+                _micButton.Opacity = muted ? 0.45 : 1; // kapalıysa soluk
             }
         }
         catch (Exception)

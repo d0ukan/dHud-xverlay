@@ -98,6 +98,9 @@ public sealed class SysInfoWidgetWindow : WidgetWindowBase
         ApplyOptions();
     }
 
+    /// <summary>Ekran görüntüsü üretimi için: verilen ölçümü çizer.</summary>
+    internal void RenderDemo(SensorSnapshot s) => Render(s);
+
     private void Render(SensorSnapshot s)
     {
         var settings = App.Current.Settings.Current;

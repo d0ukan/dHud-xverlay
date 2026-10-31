@@ -40,6 +40,24 @@
                         VerticalAlignment="Top" Margin="0,8,8,0" Click="CloseButton_Click" ToolTip="{h:Loc S.Close}" />
             </Grid>
 
+            <!-- Ayarlarda arama: yazınca eşleşen ayarlar listelenir, tıklayınca o sekmeye gidip vurgular -->
+            <Grid Margin="16,0,16,10">
+                <TextBox x:Name="SearchBox" Padding="30,6,10,6" Background="#1AFFFFFF" Foreground="{StaticResource TextBrush}"
+                         BorderBrush="#40FFFFFF" BorderThickness="1" CaretBrush="White" TextChanged="SearchBox_TextChanged"
+                         PreviewKeyDown="SearchBox_PreviewKeyDown" />
+                <TextBlock Text="&#x2315;" FontSize="15" Foreground="{StaticResource SubtleTextBrush}" IsHitTestVisible="False"
+                           VerticalAlignment="Center" Margin="10,0,0,1" />
+                <TextBlock x:Name="SearchPlaceholder" Text="{h:Loc S.SearchHint}" Foreground="{StaticResource SubtleTextBrush}"
+                           IsHitTestVisible="False" VerticalAlignment="Center" Margin="32,0,0,0" />
+                <Popup x:Name="SearchPopup" PlacementTarget="{Binding ElementName=SearchBox}" Placement="Bottom"
+                       StaysOpen="False" AllowsTransparency="True" PopupAnimation="None">
+                    <Border Background="#FF22242E" BorderBrush="#FF3A3D4A" BorderThickness="1" CornerRadius="8" Padding="4"
+                            MinWidth="320" MaxWidth="720" Margin="0,4,0,0">
+                        <StackPanel x:Name="SearchResults" />
+                    </Border>
+                </Popup>
+            </Grid>
+
             <!-- Sekmeler -->
             <UniformGrid Columns="6" Margin="12,0">
                 <RadioButton x:Name="AppearanceTab" Content="{h:Loc S.Tab.Appearance}" GroupName="Tabs" Style="{StaticResource TabHeader}" IsChecked="True" />
@@ -254,6 +272,15 @@
                     <Button Content="{h:Loc S.CheckNow}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
                             Margin="0,6,0,0" Click="CheckUpdateButton_Click" />
 
+                    <TextBlock Text="{h:Loc S.Help}" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{h:Loc S.CopyDiag}" ToolTip="{h:Loc S.CopyDiag.Tip}" Style="{StaticResource DarkButton}"
+                                Margin="0,2,8,0" Click="CopyDiagButton_Click" />
+                        <Button Content="{h:Loc S.OpenFolder}" Style="{StaticResource DarkButton}" Margin="0,2,0,0"
+                                Click="OpenFolderButton_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="DiagStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                     <TextBlock Text="{h:Loc S.FanControl}" Style="{StaticResource SectionHeader}" />
@@ -385,7 +412,7 @@
             </ScrollViewer>
 
             <!-- Durum (her sekmede görünür) -->
-            <Border CornerRadius="8" Background="#14FFFFFF" Padding="10,8" Margin="16,14,16,0">
+            <Border x:Name="StatusBox" CornerRadius="8" Background="#14FFFFFF" Padding="10,8" Margin="16,14,16,0">
                 <StackPanel>
                     <TextBlock x:Name="ElevationStatusText" TextWrapping="Wrap" FontSize="12" />
                     <TextBlock x:Name="DriverStatusText" TextWrapping="Wrap" FontSize="12" Margin="0,3,0,0" />
@@ -395,7 +422,7 @@
             </Border>
 
             <!-- Düğmeler -->
-            <DockPanel Margin="16,14,16,16" LastChildFill="False">
+            <DockPanel x:Name="FooterBar" Margin="16,14,16,16" LastChildFill="False">
                 <Button DockPanel.Dock="Left" Content="{h:Loc S.ExitApp}" Style="{StaticResource DangerButton}"
                         Click="ExitAppButton_Click" />
                 <Button DockPanel.Dock="Right" Content="{h:Loc S.Close}" Style="{StaticResource DarkButton}" MinWidth="80"

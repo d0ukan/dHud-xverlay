@@ -4,182 +4,183 @@
 
 <h1 align="center">dHud</h1>
 
-<p align="center">A lightweight, transparent, always-on-top hardware overlay for Windows,<br />with fan control, a game FPS counter and an Android companion app.</p>
+<p align="center">A light, transparent hardware overlay for Windows,<br />with desktop widgets, fan control, a game FPS counter and an Android app.</p>
 
 <p align="center"><b>English</b> · <a href="README.tr.md">Türkçe</a></p>
 
----
+<p align="center">
+  <img src="docs/images/overview.png" alt="dHud: the top bar and some desktop widgets" />
+</p>
 
 ## What is dHud?
 
-dHud shows your PC's vital signs in a small overlay that stays above your windows: CPU and GPU temperature, usage, clocks, power, fan speed, memory, network and ping. It is built to be unobtrusive (low CPU and memory use) and to stay out of your way (click-through, hotkeys, edge snapping).
+- **A thin bar** at the top of your screen with CPU / GPU temperature, usage, clocks, fans, RAM, network and ping.
+- **Desktop widgets** (all optional): clock, sticky notes, to-do list, timer, weather, calendar, system summary and more.
+- **Extras when you want them:** fan control, a game FPS counter and an Android app for your phone or tablet.
 
-On top of the overlay, dHud can:
-
-- **control your fans** with per-fan curves you draw yourself,
-- **count FPS** in fullscreen games,
-- **stream everything to your phone or tablet** (Android app) over your home network, with temperature alerts and a full-screen dashboard mode.
+It is easy on your PC (low CPU and memory use), has no telemetry and is free ([MIT](LICENSE)).
 
 ## Quick start
 
 1. Download the installer from the [latest release](https://github.com/d0ukan/dHud-xverlay/releases/latest) and run it.
-2. Start dHud. The overlay appears; drag it where you like.
-3. Click the ⚙ icon on the overlay (or double-click the tray icon) to open **Settings**.
+2. Start dHud. The bar appears: drag it where you like.
+3. Click the ⚙ on the bar (or double-click the tray icon) to open **Settings**. The search box at the top finds any setting.
 
-> For CPU temperature dHud needs **administrator rights** and the free [PawnIO](https://pawnio.eu) driver. The Settings window tells you if either is missing.
+> CPU temperature needs **administrator rights** and the free [PawnIO](https://pawnio.eu) driver. Settings tells you if either is missing.
 
-## What you can see
+## What can it do?
 
-**The overlay** has one row per device. Each row can show temperature (coloured green / yellow / red by your thresholds), usage, clock speed, power draw, fan speed and a tiny temperature graph.
-
-| Row | Shows |
+| | |
 | --- | --- |
-| **CPU** | temperature, usage, clock, power, fan |
-| **GPU** | temperature, usage, clock, power, fan, VRAM |
-| **RAM** | usage and used / total memory |
-| **DISK** | system drive: used % and used / total space (optional) |
-| **CORE** | busiest CPU core and the average over all cores (optional) |
-| **NET** | download, upload and ping (ping can be shown on its own) |
+| **The bar** | Live values in a slim bar. Vertical or horizontal, compact mode, click-through, hotkeys. You can also turn it off. |
+| **Widgets** | Small dark cards you drag onto a grid. 12 kinds, each with its own options. |
+| **Profiles** | Save all your settings under a name, switch in one click, move everything to a new PC. |
+| **Fan control** | Draw your own fan curves, use presets, test fans. Safe by design. |
+| **Game FPS** | FPS counter and an end-of-game summary. |
+| **Android app** | See everything on your phone or tablet, get alerts, even change fan presets. |
 
-**Layouts:** vertical (rows stacked, columns aligned) or horizontal (one single row, great for the top of the screen). **Compact mode** shrinks text and spacing. Everything is optional: right-click the overlay → **Metrics** to switch items on or off instantly.
+The details are below. Open what you need.
 
-The thin bar at the top is optional: right-click it → **Turn off the bar**, or untick *Show the monitor bar* in Settings → Appearance (handy if you prefer the System widget, which shows the same values). Bring it back from Settings, the tray icon or Ctrl+Shift+F9. While it is off, dHud stops reading values only the bar needed.
+<details>
+<summary><b>The bar and shortcuts</b></summary>
 
-## Controls and shortcuts
+<br />
+
+Each row can show temperature (green / yellow / red by your thresholds), usage, clock, power, fan speed and a tiny graph. Rows: **CPU**, **GPU**, **RAM**, **NET** (download, upload, ping), plus optional **DISK** and **CORE** (busiest CPU core). Right-click the bar → **Metrics** to switch items on or off.
 
 | Action | How |
 | --- | --- |
-| Move the overlay | Left-click and drag (it can't be dragged off-screen; it snaps to screen edges) |
-| Open Settings | ⚙ on the overlay, right-click → Settings, or double-click the tray icon |
-| Hide / show overlay | `Ctrl` + `Shift` + `F9` |
-| Click-through on / off | `Ctrl` + `Shift` + `F10` (mouse clicks pass through to the window below) |
-| Quick menu | Right-click the overlay: layout, compact, lock position, metrics, reset position |
-| Tray menu | Right-click the tray icon: hide / show, click-through, lock, check for updates, exit |
+| Move the bar | Drag it (it stays on screen and snaps to edges) |
+| Open Settings | ⚙ on the bar, right-click → Settings, or double-click the tray icon |
+| Hide / show the bar | `Ctrl` + `Shift` + `F9`, or right-click → **Turn off the bar** |
+| Click-through on / off | `Ctrl` + `Shift` + `F10` |
+| Quick menu | Right-click the bar |
 
-> The overlay cannot appear over *exclusive* fullscreen games. Use borderless / windowed-fullscreen mode.
+The bar is optional: if you prefer the **System** widget (same values), turn the bar off in Settings → Appearance and bring it back any time from the tray icon.
 
-## Settings at a glance
+<p align="center"><img src="docs/images/settings-appearance.png" width="720" alt="Settings: Appearance" /></p>
 
-| Tab | What is in it |
+> The bar and widgets cannot appear over *exclusive* fullscreen games. Use borderless / windowed-fullscreen mode.
+
+</details>
+
+<details>
+<summary><b>Widgets</b></summary>
+
+<br />
+
+*Settings → Widgets.* Every widget is a small card with an on/off switch; **Options** opens its visibility, always-on-top, lock and "move to corner" buttons. Widgets snap to a fine grid like macOS desktop widgets: while you drag, the spot it will take is highlighted. They never overlap each other or the bar and can't be dragged off-screen. All are off by default and use almost no CPU.
+
+<p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
+
+| Widget | What it does |
 | --- | --- |
-| **Appearance** | layout, compact mode, always on top, background opacity, size, language (English / Türkçe) |
-| **Metrics** | which items to show (CPU, GPU, usage, graph, clock, power, fan, VRAM, RAM, network, ping), refresh rate |
-| **Behavior** | start with Windows, click-through, lock position, hotkeys, update checks, plus **Fan control**, **Game FPS** and **Mobile app** |
-| **Alerts** | warning / critical temperature thresholds (separate for CPU and GPU), temperature colours, notification when a temperature stays critical |
+| **Clock** | Time and date, optional seconds and a second time zone. |
+| **Sticky notes** | Up to 30 notes stacked like **folder tabs**: click a tab to bring it forward, drag a tab to move the stack. Saved as you type. |
+| **To-do list** | Add a task with Enter, tick it off, clear the finished ones. |
+| **Timer and reminders** | Quick timers, reminders at a clock time and a pomodoro. Notification and sound (optionally on your phone). |
+| **Stopwatch** | Start, pause, laps. |
+| **Day counter** | "12 days left" for any date. |
+| **Calendar** | The next 7 days from an `.ics` file or link (repeating events work). No account sign-in. |
+| **Weather** | Current weather and a 3-day forecast for your city. The only widget that uses the internet; off until you pick a city. |
+| **System summary** | CPU, GPU, VRAM, RAM, disk and network on bars. |
+| **Quick launcher** | Your favourite apps and files as icons (opened without administrator rights). |
+| **Clipboard history** | The last 10 copied texts. Kept in memory only; password managers' private copies are skipped. |
+| **Sound and microphone** | Volume, mute and microphone mute. |
 
-## Fan control
+Notes and lists are stored only on your PC in `%AppData%\dHud\widgets.json` (saved safely, with a `.bak` copy).
 
-*Settings → Behavior → Fan control → Open fan control…* (needs administrator rights).
+<p align="center"><img src="docs/images/settings-widgets.png" width="720" alt="Settings: Widgets" /></p>
 
-dHud lists every fan it can control (CPU fan, pump, case fans, GPU fans). For each one choose:
+</details>
 
-- **Auto**: dHud does not touch it (BIOS / driver stays in charge).
-- **Manual**: a fixed speed.
-- **Curve**: speed follows a temperature curve. Open the curve editor, **drag points** to shape the curve, click an empty spot to add a point, right-click a point to remove it. A green marker shows the current temperature. Pick the temperature source (CPU or GPU) and a minimum speed.
+<details>
+<summary><b>Profiles and moving to a new PC</b></summary>
 
-**Presets:** *Quiet*, *Optimal* and *Max Cold* give you a starting curve you can fine-tune. The buttons at the top of the fan window apply a preset to **all fans at once** (GPU fans follow the GPU, the CPU fan follows the CPU, the rest follow the higher of CPU and GPU). Pumps are skipped unless you tick *Include pump*, because a slow pump can overheat your CPU.
-
-**Your own curves and profiles:** save any curve under a name (*My curves*) and reuse it on any fan. Save the settings of **all fans** as a *profile* ("Gaming", "Night"…) and load it with one click.
-
-**Fan test and fan alert:** the **Test** button runs a fan at 100% for a few seconds and tells you whether its speed really increased (useful to spot a loose cable). If a fan that dHud controls stops spinning, you get a notification (also on your phone). To avoid spam, fans that stopped at the same time are reported in one message, the same fan is reported at most every 6 hours, there is at most one message per 30 minutes, and fans below 40% speed are ignored (many fans stop there by design). You can turn the alert off with **Notify me when a fan stops spinning** in the Fan control window.
-
-**Temperature source:** each curve can follow the CPU, the GPU, or the higher of the two.
-
-**Safety:**
-
-- Fan control is **off by default** and asks for confirmation the first time.
-- If CPU or GPU reaches the **critical temperature** (Settings → Alerts), every fan dHud controls jumps to **100%**.
-- If a curve's temperature sensor can't be read for a few seconds, the fan goes to 100%.
-- Fans slow down gradually (never abruptly) to avoid constant speed hunting. A curve can only go up: a point can't be lower than the one on its left.
-- Every risky action (enabling control, applying a preset to all fans, loading a profile, testing a fan) asks for confirmation in your language.
-- When dHud exits or crashes, fans are handed back to the BIOS / driver. *If dHud is killed abruptly (for example from Task Manager), a tiny helper process (the same dHud.exe, started with `--fan-watchdog`, no window) notices and sets the fans it controlled to a safe fixed 70%. The next time dHud starts it takes them back (or returns them to automatic) and tells you about it. The helper only runs while dHud controls fans, and it does nothing after a normal exit.*
-
-Not every motherboard allows software fan control; dHud shows "no controllable fans found" in that case.
-
-## Game FPS counter
-
-*Settings → Behavior → Game FPS.* Off by default, needs administrator rights.
-
-- Measures the FPS of the **fullscreen / borderless** game in front, without injecting anything into the game (it only listens to Windows' own frame events).
-- Shows a small counter in the top-left corner of the game's monitor, only while a game is running. Colour changes with the frame rate.
-- The same value appears on the Android app.
-- **Game summary:** when a session of at least 2 minutes ends, a small card appears in the bottom-right corner with average FPS, 1% low FPS, lowest / highest FPS and the highest CPU / GPU temperature. Turn it off with *Show a summary card when a game session ends*.
-- Works with DirectX 10 / 11 / 12 games. DirectX 9 is experimental; Vulkan and OpenGL games are not measured.
-
-## Profiles and moving to a new PC
+<br />
 
 *Settings → Profiles.*
 
-- **Profiles:** save all your settings (look, metrics, widgets, alerts, fan curves, ...) under a name and switch with one click, also from the tray icon (**Profiles** submenu). Notes and phone pairing are not part of a profile.
-- **Back up / move to another PC:** *Export everything…* writes one `.dhudprofile` file. On the new PC install dHud and choose *Import…* – you continue exactly where you left off. You can include your notes, to-do lists, day counters and launcher items, and (optionally) the phone pairing key so your phone stays paired.
-- **Safety:** importing never switches fan control on by itself (turn it on again in the Fan control window), and the phone pairing key is only taken from the file if you tick it. Launcher paths and fan sensor names belong to the old PC, so check them after moving.
+- **Profiles:** save all your settings (look, metrics, widgets, alerts, fan curves …) under a name and switch with one click, also from the tray icon.
+- **Back up / move:** *Export everything…* writes one `.dhudprofile` file. On the new PC install dHud, choose *Import…* and carry on where you left off. You can include your notes, lists and launcher items, and optionally the phone pairing key.
+- **Safe:** importing never turns fan control on by itself, and the phone key is only taken if you tick it. Launcher paths and fan sensors belong to the old PC, so check them after moving.
 
-## Widgets
+<p align="center"><img src="docs/images/settings-profiles.png" width="720" alt="Settings: Profiles" /></p>
 
-*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets sit on a fine **grid** (about 20-pixel cells, 96 columns across your screen, so it looks the same at any resolution and neighbours sit close together), like desktop widgets on macOS: while you drag, the cells it will snap to are highlighted, and on release the widget settles into the nearest free cells. Widgets never overlap each other or the top bar, and can never be dragged off the screen. Untick *Snap to grid* on a widget for free placement (it still won't overlap). In Settings → Widgets each widget is a small card with an on/off switch; click **Options** on a card for visibility, always-on-top, lock and the move-to buttons.
+</details>
 
-- **Clock:** time and date, optional seconds and a second time zone (right-click).
-- **Sticky notes:** as many as you like (up to 30), stacked like **folder tabs**: each note's title strip (its first line) peeks out above the next one; click a tab to bring that note to the front, drag a tab to move the whole stack. Untick *Stack notes like folder tabs* to let every note float on its own. Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
-- **Stopwatch:** start / pause, laps and reset.
-- **System summary:** CPU, GPU, VRAM, RAM, disk and network on thin bars in one big card (independent from the overlay).
-- **To-do list:** add a task with Enter, tick it off, clear the finished ones.
-- **Day counter:** "12 days left" for any date (holiday, exam, birthday…).
-- **Quick launcher:** your favourite apps, files and folders as icons. Items are opened through Windows Explorer, so apps start with normal (not administrator) rights even though dHud runs elevated.
-- **Clipboard history:** the last 10 copied texts; click one to copy it again. Kept in memory only, never written to disk, nothing is collected while the widget is off, and copies that password managers mark as private are skipped.
-- **Sound and microphone:** volume slider, mute, and a microphone mute button for the default devices.
-- **Calendar:** the next 7 days from an `.ics` file or link (including repeating events). No account sign-in: use a file, or the secret iCal address your calendar provides.
-- **Weather:** current temperature, feels-like, wind and a 3-day forecast for a city you pick (°C or °F). It is the only widget that uses the internet (see *Privacy*), is off by default and does nothing until you choose a city. (A calendar *link* is the only other thing that is downloaded, and only if you enter one.)
-- **Timer, reminders and pomodoro:** quick timers (5 / 10 / 15 / 25 / 45 min or your own), reminders at a clock time (tomorrow if it has already passed) and a pomodoro (25 min focus, 5 min break, long break after 4 rounds). When time is up you get a notification and a sound, and optionally a notification on your phone.
+<details>
+<summary><b>Fan control</b></summary>
 
-Notes are saved as you type (within a fraction of a second, and again when you leave the note, close dHud or shut Windows down); the file is replaced safely and a `.bak` copy is kept, so a power cut cannot leave you with a half-written file. Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.
+<br />
 
-## Android companion app
+*Settings → Behavior → Fan control* (needs administrator rights). dHud lists every fan it can control. For each one choose **Auto** (dHud does not touch it), **Manual** (fixed speed) or **Curve** (speed follows temperature: drag points, click to add, right-click to remove).
 
-An Android app (phone or tablet) that mirrors dHud over your **local network** (same Wi-Fi). It has the same dark theme.
+- **Presets:** *Quiet*, *Optimal*, *Max Cold*. Apply one to all fans at once (pumps are skipped unless you ask).
+- **Your own curves and profiles:** save a curve under a name, or the setup of all fans as a profile.
+- **Test:** runs a fan at 100% for a few seconds to see if it really responds.
+- **Alerts:** if a controlled fan stops, you get one calm notification (also on your phone). It can be turned off.
 
-**What it does:** live CPU / GPU / RAM / disk / network values (and the busiest CPU core), a 5-minute temperature graph, high-temperature alerts (vibration and notification), your timer / reminder notifications and a short game summary when a game ends, the game FPS, and a **full-screen dashboard mode** for tablets (the screen stays on while charging). In full-screen mode the content slowly shifts by a few pixels and dims after 3 minutes without touch (tap to wake) to protect the screen; turn this off in the app menu (â‹®). You can also add a **home-screen widget** (CPU / GPU temperature and FPS): long-press the home screen â†’ Widgets â†’ dHud. It updates live while the app is open and otherwise about every 30 minutes (Android's limit) or when you tap âŸ³.
+**Safety:** fan control is off by default and asks for confirmation. If CPU or GPU gets critically hot, or a temperature sensor is lost, every controlled fan goes to 100%. Fans slow down gradually. When dHud exits or crashes, fans are handed back to the BIOS. If dHud is killed abruptly, a tiny windowless helper sets those fans to a safe 70% and dHud tells you at the next start. Not every motherboard allows software fan control.
 
-**Setup (once):**
+</details>
 
-1. Download `dHud-<version>.apk` from the [latest release](https://github.com/d0ukan/dHud-xverlay/releases/latest) onto the phone / tablet and install it (Android asks you to allow installs from this source).
-2. On the PC: *Settings → Behavior → Mobile app* → tick **Allow the dHud mobile app to connect**. A QR code appears. If Windows Firewall asks, allow access on **private networks**.
-3. In the Android app tap **Scan QR code** and scan it. Done: the dot at the top turns green.
+<details>
+<summary><b>Game FPS counter</b></summary>
 
-**Fans from the phone:** the app has a separate **Fans** tab. To use it, tick **Let the mobile app change fan settings** under the QR code (off by default, so the phone only watches) and turn on fan control on the PC. The phone can only pick ready-made options: for each fan *Auto*, a built-in curve (*Quiet / Optimal / Max Cold*) or one of your saved curves, or a saved **profile** that sets all fans at once. Custom speeds cannot be set from the phone. The Fans tab also has a **Fan control** switch that turns fan control on or off on the PC (turning it on asks for the same confirmation as on the PC). In the PC's Fan control window every fan has an **Allow control from phone** checkbox; an unticked fan can't be changed from the phone at all (not directly, not through a saved curve or a profile). The PC's safety rules (emergency 100%, minimum speed, gradual slow-down) still apply, and the PC shows a notification for every change.
+<br />
 
-If the PC's IP address changes, the app finds the PC again by itself. The app also checks for new versions and offers a one-tap update. **Reset pairing** (below the QR code) disconnects every device.
+*Settings → Behavior → Game FPS* (off by default, needs administrator rights). Measures the FPS of the fullscreen / borderless game in front without injecting anything into it, shows a small counter in the corner and on your Android app. When a session of 2+ minutes ends, a summary card shows average FPS, 1% low, lowest / highest FPS and peak temperatures. Works with DirectX 10 / 11 / 12 (DirectX 9 is experimental; Vulkan and OpenGL are not measured).
 
-Only devices that know the pairing key can connect; nothing is sent over the internet. dHud uses TCP port `47821` and UDP port `47822` on your local network.
+</details>
+
+<details>
+<summary><b>Android app</b></summary>
+
+<br />
+
+Mirrors dHud on your **local network** (same Wi-Fi), in the same dark theme.
+
+1. Download `dHud-<version>.apk` from the [latest release](https://github.com/d0ukan/dHud-xverlay/releases/latest) onto the phone / tablet and install it.
+2. On the PC: *Settings → Behavior → Mobile app* → tick **Allow the dHud mobile app to connect**. A QR code appears (allow Windows Firewall on private networks).
+3. In the app tap **Scan QR code**. The dot at the top turns green.
+
+It shows live values and a temperature graph, vibrates and notifies on alerts, shows your reminders and the game summary, and has a **full-screen dashboard** for tablets (it slowly shifts and dims to protect the screen) and a **home-screen widget**. It finds your PC again if its IP address changes and updates itself with one tap.
+
+**Fans from the phone:** a separate *Fans* tab. Off by default: tick **Let the mobile app change fan settings** on the PC. The phone can only pick ready-made options (Auto, Quiet / Optimal / Max Cold, your saved curves, a saved profile) and switch fan control on or off. Each fan has an **Allow control from phone** checkbox on the PC, and all safety rules still apply.
+
+Only paired devices can connect; nothing leaves your network. Ports: TCP `47821`, UDP `47822`.
+
+</details>
 
 ## Installation
 
-Download from the [latest release](https://github.com/d0ukan/dHud-xverlay/releases/latest):
+Get these from the [latest release](https://github.com/d0ukan/dHud-xverlay/releases/latest):
 
-- **`dHud-Setup-<version>.exe`**: installer. Installs per user to `%LocalAppData%\Programs\dHud` (no admin rights needed), adds a Start menu entry and an uninstaller.
-- **`dHud-<version>.exe`**: portable single file, run it anywhere.
+- **`dHud-Setup-<version>.exe`**: installer (per user, no admin rights needed, adds a Start menu entry).
+- **`dHud-<version>.exe`**: portable single file.
 - **`dHud-<version>.apk`**: Android app.
 
-dHud checks GitHub for new versions when it starts and every few hours while it runs (configurable in Settings → Behavior), then notifies you and updates with one click.
+dHud checks GitHub for new versions and updates with one click. **Requirements:** Windows 10 / 11 (no .NET install needed), Android 7.0+.
 
-**Requirements:** Windows 10 / 11 (no .NET install needed), Android 7.0+ for the app.
-
-> The app is not code-signed yet, so Windows SmartScreen may warn you the first time. Click **More info → Run anyway**.
+> The app is not code-signed yet, so Windows SmartScreen may warn you the first time: **More info → Run anyway**.
 
 ## Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| CPU temperature shows `--` | Run dHud as administrator and install the [PawnIO](https://pawnio.eu) driver (Settings shows the status). |
-| Overlay missing in a game | Exclusive fullscreen hides overlays. Switch the game to borderless / windowed-fullscreen. |
+| CPU temperature shows `--` | Run as administrator and install the [PawnIO](https://pawnio.eu) driver. |
+| Bar missing in a game | Switch the game to borderless / windowed-fullscreen. |
 | Fan list is empty | Run as administrator. Some motherboards don't allow software fan control. |
-| FPS shows nothing | Turn on *Game FPS*, run dHud as administrator, and use a fullscreen / borderless DirectX game. |
-| Phone can't connect | Same Wi-Fi as the PC? *Mobile app* ticked? Allow dHud in Windows Firewall (private network). Try *Reset pairing* and scan again. |
-| Overlay off-screen after changing monitors | Overlay menu → **Reset position**. |
+| FPS shows nothing | Turn on *Game FPS*, run as administrator, use a fullscreen / borderless DirectX game. |
+| Phone can't connect | Same Wi-Fi? *Mobile app* ticked? Allow dHud in Windows Firewall (private network). Try *Reset pairing*. |
+| Widgets or bar off-screen | Right-click → Reset position, or use *Move to* in Settings → Widgets. |
+| Something else | Settings → Behavior → **Help → Copy diagnostic info** and paste it into your report. |
 
 ## Privacy
 
-dHud has no telemetry. The only internet requests are the update check to GitHub and, only if you turn on the optional weather widget, the weather lookup at open-meteo.com (it receives the city you search for and its coordinates; no account, no key). The mobile connection stays on your local network and requires the pairing key.
+No telemetry. The only internet requests are the update check to GitHub and, only if you turn on those widgets, the weather lookup at open-meteo.com (the city you search for and its coordinates; no account, no key) or a calendar link you entered. The phone connection stays on your local network and needs the pairing key.
 
 ## Credits and license
 
-[MIT](LICENSE) © 2026 d0ukan. Sensors are read with [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0); FPS is measured with Windows event tracing ([TraceEvent](https://github.com/microsoft/perfview), MIT).
+[MIT](LICENSE) © 2026 d0ukan. Sensors are read with [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0); FPS with Windows event tracing ([TraceEvent](https://github.com/microsoft/perfview), MIT); audio with [NAudio](https://github.com/naudio/NAudio) (MIT).

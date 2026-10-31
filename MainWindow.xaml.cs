@@ -54,6 +54,9 @@ public partial class MainWindow : Window
     // ---- Değerler ----
 
     /// <summary>Yeni sensör değerlerini ekrana yansıtır. UI thread'inden çağrılmalıdır.</summary>
+    /// <summary>Ekran görüntüsü üretimi için: pencere gösterilmeden verilen ölçümü çizer.</summary>
+    public void RenderForScreenshot(SensorSnapshot snapshot) => Render(snapshot);
+
     public void UpdateReadings(SensorSnapshot snapshot)
     {
         _lastSnapshot = snapshot;

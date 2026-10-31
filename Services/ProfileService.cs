@@ -1,6 +1,8 @@
 using System.IO;
 using System.Text.Json;
 
+using DHud.Helpers;
+
 namespace DHud.Services;
 
 /// <summary>Bir profil/yedek dosyasının içeriği (.dhudprofile, JSON).</summary>
@@ -43,8 +45,7 @@ public sealed class ProfileService(SettingsService settings, WidgetService widge
     public const string Extension = ".dhudprofile";
     private const long MaxFileBytes = 20 * 1024 * 1024;
 
-    private string Folder { get; } = folder ?? Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dHud", "profiles");
+    private string Folder { get; } = folder ?? AppPaths.File("profiles");
 
     // Henüz taşınmamış bir notun konumu NaN olabilir; hem yazarken hem okurken izin verilir.
     private static readonly JsonSerializerOptions Json = new(SettingsService.JsonOptions)

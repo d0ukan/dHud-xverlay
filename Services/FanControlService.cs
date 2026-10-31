@@ -150,6 +150,7 @@ public sealed class FanControlService : IDisposable
             {
                 // Bir şey ters giderse fanları BIOS denetimine geri ver.
                 Debug.WriteLine($"Fan kontrolü hatası: {ex}");
+                DiagLog.Add("fan", ex);
                 ReleaseLocked();
             }
         }

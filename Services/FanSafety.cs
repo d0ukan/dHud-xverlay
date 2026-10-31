@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.Json;
 using LibreHardwareMonitor.Hardware;
 
+using DHud.Helpers;
+
 namespace DHud.Services;
 
 /// <summary>
@@ -31,8 +33,7 @@ public static class FanSafety
 
     public sealed record Marker(int Pid, string[] Fans);
 
-    public static string DefaultMarkerPath { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dHud", "fans-active.json");
+    public static string DefaultMarkerPath => AppPaths.File("fans-active.json");
 
     // ---- dHud tarafı ----
 
@@ -120,7 +121,9 @@ public static class FanSafety
                 return;
             }
 
-            _watchdog = Process.Start(new ProcessStartInfo(path, $"{WatchdogArgument} {Environment.ProcessId}")
+            // Özel veri klasörü kullanılıyorsa (--data-dir) bekçi de aynı işaret dosyasına bakar.
+            var arguments = $"{WatchdogArgument} {Environment.ProcessId}" + (AppPaths.IsCustom ? $" --marker \"{DefaultMarkerPath}\"" : string.Empty);
+            _watchdog = Process.Start(new ProcessStartInfo(path, arguments)
             {
                 UseShellExecute = false,
                 CreateNoWindow = true

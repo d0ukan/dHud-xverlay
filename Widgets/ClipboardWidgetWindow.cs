@@ -57,6 +57,13 @@ public sealed class ClipboardWidgetWindow : WidgetWindowBase
         ApplyOptions();
     }
 
+    /// <summary>Ekran görüntüsü üretimi için: geçmişi verilen metinlerle doldurur.</summary>
+    internal static void SeedDemo(IEnumerable<string> items)
+    {
+        History.Clear();
+        History.AddRange(items);
+    }
+
     /// <summary>Tüm geçmişi siler (ayarlardaki düğme de bunu kullanır).</summary>
     public static void ClearHistory()
     {

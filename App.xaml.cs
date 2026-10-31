@@ -42,7 +42,8 @@ public partial class App : Application
 
     public static new App Current => (App)Application.Current;
 
-    public SettingsService Settings { get; } = new();
+    // Veri klasörü komut satırından (--data-dir) değişebildiği için OnStartup'ta yeniden kurulabilir.
+    public SettingsService Settings { get; private set; } = new();
     public HardwareMonitorService Monitor { get; } = new();
     public MobileLinkService MobileLink { get; private set; } = null!;
     public FpsMonitor Fps { get; } = new();
@@ -70,6 +71,22 @@ public partial class App : Application
         if (e.Args.Contains(FanSafety.WatchdogArgument))
         {
             Shutdown(FanSafety.RunWatchdog(e.Args));
+            return;
+        }
+
+        // Veri klasörü değiştirilebilir (test / taşınabilir kullanım): --data-dir <klasör>
+        var dataIndex = Array.IndexOf(e.Args, "--data-dir");
+        if (dataIndex >= 0 && dataIndex + 1 < e.Args.Length)
+        {
+            AppPaths.DataDir = System.IO.Path.GetFullPath(e.Args[dataIndex + 1]);
+            Settings = new SettingsService(); // artık yeni klasörün settings.json'ını kullanır
+        }
+
+        // README ekran görüntüleri: pencereler ekrana çıkmadan demo verilerle görüntü dosyasına çizilir (bkz. ScreenshotGenerator).
+        var shotIndex = Array.IndexOf(e.Args, "--screenshots");
+        if (shotIndex >= 0 && shotIndex + 1 < e.Args.Length)
+        {
+            _ = RunScreenshotModeAsync(System.IO.Path.GetFullPath(e.Args[shotIndex + 1]));
             return;
         }
 
@@ -144,7 +161,12 @@ public partial class App : Application
             MobileLink?.SendAlert(message);
         });
         // Uygulama nasıl kapanırsa kapansın fanlar BIOS denetimine geri verilir.
-        AppDomain.CurrentDomain.UnhandledException += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+        {
+            DiagLog.Add("crash", a.ExceptionObject is Exception ex ? ex : new InvalidOperationException(a.ExceptionObject?.ToString()));
+            FanControl?.ReleaseAll();
+            Widgets?.Flush();
+        };
         AppDomain.CurrentDomain.ProcessExit += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
         SessionEnding += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
 
@@ -441,6 +463,74 @@ public partial class App : Application
         Monitor.CpuEnabled = (bar && (s.ShowCpu || s.ShowCores)) || s.FanControlEnabled || others;
         Monitor.GpuEnabled = (bar && s.ShowGpu) || s.FanControlEnabled || others;
         Monitor.FanEnabled = (bar && s.ShowFan) || s.FanControlEnabled || FanWindowOpen;
+    }
+
+    /// <summary>
+    /// Sorun bildirirken yapıştırılacak tanı bilgisi: sürüm, Windows, yetki, sürücü, donanım adları, açık özellikler ve son günlük kayıtları.
+    /// Not metinleri, telefon anahtarı, takvim adresi, şehir ve dosya yolları İÇERMEZ.
+    /// </summary>
+    public string BuildDiagnostics()
+    {
+        var s = Settings.Current;
+        var latest = Monitor.Latest;
+        var widgets = new List<string>();
+        if (s.WidgetClock) widgets.Add("clock");
+        if (s.WidgetStopwatch) widgets.Add("stopwatch");
+        if (s.WidgetTools) widgets.Add("timer");
+        if (s.WidgetWeather) widgets.Add("weather");
+        if (s.NotesVisible && Widgets.Data.Notes.Count > 0) widgets.Add($"notes({Widgets.Data.Notes.Count})");
+        widgets.AddRange(WidgetIds.Extra.Where(id => s.Extra(id).Enabled));
+
+        var lines = new List<string>
+        {
+            $"dHud {UpdateService.CurrentVersionText}",
+            $"Windows: {System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({(Environment.Is64BitOperatingSystem ? "64" : "32")}-bit)",
+            $".NET: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}",
+            $"Administrator: {IsElevated} | PawnIO driver: {IsPawnIoInstalled}",
+            $"CPU: {latest?.Cpu?.Name ?? "-"} (temperature {(latest?.Cpu?.Temperature is null ? "not readable" : "ok")})",
+            $"GPU: {latest?.Gpu?.Name ?? "-"} (temperature {(latest?.Gpu?.Temperature is null ? "not readable" : "ok")})",
+            $"Language: {s.Language} | Bar: {(s.ShowOverlay ? "on" : "off")} ({s.Layout}) | Interval: {s.UpdateIntervalMs} ms",
+            $"Fans found: {Monitor.FanChannels.Count} | Fan control: {s.FanControlEnabled} | Phone may change fans: {s.MobileFanControl}",
+            $"FPS counter: {s.FpsEnabled} (error: {Fps.Error ?? "none"})",
+            $"Mobile link: {s.MobileEnabled} (running: {MobileLink.IsRunning}, devices: {MobileLink.ClientCount}, error: {MobileLink.LastError ?? "none"})",
+            $"Widgets: {(widgets.Count == 0 ? "none" : string.Join(", ", widgets))}",
+            $"Calendar source: {(string.IsNullOrEmpty(s.CalendarSource) ? "not set" : s.CalendarSource.StartsWith("http", StringComparison.OrdinalIgnoreCase) || s.CalendarSource.StartsWith("webcal", StringComparison.OrdinalIgnoreCase) ? "link" : "file")}",
+            $"Profiles saved: {Profiles.List().Count}",
+            "",
+            "Recent log:"
+        };
+        var log = DiagLog.Snapshot();
+        lines.AddRange(log.Count == 0 ? ["(empty)"] : log.TakeLast(25));
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    /// <summary>Ekran görüntüsü modu: gerçek ayarlara dokunmadan geçici bir veri klasöründe demo verilerle görüntüleri üretir ve çıkar.</summary>
+    private async Task RunScreenshotModeAsync(string outDir)
+    {
+        try
+        {
+            AppPaths.DataDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dhud-shots-" + Guid.NewGuid().ToString("N"));
+            IsElevated = true;
+            Settings = new SettingsService(); // geçici klasörün (boş) ayarları; gerçek ayarlar hiç okunmaz
+            Settings.Load();
+            Widgets = new WidgetService();
+            Widgets.Load();
+            WidgetManager = new WidgetManager(Settings, Widgets);
+            Profiles = new ProfileService(Settings, Widgets, UpdateService.CurrentVersionText);
+            FanControl = new FanControlService(Monitor, Settings);
+            RemoteFan = new RemoteFanService(Monitor, Settings, FanControl);
+            MobileLink = new MobileLinkService(Monitor, Settings);
+            await ScreenshotGenerator.RunAsync(outDir);
+        }
+        catch (Exception ex)
+        {
+            System.IO.Directory.CreateDirectory(outDir);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(outDir, "error.txt"), ex.ToString());
+        }
+        finally
+        {
+            Shutdown();
+        }
     }
 
     /// <summary>Overlay'in ekrandaki dikdörtgeni (gölge payı hariç); gizliyse null. Widget'lar buna binmesin diye kullanılır.</summary>
@@ -775,6 +865,7 @@ public partial class App : Application
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        DiagLog.Add("ui", e.Exception);
         try
         {
             DarkMessageBox.Show(Loc.T("N.Unexpected", e.Exception.Message), "dHud",

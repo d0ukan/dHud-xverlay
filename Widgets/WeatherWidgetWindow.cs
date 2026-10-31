@@ -247,6 +247,9 @@ public sealed class WeatherWidgetWindow : WidgetWindowBase
         _body.Children.Add(text);
     }
 
+    /// <summary>Ekran görüntüsü üretimi için: ağa çıkmadan verilen hava durumunu gösterir.</summary>
+    internal void ShowDemo(WeatherData data) => ShowWeather(data);
+
     private void ShowWeather(WeatherData data, bool error = false)
     {
         var f = _settings.Current.WeatherFahrenheit;

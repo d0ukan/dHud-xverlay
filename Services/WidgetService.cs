@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Threading;
 
+using DHud.Helpers;
+
 namespace DHud.Services;
 
 /// <summary>Bir widget'ın (veya not grubunun) görünüm ve davranış ayarı.</summary>
@@ -168,8 +170,7 @@ public sealed class WidgetService
     /// <param name="filePath">Test için; boşsa %AppData%\dHud\widgets.json.</param>
     public WidgetService(string? filePath = null)
     {
-        _filePath = filePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dHud", "widgets.json");
+        _filePath = filePath ?? AppPaths.File("widgets.json");
     }
 
     private readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
@@ -333,6 +334,7 @@ public sealed class WidgetService
         catch (Exception ex)
         {
             Debug.WriteLine($"Widget verisi yazılamadı: {ex.Message}");
+            DiagLog.Add("widgets", ex);
         }
     }
 

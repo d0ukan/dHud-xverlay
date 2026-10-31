@@ -471,20 +471,27 @@ public partial class SettingsWindow : Window
         toggle.SetResourceReference(StyleProperty, "DarkButton");
         void SetToggleText() => toggle.Content = (panel.Visibility == Visibility.Visible ? "⚙  ▴  " : "⚙  ▾  ") + Loc.T("S.WidgetOptions");
         SetToggleText();
+        panel.Tag = (Action)SetToggleText; // arama sonucu bu ayrıntıları açarken düğme yazısını da günceller
+        title.Tag = "card";                // arama bu başlığı bulur
         toggle.Click += (_, _) =>
         {
             panel.Visibility = panel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
             SetToggleText();
         };
 
+        // Kısa açıklama: bu widget ne işe yarar (yeni kullanıcı için).
+        var description = new TextBlock { Text = Loc.T("S.Desc." + key), FontSize = 11.5, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
+        description.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
+
         var body = new StackPanel();
         body.Children.Add(headerRow);
+        body.Children.Add(description);
         body.Children.Add(toggle);
         body.Children.Add(panel);
         return new Border
         {
             Tag = key,
-            Width = 246,
+            Width = 236,
             Margin = new Thickness(0, 0, 10, 10),
             Padding = new Thickness(12, 10, 12, 10),
             CornerRadius = new CornerRadius(10),
