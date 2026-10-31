@@ -230,7 +230,7 @@ public partial class App : Application
         {
             if (manual)
             {
-                MessageBox.Show(Loc.T("U.CheckFailed", ex.Message), "dHud",
+                DarkMessageBox.Show(Loc.T("U.CheckFailed", ex.Message), "dHud",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
@@ -241,7 +241,7 @@ public partial class App : Application
         {
             if (manual)
             {
-                MessageBox.Show(Loc.T("U.UpToDate", UpdateService.CurrentVersionText), "dHud",
+                DarkMessageBox.Show(Loc.T("U.UpToDate", UpdateService.CurrentVersionText), "dHud",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
@@ -267,7 +267,7 @@ public partial class App : Application
         if (!UpdateService.CanSelfUpdate || update.DownloadUrl is null)
         {
             // Geliştirme derlemesi kendini değiştiremez; sürüm sayfasını aç.
-            if (MessageBox.Show(Loc.T("U.OpenPage", update.Tag, UpdateService.CurrentVersionText),
+            if (DarkMessageBox.Show(Loc.T("U.OpenPage", update.Tag, UpdateService.CurrentVersionText),
                     "dHud", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
             {
                 Process.Start(new ProcessStartInfo(update.PageUrl) { UseShellExecute = true });
@@ -276,7 +276,7 @@ public partial class App : Application
             return;
         }
 
-        if (MessageBox.Show(Loc.T("U.Install", update.Tag, UpdateService.CurrentVersionText),
+        if (DarkMessageBox.Show(Loc.T("U.Install", update.Tag, UpdateService.CurrentVersionText),
                 "dHud", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {
             return;
@@ -288,7 +288,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Loc.T("U.InstallFailed", ex.Message), "dHud",
+            DarkMessageBox.Show(Loc.T("U.InstallFailed", ex.Message), "dHud",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -603,8 +603,16 @@ public partial class App : Application
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        MessageBox.Show(Loc.T("N.Unexpected", e.Exception.Message), "dHud",
-            MessageBoxButton.OK, MessageBoxImage.Error);
+        try
+        {
+            DarkMessageBox.Show(Loc.T("N.Unexpected", e.Exception.Message), "dHud",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (Exception)
+        {
+            MessageBox.Show(Loc.T("N.Unexpected", e.Exception.Message), "dHud",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
         e.Handled = true;
     }
 }

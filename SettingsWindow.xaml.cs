@@ -314,7 +314,7 @@ public partial class SettingsWindow : Window
         catch (Exception ex)
         {
             Mouse.OverrideCursor = null;
-            MessageBox.Show(this, ex.Message, Loc.T("S.Startup.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            DarkMessageBox.Show(this, ex.Message, Loc.T("S.Startup.Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {

@@ -16,11 +16,19 @@ public partial class FanControlWindow : Window
     private readonly Dictionary<string, TextBlock> _curveLabels = [];
     private readonly Dictionary<string, TextBlock> _testLabels = [];
     private string _builtFor = string.Empty;
+    private bool _testAllActive;
+    private bool _testAllSawRunning;
 
     public FanControlWindow()
     {
         InitializeComponent();
-        // Küçük ekranda pencere ekrandan taşmasın; içerik kaydırılır (başlık için ~70 px ayrılır).
+        // Geniş ve alçak: fan kartları ekran genişliğine göre 2-4 sütun olur, böylece kaydırma gerekmez.
+        var screenWidth = SystemParameters.WorkArea.Width;
+        var columns = screenWidth >= 1700 ? 4 : screenWidth >= 1250 ? 3 : 2;
+        FanList.Columns = columns;
+        Width = Math.Min(columns * 316 + 64, screenWidth - 24);
+
+        // Yine de çok küçük ekranda taşmasın: içerik kaydırılır (başlık için ~70 px ayrılır).
         MainScroll.MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 24 - 70);
         EnableCheckBox.IsChecked = _settings.Current.FanControlEnabled;
         ProfileStatusText.Text = Loc.T("F.ProfileHint");
@@ -59,7 +67,7 @@ public partial class FanControlWindow : Window
     }
 
     private bool Confirm(string text) =>
-        MessageBox.Show(this, text, Loc.T("F.Title"), MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+        DarkMessageBox.Show(this, text, Loc.T("F.Title"), MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
 
     // ---- Yenileme ----
 
@@ -96,6 +104,61 @@ public partial class FanControlWindow : Window
         {
             ShowTestState(label, status.FirstOrDefault(x => x.Id == id));
         }
+
+        UpdateTestAll(status);
+    }
+
+    // ---- Tüm fanları test et ----
+
+    private void TestAll_Click(object sender, RoutedEventArgs e)
+    {
+        var count = App.Current.Monitor.FanChannels.Count;
+        if (count == 0 || !Confirm(Loc.T("F.ConfirmTestAll", count, FanControlService.TestSeconds)))
+        {
+            return;
+        }
+
+        _testAllActive = true;
+        _testAllSawRunning = false;
+        TestAllStatusText.Foreground = (Brush)FindResource("SubtleTextBrush");
+        TestAllStatusText.Text = Loc.T("F.TestAllRunning");
+        TestAllStatusText.Visibility = Visibility.Visible;
+        App.Current.FanControl.StartTestAll();
+    }
+
+    /// <summary>Tüm testler bitince özet: kaç fan yanıt verdi, hangileri vermedi veya doğrulanamadı.</summary>
+    private void UpdateTestAll(IReadOnlyList<FanStatus> status)
+    {
+        if (!_testAllActive || status.Count == 0)
+        {
+            return;
+        }
+
+        // Eski sonuçlar yeni testle karışmasın: önce en az bir fanın çalıştığı görülmeli.
+        _testAllSawRunning |= status.Any(s => s.TestRunning);
+        if (!_testAllSawRunning || status.Any(s => s.TestRunning) || !status.All(s => s.TestDone))
+        {
+            return;
+        }
+
+        _testAllActive = false;
+        var verifiable = status.Where(s => s.HasRpm).ToList();
+        var noResponse = verifiable.Where(s => !s.TestOk).Select(s => s.Name).ToList();
+        var noSensor = status.Where(s => !s.HasRpm).Select(s => s.Name).ToList();
+
+        var lines = new List<string> { Loc.T("F.TestAllResult", verifiable.Count - noResponse.Count, verifiable.Count) };
+        if (noResponse.Count > 0)
+        {
+            lines.Add(Loc.T("F.TestAllNoResponse", string.Join(", ", noResponse)));
+        }
+
+        if (noSensor.Count > 0)
+        {
+            lines.Add(Loc.T("F.TestAllNoSensor", string.Join(", ", noSensor)));
+        }
+
+        TestAllStatusText.Text = string.Join("\n", lines);
+        TestAllStatusText.Foreground = (Brush)FindResource(noResponse.Count == 0 ? "GoodBrush" : "WarnBrush");
     }
 
     private void ShowTestState(TextBlock label, FanStatus? s)
@@ -258,10 +321,14 @@ public partial class FanControlWindow : Window
             }
         };
 
-        var topLine = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
-        DockPanel.SetDock(testButton, Dock.Right);
-        topLine.Children.Add(testButton);
-        topLine.Children.Add(radios);
+        // Dar kartta yer kazanmak için Test düğmesi başlık satırına, adın ve devrin yanına konur.
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        testButton.Margin = new Thickness(10, 0, 0, 0);
+        testButton.Padding = new Thickness(10, 3, 10, 3);
+        Grid.SetColumn(testButton, 2);
+        header.Children.Add(testButton);
+        radios.Margin = new Thickness(0, 6, 0, 0);
+        var topLine = radios;
 
         var content = new StackPanel();
         content.Children.Add(header);
@@ -276,7 +343,7 @@ public partial class FanControlWindow : Window
             Background = new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(12, 10, 12, 10),
-            Margin = new Thickness(0, 0, 0, 8),
+            Margin = new Thickness(0, 0, 8, 8),
             Child = content
         };
     }

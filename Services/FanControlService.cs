@@ -94,6 +94,24 @@ public sealed class FanControlService : IDisposable
         }
     }
 
+    /// <summary>Tüm fanların testini aynı anda başlatır (her biri <see cref="TestSeconds"/> saniye %100).</summary>
+    public void StartTestAll()
+    {
+        lock (_gate)
+        {
+            foreach (var channel in _monitor.FanChannels)
+            {
+                if (!_states.TryGetValue(channel.Id, out var state))
+                {
+                    _states[channel.Id] = state = new State();
+                }
+
+                state.TestRequested = true;
+                state.TestDone = false;
+            }
+        }
+    }
+
     private void OnSnapshot(SensorSnapshot snapshot)
     {
         lock (_gate)
