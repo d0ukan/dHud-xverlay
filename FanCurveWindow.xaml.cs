@@ -26,6 +26,7 @@ public partial class FanCurveWindow : Window
         Editor.Points = config.Curve;
         CpuSourceRadio.IsChecked = config.Source == FanSource.Cpu;
         GpuSourceRadio.IsChecked = config.Source == FanSource.Gpu;
+        MaxSourceRadio.IsChecked = config.Source == FanSource.Max;
         MinSlider.Value = config.MinPercent;
         MinValueText.Text = $"{config.MinPercent}%";
 
@@ -54,9 +55,11 @@ public partial class FanCurveWindow : Window
     private void RefreshLive()
     {
         var snapshot = App.Current.Monitor.Latest;
-        var temp = (_config.Source == FanSource.Gpu ? snapshot?.Gpu?.Temperature : snapshot?.Cpu?.Temperature);
+        double? cpu = snapshot?.Cpu?.Temperature is > 0 ? snapshot.Cpu.Temperature : null;
+        double? gpu = snapshot?.Gpu?.Temperature is > 0 ? snapshot.Gpu.Temperature : null;
+        var temp = FanControlService.SourceTemp(_config.Source, cpu, gpu);
         var percent = App.Current.FanControl.Status.FirstOrDefault(s => s.Id == _fanId)?.Percent;
-        Editor.Live = (temp is > 0 ? temp : null, percent);
+        Editor.Live = (temp, percent);
     }
 
     private void Source_Checked(object sender, RoutedEventArgs e)
@@ -66,7 +69,9 @@ public partial class FanCurveWindow : Window
             return;
         }
 
-        _config.Source = GpuSourceRadio.IsChecked == true ? FanSource.Gpu : FanSource.Cpu;
+        _config.Source = GpuSourceRadio.IsChecked == true ? FanSource.Gpu
+            : MaxSourceRadio.IsChecked == true ? FanSource.Max
+            : FanSource.Cpu;
         _settings.NotifyChanged();
         RefreshLive();
     }

@@ -7,20 +7,23 @@ using DHud.Services;
 
 namespace DHud;
 
-/// <summary>Fan kontrol penceresi: her fan için Otomatik / Manuel / Eğri seçimi.</summary>
+/// <summary>Fan kontrol penceresi: her fan için Otomatik / Manuel / Eğri, tüm fanlara hazır eğri, profiller ve fan testi.</summary>
 public partial class FanControlWindow : Window
 {
     private readonly SettingsService _settings = App.Current.Settings;
     private readonly DispatcherTimer _timer;
     private readonly Dictionary<string, TextBlock> _liveTexts = [];
     private readonly Dictionary<string, TextBlock> _curveLabels = [];
+    private readonly Dictionary<string, TextBlock> _testLabels = [];
     private string _builtFor = string.Empty;
 
     public FanControlWindow()
     {
         InitializeComponent();
-        MaxHeight = SystemParameters.WorkArea.Height - 24; // küçük ekranda taşmasın
+        // Küçük ekranda pencere ekrandan taşmasın; içerik kaydırılır (başlık için ~70 px ayrılır).
+        MainScroll.MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 24 - 70);
         EnableCheckBox.IsChecked = _settings.Current.FanControlEnabled;
+        ProfileStatusText.Text = Loc.T("F.ProfileHint");
 
         // Pencere açıkken anakart sensörleri taranır; böylece kontrol kapalıyken de fanlar listelenir.
         App.Current.FanWindowOpen = true;
@@ -29,6 +32,7 @@ public partial class FanControlWindow : Window
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => Refresh();
         _timer.Start();
+        RefreshProfiles();
         Refresh();
 
         Closed += (_, _) =>
@@ -39,11 +43,12 @@ public partial class FanControlWindow : Window
         };
     }
 
+    // ---- Etkinleştirme ----
+
     private void EnableCheckBox_Click(object sender, RoutedEventArgs e)
     {
         var enable = EnableCheckBox.IsChecked == true;
-        if (enable && MessageBox.Show(this, Loc.T("F.Confirm"), Loc.T("F.Title"),
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        if (enable && !Confirm(Loc.T("F.Confirm")))
         {
             EnableCheckBox.IsChecked = false;
             return;
@@ -52,6 +57,11 @@ public partial class FanControlWindow : Window
         _settings.Current.FanControlEnabled = enable;
         _settings.NotifyChanged();
     }
+
+    private bool Confirm(string text) =>
+        MessageBox.Show(this, text, Loc.T("F.Title"), MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+
+    // ---- Yenileme ----
 
     private void Refresh()
     {
@@ -75,12 +85,54 @@ public partial class FanControlWindow : Window
                 : Loc.T("F.Live", s.Rpm is float rpm ? $"{rpm:0}" : "--", s.Percent is float p ? $"{p:0}" : "--");
         }
 
-        // Eğri modundaki fanın yanında eğrinin adı (hazır ayar / kayıtlı ad / Özel). Eğri penceresinde değişince güncellenir.
+        // Eğri modundaki fanın yanında eğrinin adı (hazır ayar / kayıtlı ad / Özel).
         foreach (var (id, label) in _curveLabels)
         {
             var curve = _settings.Current.Fans.TryGetValue(id, out var cfg) ? cfg.Curve : FanCurve.Default();
             label.Text = Loc.T("F.CurveIs", FanCurve.Describe(curve, _settings.Current.CurvePresets));
         }
+
+        foreach (var (id, label) in _testLabels)
+        {
+            ShowTestState(label, status.FirstOrDefault(x => x.Id == id));
+        }
+    }
+
+    private void ShowTestState(TextBlock label, FanStatus? s)
+    {
+        string? text = null;
+        var brush = (Brush)FindResource("SubtleTextBrush");
+
+        if (s is { TestRunning: true })
+        {
+            text = Loc.T("F.Testing");
+        }
+        else if (s is { TestDone: true })
+        {
+            if (!s.HasRpm)
+            {
+                text = Loc.T("F.TestNoRpm");
+            }
+            else if (s.TestOk)
+            {
+                text = Loc.T("F.TestOk", $"{s.TestBefore:0}", $"{s.TestPeak:0}");
+                brush = (Brush)FindResource("GoodBrush");
+            }
+            else
+            {
+                text = Loc.T("F.TestFail", $"{s.TestBefore:0}", $"{s.TestPeak:0}");
+                brush = (Brush)FindResource("WarnBrush");
+            }
+        }
+        else if (s is { Stalled: true })
+        {
+            text = Loc.T("F.StalledShort");
+            brush = (Brush)FindResource("HotBrush");
+        }
+
+        label.Text = text ?? string.Empty;
+        label.Foreground = brush;
+        label.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private FanSetting GetOrCreate(string id)
@@ -99,12 +151,18 @@ public partial class FanControlWindow : Window
         FanList.Children.Clear();
         _liveTexts.Clear();
         _curveLabels.Clear();
+        _testLabels.Clear();
 
         foreach (var channel in channels)
         {
             FanList.Children.Add(BuildRow(channel));
         }
     }
+
+    private static bool IsPump(string name) =>
+        name.Contains("pump", StringComparison.OrdinalIgnoreCase) || name.Contains("AIO", StringComparison.OrdinalIgnoreCase);
+
+    // ---- Fan satırı ----
 
     private UIElement BuildRow(FanChannel channel)
     {
@@ -140,7 +198,7 @@ public partial class FanControlWindow : Window
             _settings.NotifyChanged();
         };
 
-        // Eğri: düzenleme düğmesi
+        // Eğri: düzenleme düğmesi ve eğrinin adı
         var curveButton = new Button
         {
             Content = Loc.T("F.EditCurve"), Style = (Style)FindResource("DarkButton"),
@@ -161,24 +219,57 @@ public partial class FanControlWindow : Window
             new FanCurveWindow(id, channel.Name, cfg) { Owner = this }.Show();
         };
 
-        void ApplyModeVisibility(FanMode m)
+        // Satır içi uyarı (seçilen dilde)
+        var warn = new TextBlock
+        {
+            Foreground = (Brush)FindResource("WarnBrush"), TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed
+        };
+
+        // Fan testi sonucu
+        var testLabel = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed };
+        _testLabels[id] = testLabel;
+
+        void ApplyModeUi(FanMode m)
         {
             manualPanel.Visibility = m == FanMode.Manual ? Visibility.Visible : Visibility.Collapsed;
             curvePanel.Visibility = m == FanMode.Curve ? Visibility.Visible : Visibility.Collapsed;
+
+            var text = m != FanMode.Auto && IsPump(channel.Name) ? Loc.T("F.WarnPump")
+                : m == FanMode.Manual ? Loc.T("F.WarnManual")
+                : null;
+            warn.Text = text ?? string.Empty;
+            warn.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        ApplyModeVisibility(mode);
+        ApplyModeUi(mode);
 
-        var radios = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
-        radios.Children.Add(MakeRadio(id, Loc.T("F.Auto"), mode == FanMode.Auto, () => SetMode(id, FanMode.Auto, ApplyModeVisibility)));
-        radios.Children.Add(MakeRadio(id, Loc.T("F.Manual"), mode == FanMode.Manual, () => SetMode(id, FanMode.Manual, ApplyModeVisibility)));
-        radios.Children.Add(MakeRadio(id, Loc.T("F.Curve"), mode == FanMode.Curve, () => SetMode(id, FanMode.Curve, ApplyModeVisibility)));
+        var radios = new StackPanel { Orientation = Orientation.Horizontal };
+        radios.Children.Add(MakeRadio(id, Loc.T("F.Auto"), mode == FanMode.Auto, () => SetMode(id, FanMode.Auto, ApplyModeUi)));
+        radios.Children.Add(MakeRadio(id, Loc.T("F.Manual"), mode == FanMode.Manual, () => SetMode(id, FanMode.Manual, ApplyModeUi)));
+        radios.Children.Add(MakeRadio(id, Loc.T("F.Curve"), mode == FanMode.Curve, () => SetMode(id, FanMode.Curve, ApplyModeUi)));
+
+        var testButton = new Button { Content = Loc.T("F.Test"), Style = (Style)FindResource("DarkButton") };
+        testButton.Click += (_, _) =>
+        {
+            if (Confirm(Loc.T("F.ConfirmTest", channel.Name, FanControlService.TestSeconds)))
+            {
+                App.Current.FanControl.StartTest(id);
+            }
+        };
+
+        var topLine = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
+        DockPanel.SetDock(testButton, Dock.Right);
+        topLine.Children.Add(testButton);
+        topLine.Children.Add(radios);
 
         var content = new StackPanel();
         content.Children.Add(header);
-        content.Children.Add(radios);
+        content.Children.Add(topLine);
         content.Children.Add(manualPanel);
         content.Children.Add(curvePanel);
+        content.Children.Add(warn);
+        content.Children.Add(testLabel);
 
         return new Border
         {
@@ -201,11 +292,152 @@ public partial class FanControlWindow : Window
         return radio;
     }
 
-    private void SetMode(string id, FanMode mode, Action<FanMode> applyVisibility)
+    private void SetMode(string id, FanMode mode, Action<FanMode> applyUi)
     {
         GetOrCreate(id).Mode = mode;
-        applyVisibility(mode);
+        applyUi(mode);
         _settings.NotifyChanged();
+    }
+
+    // ---- Tüm fanlara hazır eğri ----
+
+    private void AllQuiet_Click(object sender, RoutedEventArgs e) => ApplyPresetToAll(FanPreset.Quiet);
+
+    private void AllOptimal_Click(object sender, RoutedEventArgs e) => ApplyPresetToAll(FanPreset.Optimal);
+
+    private void AllMax_Click(object sender, RoutedEventArgs e) => ApplyPresetToAll(FanPreset.MaxCold);
+
+    /// <summary>
+    /// Hazır eğriyi tüm fanlara uygular: GPU fanları GPU'yu, "CPU Fan" CPU'yu, diğerleri CPU ve GPU'nun yüksek olanını izler.
+    /// Pompalar, kutu işaretli değilse atlanır (yavaş pompa CPU'yu ısıtır).
+    /// </summary>
+    private void ApplyPresetToAll(FanPreset preset)
+    {
+        var includePump = IncludePumpCheckBox.IsChecked == true;
+        var targets = App.Current.Monitor.FanChannels.Where(c => includePump || !IsPump(c.Name)).ToList();
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        var notes = includePump ? Loc.T("F.NotePumpIn") : Loc.T("F.NotePumpOut");
+        if (!_settings.Current.FanControlEnabled)
+        {
+            notes += "\n" + Loc.T("F.NoteOff");
+        }
+
+        if (!Confirm(Loc.T("F.ConfirmAll", FanCurve.PresetName(preset), targets.Count, notes)))
+        {
+            return;
+        }
+
+        var (curve, min) = FanCurve.Preset(preset);
+        foreach (var channel in targets)
+        {
+            var cfg = GetOrCreate(channel.Id);
+            cfg.Mode = FanMode.Curve;
+            cfg.Curve = curve.Select(p => new CurvePoint { Temp = p.Temp, Percent = p.Percent }).ToList();
+            cfg.MinPercent = min;
+            cfg.Source = channel.IsGpu ? FanSource.Gpu
+                : channel.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase) ? FanSource.Cpu
+                : FanSource.Max;
+        }
+
+        _settings.NotifyChanged();
+        ForceRebuild();
+    }
+
+    private void ForceRebuild()
+    {
+        _builtFor = string.Empty;
+        Refresh();
+    }
+
+    // ---- Profiller ----
+
+    private void ProfileNameBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            SaveProfile_Click(sender, e);
+            e.Handled = true;
+        }
+    }
+
+    private void SaveProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var name = ProfileNameBox.Text.Trim();
+        if (name.Length == 0)
+        {
+            ProfileStatusText.Text = Loc.T("F.ProfileInvalid");
+            return;
+        }
+
+        var profiles = _settings.Current.FanProfiles;
+        var existing = profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is null && profiles.Count >= FanCurve.MaxProfiles)
+        {
+            ProfileStatusText.Text = Loc.T("F.ProfileTooMany", FanCurve.MaxProfiles);
+            return;
+        }
+
+        // Profil, o anki ayarların kopyasıdır; sonradan fanları değiştirmek profili etkilemez.
+        var copy = _settings.Current.Fans.ToDictionary(pair => pair.Key, pair => pair.Value.Clone());
+        if (existing is null)
+        {
+            profiles.Add(new FanProfile { Name = name, Fans = copy });
+        }
+        else
+        {
+            existing.Fans = copy;
+        }
+
+        _settings.NotifyChanged();
+        ProfileNameBox.Clear();
+        ProfileStatusText.Text = Loc.T("F.ProfileSaved", name);
+        RefreshProfiles();
+    }
+
+    private void LoadProfile(FanProfile profile)
+    {
+        if (!Confirm(Loc.T("F.ConfirmProfile", profile.Name)))
+        {
+            return;
+        }
+
+        _settings.Current.Fans = profile.Fans.ToDictionary(pair => pair.Key, pair => pair.Value.Clone());
+        _settings.NotifyChanged();
+        ForceRebuild();
+    }
+
+    private void RefreshProfiles()
+    {
+        ProfilePanel.Children.Clear();
+        foreach (var profile in _settings.Current.FanProfiles.ToList())
+        {
+            var load = new Button
+            {
+                Content = profile.Name, Style = (Style)FindResource("DarkButton"), Margin = new Thickness(0, 0, 2, 0)
+            };
+            load.Click += (_, _) => LoadProfile(profile);
+
+            var delete = new Button
+            {
+                Content = "✕", Style = (Style)FindResource("DarkButton"), ToolTip = Loc.T("F.DeleteProfile"),
+                Padding = new Thickness(8, 4, 8, 4)
+            };
+            delete.Click += (_, _) =>
+            {
+                _settings.Current.FanProfiles.Remove(profile);
+                _settings.NotifyChanged();
+                RefreshProfiles();
+            };
+
+            var pair = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 10, 6) };
+            pair.Children.Add(load);
+            pair.Children.Add(delete);
+            ProfilePanel.Children.Add(pair);
+        }
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

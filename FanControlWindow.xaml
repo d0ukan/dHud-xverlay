@@ -3,9 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:h="clr-namespace:DHud.Helpers"
         Title="{h:Loc F.Title}"
-        Width="480"
+        Width="560"
         SizeToContent="Height"
-        MaxHeight="720"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -38,20 +37,47 @@
                         VerticalAlignment="Top" Margin="0,8,8,0" Click="CloseButton_Click" />
             </Grid>
 
-            <StackPanel Margin="16,0,16,16">
-                <TextBlock Text="{h:Loc F.Warning}" Style="{StaticResource HintText}" TextWrapping="Wrap"
-                           Foreground="{StaticResource WarnBrush}" />
-                <CheckBox x:Name="EnableCheckBox" Content="{h:Loc F.Enable}" Style="{StaticResource DarkCheckBox}"
-                          Margin="0,10,0,0" Click="EnableCheckBox_Click" />
-                <TextBlock x:Name="EmergencyText" Text="{h:Loc F.Emergency}" Foreground="{StaticResource HotBrush}"
-                           FontWeight="SemiBold" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap" />
-                <TextBlock x:Name="NoFansText" Text="{h:Loc F.NoFans}" Style="{StaticResource HintText}"
-                           TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed" />
+            <ScrollViewer x:Name="MainScroll" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="16,0,16,16">
+                    <TextBlock Text="{h:Loc F.Warning}" Style="{StaticResource HintText}" TextWrapping="Wrap"
+                               Foreground="{StaticResource WarnBrush}" />
+                    <CheckBox x:Name="EnableCheckBox" Content="{h:Loc F.Enable}" Style="{StaticResource DarkCheckBox}"
+                              Margin="0,10,0,0" Click="EnableCheckBox_Click" />
+                    <TextBlock x:Name="EmergencyText" Text="{h:Loc F.Emergency}" Foreground="{StaticResource HotBrush}"
+                               FontWeight="SemiBold" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap" />
+                    <TextBlock x:Name="NoFansText" Text="{h:Loc F.NoFans}" Style="{StaticResource HintText}"
+                               TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed" />
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="440" Margin="0,8,0,0">
-                    <StackPanel x:Name="FanList" />
-                </ScrollViewer>
-            </StackPanel>
+                    <!-- Tüm fanlara hazır eğri -->
+                    <TextBlock Text="{h:Loc F.AllFans}" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{h:Loc F.PresetQuiet}" Style="{StaticResource DarkButton}" Margin="0,0,8,0"
+                                Click="AllQuiet_Click" />
+                        <Button Content="{h:Loc F.PresetOptimal}" Style="{StaticResource DarkButton}" Margin="0,0,8,0"
+                                Click="AllOptimal_Click" />
+                        <Button Content="{h:Loc F.PresetMax}" Style="{StaticResource DarkButton}"
+                                Click="AllMax_Click" />
+                    </StackPanel>
+                    <CheckBox x:Name="IncludePumpCheckBox" Content="{h:Loc F.IncludePump}" Style="{StaticResource DarkCheckBox}"
+                              Margin="0,8,0,0" />
+                    <TextBlock Text="{h:Loc F.AllHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+
+                    <!-- Profiller: tüm fanların ayarı -->
+                    <TextBlock Text="{h:Loc F.Profiles}" Style="{StaticResource SectionHeader}" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="{h:Loc F.ProfileSave}" Style="{StaticResource DarkButton}"
+                                Margin="8,0,0,0" Click="SaveProfile_Click" />
+                        <TextBox x:Name="ProfileNameBox" MaxLength="24" Padding="6,3" Background="#1AFFFFFF"
+                                 Foreground="{StaticResource TextBrush}" CaretBrush="White"
+                                 BorderBrush="#40FFFFFF" BorderThickness="1" KeyDown="ProfileNameBox_KeyDown" />
+                    </DockPanel>
+                    <TextBlock x:Name="ProfileStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                    <WrapPanel x:Name="ProfilePanel" Margin="0,6,0,0" />
+
+                    <!-- Tek tek fanlar -->
+                    <StackPanel x:Name="FanList" Margin="0,12,0,0" />
+                </StackPanel>
+            </ScrollViewer>
         </StackPanel>
     </Border>
 </Window>

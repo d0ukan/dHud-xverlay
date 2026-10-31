@@ -73,14 +73,21 @@ dHud lists every fan it can control (CPU fan, pump, case fans, GPU fans). For ea
 - **Manual**: a fixed speed.
 - **Curve**: speed follows a temperature curve. Open the curve editor, **drag points** to shape the curve, click an empty spot to add a point, right-click a point to remove it. A green marker shows the current temperature. Pick the temperature source (CPU or GPU) and a minimum speed.
 
-**Presets:** *Quiet*, *Optimal* and *Max Cold* give you a starting curve you can fine-tune.
+**Presets:** *Quiet*, *Optimal* and *Max Cold* give you a starting curve you can fine-tune. The buttons at the top of the fan window apply a preset to **all fans at once** (GPU fans follow the GPU, the CPU fan follows the CPU, the rest follow the higher of CPU and GPU). Pumps are skipped unless you tick *Include pump*, because a slow pump can overheat your CPU.
+
+**Your own curves and profiles:** save any curve under a name (*My curves*) and reuse it on any fan. Save the settings of **all fans** as a *profile* ("Gaming", "Night"…) and load it with one click.
+
+**Fan test and fan alert:** the **Test** button runs a fan at 100% for a few seconds and tells you whether its speed really increased (useful to spot a loose cable). If a fan that dHud controls stops spinning, you get a notification (also on your phone).
+
+**Temperature source:** each curve can follow the CPU, the GPU, or the higher of the two.
 
 **Safety:**
 
 - Fan control is **off by default** and asks for confirmation the first time.
 - If CPU or GPU reaches the **critical temperature** (Settings → Alerts), every fan dHud controls jumps to **100%**.
 - If a curve's temperature sensor can't be read for a few seconds, the fan goes to 100%.
-- Fans slow down gradually (never abruptly) to avoid constant speed hunting.
+- Fans slow down gradually (never abruptly) to avoid constant speed hunting. A curve can only go up: a point can't be lower than the one on its left.
+- Every risky action (enabling control, applying a preset to all fans, loading a profile, testing a fan) asks for confirmation in your language.
 - When dHud exits or crashes, fans are handed back to the BIOS / driver. *If dHud is killed abruptly (for example from Task Manager), fans keep their last speed until you start dHud again or restart the PC.*
 
 Not every motherboard allows software fan control; dHud shows "no controllable fans found" in that case.

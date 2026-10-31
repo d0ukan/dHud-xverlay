@@ -105,6 +105,13 @@ public partial class App : Application
         StartupManager.MigrateLegacy();
 
         FanControl = new FanControlService(Monitor, Settings);
+        // Kontrol edilen bir fan dönmeyi bırakırsa tepsi bildirimi ve (bağlıysa) mobil uyarı.
+        FanControl.FanStalled += (name, percent) => Dispatcher.BeginInvoke(() =>
+        {
+            var message = Loc.T("F.Stalled", name, percent);
+            _tray?.ShowBalloon(Loc.T("F.StalledTitle"), message, Forms.ToolTipIcon.Warning);
+            MobileLink?.SendAlert(message);
+        });
         // Uygulama nasıl kapanırsa kapansın fanlar BIOS denetimine geri verilir.
         AppDomain.CurrentDomain.UnhandledException += (_, _) => FanControl?.ReleaseAll();
         AppDomain.CurrentDomain.ProcessExit += (_, _) => FanControl?.ReleaseAll();

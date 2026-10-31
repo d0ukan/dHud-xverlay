@@ -4,7 +4,9 @@ using LibreHardwareMonitor.Hardware;
 namespace DHud.Services;
 
 /// <summary>Arayüzde gösterilen fan durumu (arka plan thread'inde üretilir, değişmez kopya).</summary>
-public sealed record FanStatus(string Id, string Name, bool IsGpu, float? Rpm, float? Percent, bool Controlled);
+public sealed record FanStatus(
+    string Id, string Name, bool IsGpu, bool HasRpm, float? Rpm, float? Percent, bool Controlled,
+    bool TestRunning, bool TestDone, bool TestOk, float TestBefore, float TestPeak, bool Stalled);
 
 /// <summary>
 /// Fan hızlarını ayarlara göre yazılımla kontrol eder. Güvenlik önceliklidir:
@@ -13,6 +15,7 @@ public sealed record FanStatus(string Id, string Name, bool IsGpu, float? Rpm, f
 /// <item>CPU veya GPU sıcaklığı kritik eşiğe ulaşırsa dHud'un kontrol ettiği tüm fanlar %100'e çıkar.</item>
 /// <item>Eğrinin sıcaklık kaynağı okunamıyorsa birkaç saniye sonra fan %100'e çıkar.</item>
 /// <item>Fan yavaşlarken hızlı değil kademeli iner (sürekli inip çıkmayı önler).</item>
+/// <item>Kontrol edilen bir fan dönmeyi bırakırsa (0 RPM) uyarı verilir.</item>
 /// <item>Uygulama kapanırken veya çökerken <see cref="ReleaseAll"/> fanları otomatiğe geri verir.</item>
 /// </list>
 /// </summary>
@@ -24,12 +27,33 @@ public sealed class FanControlService : IDisposable
     /// <summary>Fan en fazla bu kadar yüzde/saniye yavaşlar; hızlanırken sınır yok.</summary>
     public const double MaxRampDownPerTick = 4;
 
+    /// <summary>Fan testi süresi (saniye): fan bu kadar %100'de çalışır.</summary>
+    public const int TestSeconds = 8;
+
+    /// <summary>Fan bu kadar ardışık ölçüm 0 RPM okunursa (komut ≥ %30 iken) uyarı verilir.</summary>
+    public const int StallTicks = 10;
+
+    private const double StallMinPercent = 30;
+    private const float SpinningRpm = 50;
+
     private sealed class State
     {
         public double? Last;
         public int Missing;
         public int TicksSinceSend;
         public bool Taken;
+
+        public bool TestRequested;
+        public DateTime? TestEnd;
+        public bool TestDone;
+        public bool TestOk;
+        public float TestBefore;
+        public float TestBeforePercent;
+        public float TestPeak;
+
+        public bool SeenSpinning;
+        public int ZeroTicks;
+        public bool Stalled;
     }
 
     private readonly HardwareMonitorService _monitor;
@@ -51,6 +75,24 @@ public sealed class FanControlService : IDisposable
 
     /// <summary>Sıcaklık kritik eşikte olduğu için fanlar zorla %100'de mi.</summary>
     public bool Emergency => _emergency;
+
+    /// <summary>Kontrol edilen bir fan dönmüyor: fan adı ve ayarlanan yüzde. DİKKAT: arka plan thread'inden çağrılır.</summary>
+    public event Action<string, int>? FanStalled;
+
+    /// <summary>Bir fanı <see cref="TestSeconds"/> saniye %100'de çalıştırıp devrin artıp artmadığına bakar; sonra eski haline döner.</summary>
+    public void StartTest(string id)
+    {
+        lock (_gate)
+        {
+            if (!_states.TryGetValue(id, out var state))
+            {
+                _states[id] = state = new State();
+            }
+
+            state.TestRequested = true;
+            state.TestDone = false;
+        }
+    }
 
     private void OnSnapshot(SensorSnapshot snapshot)
     {
@@ -78,6 +120,7 @@ public sealed class FanControlService : IDisposable
     {
         var settings = _settings.Current;
         var enabled = settings.FanControlEnabled;
+        var now = DateTime.UtcNow;
 
         var cpuTemp = ValidTemp(snapshot.Cpu?.Temperature);
         var gpuTemp = ValidTemp(snapshot.Gpu?.Temperature);
@@ -99,10 +142,35 @@ public sealed class FanControlService : IDisposable
                 _states[channel.Id] = state = new State();
             }
 
+            var rpm = channel.Rpm?.Value;
+
+            // ---- Fan testi ----
+            if (state.TestRequested)
+            {
+                state.TestRequested = false;
+                state.TestEnd = now.AddSeconds(TestSeconds);
+                state.TestBefore = rpm ?? 0;
+                state.TestBeforePercent = channel.Control.Value ?? 0;
+                state.TestPeak = 0;
+            }
+
+            var testing = state.TestEnd is DateTime end && now < end;
+            if (state.TestEnd is not null && !testing)
+            {
+                state.TestEnd = null;
+                state.TestDone = true;
+                state.TestOk = TestPassed(state.TestBefore, state.TestPeak, state.TestBeforePercent);
+            }
+
             settings.Fans.TryGetValue(channel.Id, out var cfg);
             var mode = enabled ? cfg?.Mode ?? FanMode.Auto : FanMode.Auto;
 
-            if (mode == FanMode.Auto || cfg is null)
+            if (testing)
+            {
+                state.TestPeak = Math.Max(state.TestPeak, rpm ?? 0);
+                Write(control, state, 100);
+            }
+            else if (mode == FanMode.Auto || cfg is null)
             {
                 if (state.Taken)
                 {
@@ -113,29 +181,79 @@ public sealed class FanControlService : IDisposable
             }
             else
             {
-                var source = cfg.Source == FanSource.Gpu ? gpuTemp : cpuTemp;
+                var source = SourceTemp(cfg.Source, cpuTemp, gpuTemp);
                 state.Missing = source is null ? state.Missing + 1 : 0;
 
                 var target = ComputeTarget(cfg, source, state.Missing, emergency, state.Last);
-                target = Math.Clamp(target, control.MinSoftwareValue, control.MaxSoftwareValue);
-
-                // Değişiklik varsa hemen, yoksa yaklaşık 10 saniyede bir yeniden yaz (sürücü kendiliğinden bırakmasın).
-                state.TicksSinceSend++;
-                if (state.Last is null || Math.Abs(target - state.Last.Value) >= 1 || state.TicksSinceSend >= 10)
-                {
-                    control.SetSoftware((float)target);
-                    state.Last = target;
-                    state.TicksSinceSend = 0;
-                }
-
-                state.Taken = true;
+                Write(control, state, target);
             }
 
-            statuses.Add(new FanStatus(channel.Id, channel.Name, channel.IsGpu, channel.Rpm?.Value, channel.Control.Value, state.Taken));
+            DetectStall(channel, state, rpm, testing);
+
+            statuses.Add(new FanStatus(channel.Id, channel.Name, channel.IsGpu, channel.Rpm is not null, rpm,
+                channel.Control.Value, state.Taken, testing, state.TestDone, state.TestOk,
+                state.TestBefore, state.TestPeak, state.Stalled));
         }
 
         _status = statuses;
     }
+
+    /// <summary>Hedef yüzdeyi donanımın sınırlarına çekip yazar. Değişiklik varsa hemen, yoksa yaklaşık 10 saniyede bir yeniden yazar.</summary>
+    private static void Write(IControl control, State state, double target)
+    {
+        target = Math.Clamp(target, control.MinSoftwareValue, control.MaxSoftwareValue);
+
+        state.TicksSinceSend++;
+        if (state.Last is null || Math.Abs(target - state.Last.Value) >= 1 || state.TicksSinceSend >= 10)
+        {
+            control.SetSoftware((float)target);
+            state.Last = target;
+            state.TicksSinceSend = 0;
+        }
+
+        state.Taken = true;
+    }
+
+    /// <summary>
+    /// dHud'un yüzde yazdığı bir fan daha önce döndüğü halde 0 RPM okunuyorsa uyarır. Hiç dönmemiş fanlar
+    /// (devir sensörü bazı fanlarda hep 0 okur) uyarı üretmez.
+    /// </summary>
+    private void DetectStall(FanChannel channel, State state, float? rpm, bool testing)
+    {
+        if (rpm is not float value || testing || !state.Taken)
+        {
+            state.ZeroTicks = 0;
+            return;
+        }
+
+        if (value > SpinningRpm)
+        {
+            state.SeenSpinning = true;
+            state.ZeroTicks = 0;
+            state.Stalled = false;
+        }
+        else if (state.SeenSpinning && state.Last >= StallMinPercent)
+        {
+            state.ZeroTicks++;
+            if (state.ZeroTicks >= StallTicks && !state.Stalled)
+            {
+                state.Stalled = true;
+                FanStalled?.Invoke(channel.Name, (int)Math.Round(state.Last.Value));
+            }
+        }
+    }
+
+    /// <summary>Test geçti mi: devir en az 100 RPM arttı; ya da fan zaten (≥ %90) en yüksekteydi ve dönüyor.</summary>
+    public static bool TestPassed(float rpmBefore, float rpmPeak, float percentBefore) =>
+        rpmPeak - rpmBefore >= 100 || (percentBefore >= 90 && rpmPeak > 200);
+
+    /// <summary>Eğrinin sıcaklık kaynağı: CPU, GPU veya ikisinin yüksek olanı (biri okunamıyorsa diğeri).</summary>
+    public static double? SourceTemp(FanSource source, double? cpuTemp, double? gpuTemp) => source switch
+    {
+        FanSource.Cpu => cpuTemp,
+        FanSource.Gpu => gpuTemp,
+        _ => cpuTemp is double c && gpuTemp is double g ? Math.Max(c, g) : cpuTemp ?? gpuTemp
+    };
 
     /// <summary>
     /// Bir fan için hedef yüzdeyi hesaplar (donanıma dokunmaz). Sıra: acil durum → manuel/eğri → alt sınır → kademeli yavaşlama.
@@ -204,6 +322,7 @@ public sealed class FanControlService : IDisposable
 
                 state.Taken = false;
                 state.Last = null;
+                state.TestEnd = null;
             }
         }
     }

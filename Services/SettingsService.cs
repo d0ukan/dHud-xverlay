@@ -121,6 +121,9 @@ public sealed class AppSettings
     /// <summary>Kullanıcının kaydettiği, adlandırılmış fan eğrileri (tüm fanlar için ortak).</summary>
     public List<SavedCurve> CurvePresets { get; set; } = [];
 
+    /// <summary>Tüm fanların ayarını saklayan profiller ("Oyun", "Gece" vb.).</summary>
+    public List<FanProfile> FanProfiles { get; set; } = [];
+
     /// <summary>Oyun FPS'ini ölç (ETW). Mobil uygulamaya da gönderilir. Yönetici yetkisi gerekir.</summary>
     public bool FpsEnabled { get; set; }
 
@@ -243,6 +246,22 @@ public sealed class SettingsService
         foreach (var fan in s.Fans.Values)
         {
             FanCurve.Sanitize(fan);
+        }
+
+        s.FanProfiles ??= [];
+        s.FanProfiles = s.FanProfiles
+            .Where(p => !string.IsNullOrWhiteSpace(p.Name))
+            .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase).Select(g => g.Last())
+            .Take(FanCurve.MaxProfiles)
+            .ToList();
+        foreach (var profile in s.FanProfiles)
+        {
+            profile.Name = profile.Name.Trim();
+            profile.Fans ??= [];
+            foreach (var fan in profile.Fans.Values)
+            {
+                FanCurve.Sanitize(fan);
+            }
         }
 
         s.CurvePresets ??= [];

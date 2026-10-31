@@ -73,14 +73,21 @@ dHud kontrol edebildiği tüm fanları listeler (CPU fanı, pompa, kasa fanları
 - **Manuel**: sabit bir hız.
 - **Eğri**: hız sıcaklığa göre değişir. Eğri editörünü aç, eğriyi şekillendirmek için **noktaları sürükle**, boş bir yere tıklayıp nokta ekle, bir noktaya sağ tıklayıp sil. Yeşil işaretçi şu anki sıcaklığı gösterir. Sıcaklık kaynağını (CPU veya GPU) ve minimum hızı seçebilirsin.
 
-**Hazır ayarlar:** *Sessiz*, *Optimal* ve *Max Soğutma* sana ince ayar yapabileceğin bir başlangıç eğrisi verir.
+**Hazır ayarlar:** *Sessiz*, *Optimal* ve *Max Soğutma* sana ince ayar yapabileceğin bir başlangıç eğrisi verir. Fan penceresinin üstündeki düğmeler hazır ayarı **tüm fanlara tek seferde** uygular (GPU fanları GPU'yu, CPU fanı CPU'yu, diğerleri CPU ve GPU'nun yüksek olanını izler). Yavaş pompa CPU'yu ısıtabileceği için *Pompayı da dahil et* kutusunu işaretlemezsen pompalar atlanır.
+
+**Kendi eğrilerin ve profiller:** herhangi bir eğriyi adla kaydet (*Kayıtlı eğrilerim*) ve her fanda kullan. **Tüm fanların** ayarını bir *profil* olarak ("Oyun", "Gece"…) kaydet ve tek tıkla yükle.
+
+**Fan testi ve fan uyarısı:** **Test** düğmesi fanı birkaç saniye %100'de çalıştırır ve hızının gerçekten artıp artmadığını söyler (gevşek kabloyu anlamak için işe yarar). dHud'un kontrol ettiği bir fan dönmeyi bırakırsa bildirim alırsın (telefonuna da gider).
+
+**Sıcaklık kaynağı:** her eğri CPU'yu, GPU'yu veya ikisinin yüksek olanını izleyebilir.
 
 **Güvenlik:**
 
 - Fan kontrolü **varsayılan olarak kapalıdır**, ilk açışta onay ister.
 - CPU veya GPU **kritik sıcaklığa** (Ayarlar → Alerts) ulaşırsa dHud'un kontrol ettiği tüm fanlar **%100'e** çıkar.
 - Eğrinin sıcaklık sensörü birkaç saniye okunamazsa fan %100'e çıkar.
-- Fanlar ani değil kademeli yavaşlar (sürekli inip çıkmasın diye).
+- Fanlar ani değil kademeli yavaşlar (sürekli inip çıkmasın diye). Eğri sadece yukarı gidebilir: bir nokta solundaki noktadan düşük olamaz.
+- Riskli her işlem (kontrolü açma, tüm fanlara hazır ayar uygulama, profil yükleme, fan testi) seçili dilde onay ister.
 - dHud kapanırken veya çökerken fanlar BIOS / sürücüye geri verilir. *dHud aniden sonlandırılırsa (örneğin Görev Yöneticisi'nden), fanlar dHud'u yeniden açana veya bilgisayarı yeniden başlatana kadar son hızında kalır.*
 
 Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edilebilir fan bulunamadı" der.

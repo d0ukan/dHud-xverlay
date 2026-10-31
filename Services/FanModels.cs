@@ -22,7 +22,10 @@ public enum FanPreset
 public enum FanSource
 {
     Cpu,
-    Gpu
+    Gpu,
+
+    /// <summary>CPU ve GPU sıcaklığının yüksek olanı (kasa fanları için).</summary>
+    Max
 }
 
 /// <summary>Eğri noktası: bu sıcaklıkta (°C) fan bu yüzdede (%) çalışır.</summary>
@@ -43,6 +46,22 @@ public sealed class FanSetting
     public int MinPercent { get; set; } = 20;
 
     public List<CurvePoint> Curve { get; set; } = FanCurve.Default();
+
+    public FanSetting Clone() => new()
+    {
+        Mode = Mode,
+        ManualPercent = ManualPercent,
+        Source = Source,
+        MinPercent = MinPercent,
+        Curve = Curve.Select(p => new CurvePoint { Temp = p.Temp, Percent = p.Percent }).ToList()
+    };
+}
+
+/// <summary>Tüm fanların ayarını bir adla saklar; sonra tek tıkla yüklenir.</summary>
+public sealed class FanProfile
+{
+    public string Name { get; set; } = string.Empty;
+    public Dictionary<string, FanSetting> Fans { get; set; } = [];
 }
 
 /// <summary>Kullanıcının adlandırıp kaydettiği fan eğrisi.</summary>
@@ -87,6 +106,7 @@ public static class FanCurve
     };
 
     public const int MaxSavedCurves = 20;
+    public const int MaxProfiles = 10;
     public const int MaxNameLength = 24;
 
     /// <summary>İki eğri aynı noktalara sahip mi (sıra önemsiz).</summary>

@@ -44,7 +44,9 @@
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="CpuSourceRadio" GroupName="Source" Content="CPU" Margin="0,0,16,0"
                                  Style="{StaticResource DarkRadioButton}" Checked="Source_Checked" />
-                    <RadioButton x:Name="GpuSourceRadio" GroupName="Source" Content="GPU"
+                    <RadioButton x:Name="GpuSourceRadio" GroupName="Source" Content="GPU" Margin="0,0,16,0"
+                                 Style="{StaticResource DarkRadioButton}" Checked="Source_Checked" />
+                    <RadioButton x:Name="MaxSourceRadio" GroupName="Source" Content="{h:Loc F.SourceMax}"
                                  Style="{StaticResource DarkRadioButton}" Checked="Source_Checked" />
                 </StackPanel>
 
