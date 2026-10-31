@@ -442,6 +442,7 @@ public partial class App : Application
             if (message is not null)
             {
                 _tray?.ShowBalloon(Loc.T("N.HighTemp"), message, Forms.ToolTipIcon.Warning);
+                MobileLink.SendAlert(message);
             }
         }
     }

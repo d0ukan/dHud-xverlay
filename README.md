@@ -21,7 +21,7 @@
 - English and Turkish UI (English by default, switch in Settings → Appearance)
 - Automatic update checks via GitHub Releases (on startup and every 1–24 hours while running; you get a notification and update with one click)
 - Game FPS counter (fullscreen DirectX games): small overlay on the PC and live FPS on the mobile app. Off by default, needs administrator rights
-- Android companion app (APK in Releases): live stats, temperature graph and a full-screen tablet dashboard over your local network. Pair by scanning the QR code in Settings → Behavior → Mobile app
+- Android companion app (APK in Releases): live stats, temperature graph, high-temperature alerts and a full-screen tablet dashboard over your local network. Pair by scanning the QR code in Settings → Behavior → Mobile app
 
 ## Requirements
 

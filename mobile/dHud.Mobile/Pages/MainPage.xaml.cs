@@ -1,3 +1,4 @@
+using dHud.Mobile.Controls;
 using dHud.Mobile.Services;
 
 namespace dHud.Mobile.Pages;
@@ -21,6 +22,7 @@ public partial class MainPage : ContentPage
 	private AppUpdate? _update;
 	private bool _fullscreen;
 	private LayoutMode? _mode;
+	private static double _tempFontSize = 40;
 
 	public MainPage()
 	{
@@ -30,6 +32,7 @@ public partial class MainPage : ContentPage
 		ApplyTexts();
 
 		App.Link.Changed += Refresh;
+		App.Link.AlertReceived += OnAlert;
 		Dashboard.SizeChanged += Dashboard_SizeChanged;
 
 		// Tablet şarjdayken (dock/duvar standı) ekran kapanmasın; pilde normal uyku süresi geçerli.
@@ -57,6 +60,7 @@ public partial class MainPage : ContentPage
 
 		Refresh();
 		StartUpdateChecks();
+		_ = AlertNotifier.RequestPermissionAsync();
 	}
 
 	protected override void OnSizeAllocated(double width, double height)
@@ -101,14 +105,14 @@ public partial class MainPage : ContentPage
 
 	private void ApplyDensity(bool compact)
 	{
-		var padding = new Thickness(compact ? 10 : 16);
+		var padding = new Thickness(compact ? 10 : 14);
 		foreach (var card in new[] { CpuCard, GpuCard, GraphCard, RamCard, NetCard })
 		{
 			card.Padding = padding;
 		}
 
-		CpuTemp.FontSize = GpuTemp.FontSize = compact ? 32 : 46;
-		RamValue.FontSize = compact ? 22 : 30;
+		_tempFontSize = compact ? 30 : 40;
+		RamValue.FontSize = compact ? 20 : 26;
 		Cards.ColumnSpacing = Cards.RowSpacing = compact ? 8 : 12;
 	}
 
@@ -118,6 +122,7 @@ public partial class MainPage : ContentPage
 		EmptyText.Text = Loc.T("NotPaired.Text");
 		ScanButton.Text = Loc.T("ScanQr");
 		ManualButton.Text = Loc.T("Manual");
+		AlertDismissButton.Text = Loc.T("Ok");
 
 		GraphTitle.Text = Loc.T("Graph");
 		foreach (var caption in new[] { CpuUsageCaption, GpuUsageCaption })
@@ -258,12 +263,11 @@ public partial class MainPage : ContentPage
 		Graph.Invalidate();
 	}
 
-	private static void ShowDevice(DeviceReading? d, Label name, Label temp, Label load, ProgressBar bar,
+	private static void ShowDevice(DeviceReading? d, Label name, Label temp, Label load, BarView bar,
 		Label clock, Label power, Label fan)
 	{
 		name.Text = d?.Name ?? string.Empty;
-		temp.Text = FormatTemp(d?.Temperature);
-		temp.TextColor = TempColor(d?.Temperature);
+		SetTemperature(temp, d?.Temperature);
 		load.Text = d?.Load is float l ? $"{l:0}%" : "--%";
 		bar.Progress = Math.Clamp((d?.Load ?? 0) / 100.0, 0, 1);
 		clock.Text = d?.ClockMhz switch
@@ -276,7 +280,7 @@ public partial class MainPage : ContentPage
 		fan.Text = d?.FanRpm is float f ? $"{f:0} RPM" : "--";
 	}
 
-	private static void ShowMemory(float? used, float? total, Label label, ProgressBar bar, int decimals)
+	private static void ShowMemory(float? used, float? total, Label label, BarView bar, int decimals)
 	{
 		if (used is float u && total is float t && t > 0)
 		{
@@ -288,6 +292,20 @@ public partial class MainPage : ContentPage
 			label.Text = "--";
 			bar.Progress = 0;
 		}
+	}
+
+	/// <summary>Büyük sayı + küçük "°C" birimi.</summary>
+	private static void SetTemperature(Label label, float? t)
+	{
+		var color = TempColor(t);
+		label.FormattedText = new FormattedString
+		{
+			Spans =
+			{
+				new Span { Text = t is float v && v > 0 ? $"{v:0}" : "--", FontSize = _tempFontSize, FontAttributes = FontAttributes.Bold, TextColor = color },
+				new Span { Text = "°C", FontSize = _tempFontSize * 0.42, TextColor = Color.FromArgb("#7B8494") }
+			}
+		};
 	}
 
 	private static string FormatTemp(float? t) => t is float v && v > 0 ? $"{v:0}°C" : "--°C";
@@ -392,6 +410,17 @@ public partial class MainPage : ContentPage
 		}
 #endif
 	}
+
+	// ---- Sıcaklık uyarısı ----
+
+	private void OnAlert(string text)
+	{
+		AlertLabel.Text = text;
+		AlertBanner.IsVisible = true;
+		AlertNotifier.Notify(Loc.T("AlertTitle"), text);
+	}
+
+	private void AlertDismissButton_Clicked(object? sender, EventArgs e) => AlertBanner.IsVisible = false;
 
 	// ---- Güncelleme ----
 

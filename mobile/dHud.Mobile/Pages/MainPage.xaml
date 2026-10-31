@@ -3,20 +3,25 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="dHud.Mobile.Pages.MainPage"
              BackgroundColor="{StaticResource BgColor}"
+             xmlns:ui="clr-namespace:dHud.Mobile.Controls"
              NavigationPage.HasNavigationBar="False">
 
     <Grid RowDefinitions="Auto,Auto,*" Padding="16,12" RowSpacing="10">
 
         <!-- Üst çubuk -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto">
-            <VerticalStackLayout x:Name="TitleBox" VerticalOptions="Center">
-                <HorizontalStackLayout Spacing="8">
-                    <BoxView x:Name="StatusDot" WidthRequest="10" HeightRequest="10" CornerRadius="5"
-                             VerticalOptions="Center" Color="{StaticResource SubtleColor}" />
-                    <Label Text="dHud" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
-                </HorizontalStackLayout>
-                <Label x:Name="StatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" />
-            </VerticalStackLayout>
+            <HorizontalStackLayout x:Name="TitleBox" Spacing="12" VerticalOptions="Center">
+                <Label Text="dHud" FontSize="20" FontAttributes="Bold" CharacterSpacing="0.5"
+                       TextColor="{StaticResource TextColor}" VerticalOptions="Center" />
+                <Border BackgroundColor="{StaticResource CardColor}" Stroke="{StaticResource StrokeColor}" StrokeThickness="1"
+                        StrokeShape="RoundRectangle 12" Padding="10,4" VerticalOptions="Center">
+                    <HorizontalStackLayout Spacing="7">
+                        <BoxView x:Name="StatusDot" WidthRequest="8" HeightRequest="8" CornerRadius="4"
+                                 VerticalOptions="Center" Color="{StaticResource SubtleColor}" />
+                        <Label x:Name="StatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Border>
+            </HorizontalStackLayout>
             <Label x:Name="FpsLabel" Grid.Column="1" IsVisible="False" VerticalOptions="Center" Margin="0,0,8,0"
                    FontSize="26" FontAttributes="Bold" TextColor="{StaticResource GoodColor}" />
             <Button x:Name="FullscreenButton" Grid.Column="2" Text="⛶" Style="{StaticResource IconButton}"
@@ -26,13 +31,24 @@
         </Grid>
 
         <!-- Güncelleme çubuğu -->
-        <Border x:Name="UpdateBanner" Grid.Row="1" IsVisible="False" Style="{StaticResource CardStyle}" Padding="12,8">
-            <Grid ColumnDefinitions="*,Auto">
-                <Label x:Name="UpdateLabel" VerticalOptions="Center" TextColor="{StaticResource TextColor}" />
-                <Button x:Name="InstallButton" Grid.Column="1" Style="{StaticResource PrimaryButton}"
-                        HeightRequest="38" Padding="16,0" Clicked="InstallButton_Clicked" />
-            </Grid>
-        </Border>
+        <VerticalStackLayout Grid.Row="1" Spacing="8">
+            <Border x:Name="AlertBanner" IsVisible="False" Style="{StaticResource CardStyle}" Padding="12,8"
+                    BackgroundColor="#4DF87171" Stroke="{StaticResource HotColor}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label x:Name="AlertLabel" VerticalOptions="Center" TextColor="{StaticResource TextColor}" FontAttributes="Bold" />
+                    <Button x:Name="AlertDismissButton" Grid.Column="1" Style="{StaticResource SecondaryButton}"
+                            HeightRequest="38" Padding="16,0" Clicked="AlertDismissButton_Clicked" />
+                </Grid>
+            </Border>
+
+            <Border x:Name="UpdateBanner" IsVisible="False" Style="{StaticResource CardStyle}" Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label x:Name="UpdateLabel" VerticalOptions="Center" TextColor="{StaticResource TextColor}" />
+                    <Button x:Name="InstallButton" Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                            HeightRequest="38" Padding="16,0" Clicked="InstallButton_Clicked" />
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
 
         <!-- Eşleşme yokken karşılama -->
         <VerticalStackLayout x:Name="EmptyState" Grid.Row="2" IsVisible="False" Spacing="14"
@@ -61,7 +77,7 @@
                             <Label x:Name="CpuUsageCaption" Style="{StaticResource CaptionLabel}" />
                             <Label x:Name="CpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
                         </Grid>
-                        <ProgressBar x:Name="CpuLoadBar" ProgressColor="{StaticResource AccentColor}" />
+                        <ui:BarView x:Name="CpuLoadBar" />
                         <Grid ColumnDefinitions="*,*,*">
                             <VerticalStackLayout>
                                 <Label x:Name="CpuClockCaption" Style="{StaticResource CaptionLabel}" />
@@ -92,7 +108,7 @@
                             <Label x:Name="GpuUsageCaption" Style="{StaticResource CaptionLabel}" />
                             <Label x:Name="GpuLoad" Grid.Column="1" Text="--%" Style="{StaticResource ValueLabel}" FontSize="13" />
                         </Grid>
-                        <ProgressBar x:Name="GpuLoadBar" ProgressColor="{StaticResource AccentColor}" />
+                        <ui:BarView x:Name="GpuLoadBar" />
                         <Grid ColumnDefinitions="*,*,*,*">
                             <VerticalStackLayout>
                                 <Label x:Name="GpuClockCaption" Style="{StaticResource CaptionLabel}" />
@@ -136,8 +152,8 @@
                 <Border x:Name="RamCard" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="RAM" Style="{StaticResource TitleLabel}" />
-                        <Label x:Name="RamValue" Text="--" Style="{StaticResource BigLabel}" FontSize="30" />
-                        <ProgressBar x:Name="RamBar" ProgressColor="{StaticResource AccentColor}" />
+                        <Label x:Name="RamValue" Text="--" Style="{StaticResource BigLabel}" FontSize="26" />
+                        <ui:BarView x:Name="RamBar" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -152,15 +168,15 @@
                         <Grid ColumnDefinitions="*,*,*">
                             <VerticalStackLayout>
                                 <Label x:Name="NetDownCaption" Style="{StaticResource CaptionLabel}" />
-                                <Label x:Name="NetDown" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                                <Label x:Name="NetDown" Text="--" Style="{StaticResource ValueLabel}" FontSize="18" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1">
                                 <Label x:Name="NetUpCaption" Style="{StaticResource CaptionLabel}" />
-                                <Label x:Name="NetUp" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                                <Label x:Name="NetUp" Text="--" Style="{StaticResource ValueLabel}" FontSize="18" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="2">
                                 <Label x:Name="NetPingCaption" Style="{StaticResource CaptionLabel}" />
-                                <Label x:Name="NetPing" Text="--" Style="{StaticResource ValueLabel}" FontSize="20" />
+                                <Label x:Name="NetPing" Text="--" Style="{StaticResource ValueLabel}" FontSize="18" />
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>

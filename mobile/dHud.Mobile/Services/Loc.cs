@@ -44,6 +44,7 @@ public static class Loc
 		["ScanHint"] = ("Point the camera at the QR code shown in dHud on your PC.", "Kamerayı PC'deki dHud'un gösterdiği QR koda tut."),
 		["BadQr"] = ("This is not a dHud QR code.", "Bu bir dHud QR kodu değil."),
 		["NoCamera"] = ("Camera permission is needed to scan the QR code.", "QR kodu taramak için kamera izni gerekli."),
+		["AlertTitle"] = ("dHud temperature alert", "dHud sıcaklık uyarısı"),
 		["Ok"] = ("OK", "Tamam")
 	};
 

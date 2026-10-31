@@ -425,6 +425,45 @@ public sealed class MobileLinkService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Sıcaklık uyarısını bağlı cihazlara gönderir. Anlık görüntülerden farklı olarak uyarı atlanmaz:
+    /// cihaz meşgulse kısa süre beklenir.
+    /// </summary>
+    public void SendAlert(string text)
+    {
+        Client[] targets;
+        lock (_gate)
+        {
+            if (_clients.Count == 0)
+            {
+                return;
+            }
+
+            targets = [.. _clients];
+        }
+
+        var data = Append(JsonSerializer.SerializeToUtf8Bytes(
+            new { alert = new { text, ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds() } }, Json));
+        foreach (var client in targets)
+        {
+            _ = SendReliableAsync(client, data);
+        }
+    }
+
+    private async Task SendReliableAsync(Client client, byte[] data)
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            if (Interlocked.Exchange(ref client.Busy, 1) == 0)
+            {
+                await SendAsync(client, data).ConfigureAwait(false);
+                return;
+            }
+
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+    }
+
     private async Task SendAsync(Client client, byte[] data)
     {
         try

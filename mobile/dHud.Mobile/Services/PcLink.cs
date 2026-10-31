@@ -27,6 +27,9 @@ public sealed class PcLink
 	/// <summary>Durum veya veri değişince ana iş parçacığında tetiklenir.</summary>
 	public event Action? Changed;
 
+	/// <summary>PC bir sıcaklık uyarısı gönderdiğinde (ana iş parçacığında) uyarı metniyle tetiklenir.</summary>
+	public event Action<string>? AlertReceived;
+
 	public void Start(PairingInfo info)
 	{
 		Stop();
@@ -166,6 +169,17 @@ public sealed class PcLink
 			}
 
 			using var doc = JsonDocument.Parse(line);
+			if (doc.RootElement.TryGetProperty("alert", out var alert))
+			{
+				var text = alert.TryGetProperty("text", out var textElement) ? textElement.GetString() : null;
+				if (!string.IsNullOrEmpty(text))
+				{
+					MainThread.BeginInvokeOnMainThread(() => AlertReceived?.Invoke(text));
+				}
+
+				continue;
+			}
+
 			if (doc.RootElement.TryGetProperty("ok", out var ok))
 			{
 				if (!ok.GetBoolean())
