@@ -31,6 +31,10 @@ public partial class MainPage : ContentPage
 
 		App.Link.Changed += Refresh;
 		Dashboard.SizeChanged += Dashboard_SizeChanged;
+
+		// Tablet şarjdayken (dock/duvar standı) ekran kapanmasın; pilde normal uyku süresi geçerli.
+		Battery.Default.BatteryInfoChanged += (_, _) => UpdateKeepAwake();
+		UpdateKeepAwake();
 	}
 
 	protected override void OnAppearing()
@@ -70,6 +74,11 @@ public partial class MainPage : ContentPage
 	/// </summary>
 	private void FitToViewport() =>
 		Cards.MinimumHeightRequest = _mode == LayoutMode.Narrow ? 0 : Dashboard.Height;
+
+	/// <summary>Şarj olurken veya tam ekran modunda ekran açık kalır.</summary>
+	private void UpdateKeepAwake() =>
+		DeviceDisplay.Current.KeepScreenOn = _fullscreen
+			|| Battery.Default.PowerSource is BatteryPowerSource.AC or BatteryPowerSource.Usb or BatteryPowerSource.Wireless;
 
 	private void ApplyDensity(bool compact)
 	{
@@ -335,7 +344,7 @@ public partial class MainPage : ContentPage
 	{
 		_fullscreen = !_fullscreen;
 		MenuButton.IsVisible = TitleBox.IsVisible = !_fullscreen;
-		DeviceDisplay.Current.KeepScreenOn = _fullscreen;
+		UpdateKeepAwake();
 
 #if ANDROID
 		if (Platform.CurrentActivity?.Window is { } window)
