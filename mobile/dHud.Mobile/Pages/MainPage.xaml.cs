@@ -33,7 +33,15 @@ public partial class MainPage : ContentPage
 		Dashboard.SizeChanged += Dashboard_SizeChanged;
 
 		// Tablet şarjdayken (dock/duvar standı) ekran kapanmasın; pilde normal uyku süresi geçerli.
-		Battery.Default.BatteryInfoChanged += (_, _) => UpdateKeepAwake();
+		try
+		{
+			Battery.Default.BatteryInfoChanged += (_, _) => UpdateKeepAwake();
+		}
+		catch (Exception)
+		{
+			// Pil bilgisi okunamayan cihazlarda yalnızca tam ekran modu ekranı açık tutar.
+		}
+
 		UpdateKeepAwake();
 	}
 
@@ -76,9 +84,20 @@ public partial class MainPage : ContentPage
 		Cards.MinimumHeightRequest = _mode == LayoutMode.Narrow ? 0 : Dashboard.Height;
 
 	/// <summary>Şarj olurken veya tam ekran modunda ekran açık kalır.</summary>
-	private void UpdateKeepAwake() =>
-		DeviceDisplay.Current.KeepScreenOn = _fullscreen
-			|| Battery.Default.PowerSource is BatteryPowerSource.AC or BatteryPowerSource.Usb or BatteryPowerSource.Wireless;
+	private void UpdateKeepAwake()
+	{
+		var charging = false;
+		try
+		{
+			charging = Battery.Default.PowerSource is BatteryPowerSource.AC or BatteryPowerSource.Usb or BatteryPowerSource.Wireless;
+		}
+		catch (Exception)
+		{
+			// Pil bilgisi okunamadı; şarj yokmuş gibi davran.
+		}
+
+		DeviceDisplay.Current.KeepScreenOn = _fullscreen || charging;
+	}
 
 	private void ApplyDensity(bool compact)
 	{
