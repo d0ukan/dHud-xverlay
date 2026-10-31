@@ -4,15 +4,14 @@ namespace DHud.Services;
 
 /// <summary>
 /// Mobil uygulamadan gelen fan komutlarını işler ve fan durumunu mobil için hazırlar.
-/// Komutlar yalnızca ayarlarda "mobil uygulama fanları değiştirebilsin" açıksa ve fan kontrolü etkinse uygulanır.
-/// Mobil yalnızca niyet bildirir (mod, yüzde, hazır eğri); acil %100, alt sınır ve kademeli yavaşlama gibi
-/// güvenlik kuralları <see cref="FanControlService"/> içinde aynen geçerli kalır.
+/// Telefon yalnızca ÖNCEDEN HAZIRLANMIŞ seçenekleri seçebilir: hazır eğriler (Sessiz / Optimal / Max Cold),
+/// PC'de kaydedilmiş eğriler, fanı otomatiğe vermek ve PC'de kaydedilmiş tüm-fan profilleri.
+/// Elle yüzde veya eğri noktası gönderilemez. Komutlar yalnızca ayarlarda "mobil uygulama fanları değiştirebilsin"
+/// açıksa ve fan kontrolü etkinse uygulanır; acil %100, alt sınır ve kademeli yavaşlama gibi güvenlik kuralları
+/// <see cref="FanControlService"/> içinde aynen geçerli kalır.
 /// </summary>
 public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsService settings, FanControlService fan)
 {
-    /// <summary>Manuel yüzde alt sınırı (donanım kendi alt sınırını ayrıca uygular).</summary>
-    private const int MinManualPercent = 20;
-
     private IReadOnlyList<object> _lastFans = [];
 
     /// <summary>Telefondan bir değişiklik uygulandı (ana iş parçacığında): kısa açıklama.</summary>
@@ -21,6 +20,8 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
     /// <summary>Anlık görüntüyle gönderilen fan bilgisi. Arka plan thread'inden çağrılır; hata olursa son geçerli liste döner.</summary>
     public (object Fans, object State) BuildState()
     {
+        object? curves = null;
+        object? profiles = null;
         try
         {
             var s = settings.Current;
@@ -46,6 +47,8 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
             }
 
             _lastFans = list;
+            curves = s.CurvePresets.Select(c => c.Name).ToArray();
+            profiles = s.FanProfiles.Select(p => p.Name).ToArray();
         }
         catch (Exception)
         {
@@ -56,7 +59,9 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
         {
             enabled = settings.Current.FanControlEnabled,
             remote = settings.Current.MobileFanControl,
-            emergency = fan.Emergency
+            emergency = fan.Emergency,
+            curves,
+            profiles
         });
     }
 
@@ -77,64 +82,94 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
             return "fanctl";
         }
 
-        var cmd = Str(command, "cmd");
-        if (cmd == "fan")
+        switch (Str(command, "cmd"))
         {
-            var id = Str(command, "id");
-            var channel = monitor.FanChannels.FirstOrDefault(c => c.Id == id);
-            if (channel is null)
+            case "fan":
             {
-                return "nofan";
-            }
+                var id = Str(command, "id");
+                var channel = monitor.FanChannels.FirstOrDefault(c => c.Id == id);
+                if (channel is null)
+                {
+                    return "nofan";
+                }
 
-            if (!Configure(channel, command, out var summary))
-            {
-                return "bad";
-            }
-
-            Commit(summary);
-            return null;
-        }
-
-        if (cmd == "fanAll")
-        {
-            var includePump = command.TryGetProperty("pump", out var p) && p.ValueKind == JsonValueKind.True;
-            var targets = monitor.FanChannels.Where(c => includePump || !IsPump(c.Name)).ToList();
-            if (targets.Count == 0)
-            {
-                return "nofan";
-            }
-
-            var summaries = new List<string>();
-            foreach (var channel in targets)
-            {
                 if (!Configure(channel, command, out var summary))
                 {
                     return "bad";
                 }
 
-                summaries.Add(summary);
+                Commit(summary);
+                return null;
             }
 
-            Commit(summaries[0] + $" ({targets.Count})");
-            return null;
-        }
+            case "profile":
+            {
+                var name = Str(command, "name");
+                var profile = s.FanProfiles.FirstOrDefault(p => p.Name == name);
+                if (profile is null)
+                {
+                    return "bad";
+                }
 
-        return "bad";
+                s.Fans = profile.Fans.ToDictionary(pair => pair.Key, pair => pair.Value.Clone());
+                Commit(profile.Name);
+                return null;
+            }
+
+            default:
+                return "bad";
+        }
     }
 
+    /// <summary>Hazır eğri (preset), kayıtlı eğri (saved) veya otomatik (mode=auto) seçimini fana uygular.</summary>
     private bool Configure(FanChannel channel, JsonElement command, out string summary)
     {
         summary = string.Empty;
         var s = settings.Current;
-        var mode = Str(command, "mode");
-        var preset = Str(command, "preset") switch
+
+        List<CurvePoint>? curve = null;
+        int min = 20;
+        string label;
+
+        var preset = Str(command, "preset");
+        var saved = Str(command, "saved");
+        if (preset.Length > 0)
         {
-            "quiet" => FanPreset.Quiet,
-            "optimal" => FanPreset.Optimal,
-            "max" => FanPreset.MaxCold,
-            _ => (FanPreset?)null
-        };
+            FanPreset? chosen = preset switch
+            {
+                "quiet" => FanPreset.Quiet,
+                "optimal" => FanPreset.Optimal,
+                "max" => FanPreset.MaxCold,
+                _ => null
+            };
+            if (chosen is not FanPreset p)
+            {
+                return false;
+            }
+
+            (curve, min) = FanCurve.Preset(p);
+            label = FanCurve.PresetName(p);
+        }
+        else if (saved.Length > 0)
+        {
+            var found = s.CurvePresets.FirstOrDefault(c => c.Name == saved);
+            if (found is null)
+            {
+                return false;
+            }
+
+            curve = found.Curve;
+            min = found.MinPercent;
+            label = found.Name;
+        }
+        else if (Str(command, "mode") == "auto")
+        {
+            label = "Auto";
+        }
+        else
+        {
+            return false;
+        }
 
         if (!s.Fans.TryGetValue(channel.Id, out var cfg))
         {
@@ -142,45 +177,22 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
             s.Fans[channel.Id] = cfg;
         }
 
-        if (preset is FanPreset chosen)
+        if (curve is null)
         {
-            var (curve, min) = FanCurve.Preset(chosen);
+            cfg.Mode = FanMode.Auto;
+        }
+        else
+        {
             cfg.Mode = FanMode.Curve;
-            cfg.Curve = curve.Select(p => new CurvePoint { Temp = p.Temp, Percent = p.Percent }).ToList();
+            cfg.Curve = curve.Select(pt => new CurvePoint { Temp = pt.Temp, Percent = pt.Percent }).ToList();
             cfg.MinPercent = min;
             cfg.Source = channel.IsGpu ? FanSource.Gpu
                 : channel.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase) ? FanSource.Cpu
                 : FanSource.Max;
-            summary = $"{channel.Name}: {FanCurve.PresetName(chosen)}";
-            return true;
         }
 
-        switch (mode)
-        {
-            case "auto":
-                cfg.Mode = FanMode.Auto;
-                summary = $"{channel.Name}: Auto";
-                return true;
-
-            case "curve":
-                cfg.Mode = FanMode.Curve;
-                summary = $"{channel.Name}: Curve";
-                return true;
-
-            case "manual":
-                if (!command.TryGetProperty("percent", out var value) || !value.TryGetInt32(out var percent))
-                {
-                    return false;
-                }
-
-                cfg.Mode = FanMode.Manual;
-                cfg.ManualPercent = Math.Clamp(percent, MinManualPercent, 100);
-                summary = $"{channel.Name}: {cfg.ManualPercent}%";
-                return true;
-
-            default:
-                return false;
-        }
+        summary = $"{channel.Name}: {label}";
+        return true;
     }
 
     private void Commit(string summary)

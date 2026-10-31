@@ -6,7 +6,7 @@
              xmlns:ui="clr-namespace:dHud.Mobile.Controls"
              NavigationPage.HasNavigationBar="False">
 
-    <Grid RowDefinitions="Auto,Auto,*" Padding="16,12" RowSpacing="10">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16,12" RowSpacing="10">
 
         <!-- Üst çubuk -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto">
@@ -182,21 +182,38 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Fanlar -->
-                <Border x:Name="FanCard" Style="{StaticResource CardStyle}" IsVisible="False">
+            </Grid>
+        </ScrollView>
+
+        <!-- Fan sekmesi: yalnızca hazır eğri / profil seçimi -->
+        <ScrollView x:Name="FanPage" Grid.Row="2" IsVisible="False">
+            <Grid x:Name="FanLayout" ColumnSpacing="12" RowSpacing="12">
+                <Border x:Name="ProfileCard" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="8">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <Label x:Name="ProfileTitle" Style="{StaticResource TitleLabel}" />
+                        <Label x:Name="ProfileHint" FontSize="12" TextColor="{StaticResource SubtleColor}" />
+                        <FlexLayout x:Name="ProfileRows" Wrap="Wrap" JustifyContent="Start" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="FanCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                             <Label x:Name="FanTitle" Style="{StaticResource TitleLabel}" VerticalOptions="Center" />
                             <Label x:Name="FanEmergency" Grid.Column="1" IsVisible="False" FontSize="12" FontAttributes="Bold"
-                                   VerticalOptions="Center" LineBreakMode="TailTruncation" TextColor="{StaticResource HotColor}" />
-                            <Button x:Name="FanAllButton" Grid.Column="2" Style="{StaticResource SecondaryButton}"
-                                    HeightRequest="34" Padding="14,0" FontSize="12" Clicked="FanAllButton_Clicked" />
+                                   VerticalOptions="Center" HorizontalTextAlignment="End" LineBreakMode="TailTruncation"
+                                   TextColor="{StaticResource HotColor}" />
                         </Grid>
+                        <Label x:Name="FanStatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" />
                         <VerticalStackLayout x:Name="FanRows" Spacing="2" />
                     </VerticalStackLayout>
                 </Border>
-
             </Grid>
         </ScrollView>
+
+        <!-- Sekmeler -->
+        <Grid x:Name="TabBar" Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="8">
+            <Button x:Name="TabPanelButton" Style="{StaticResource PrimaryButton}" HeightRequest="42" Clicked="TabPanelButton_Clicked" />
+            <Button x:Name="TabFansButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabFansButton_Clicked" />
+        </Grid>
     </Grid>
 </ContentPage>

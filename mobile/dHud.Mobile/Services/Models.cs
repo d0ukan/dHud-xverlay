@@ -50,6 +50,12 @@ public sealed class FanCtl
 	public bool Remote { get; set; }
 
 	public bool Emergency { get; set; }
+
+	/// <summary>PC'de kaydedilmiş eğrilerin adları.</summary>
+	public List<string>? Curves { get; set; }
+
+	/// <summary>PC'de kaydedilmiş tüm-fan profillerinin adları.</summary>
+	public List<string>? Profiles { get; set; }
 }
 
 public sealed class PcSnapshot

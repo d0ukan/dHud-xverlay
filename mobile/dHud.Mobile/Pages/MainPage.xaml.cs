@@ -156,13 +156,11 @@ public partial class MainPage : ContentPage
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 0, 1);
 				Place(GraphCard, 1, 0, columnSpan: 2);
 				Place(RamCard, 2, 0);
 				Place(NetCard, 2, 1);
-				Place(FanCard, 3, 0, columnSpan: 2);
 				break;
 
 			case LayoutMode.CompactWide:
@@ -175,18 +173,16 @@ public partial class MainPage : ContentPage
 
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-				Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 0, 1);
 				Place(RamCard, 0, 2);
 				Place(GraphCard, 1, 0, columnSpan: 2);
 				Place(NetCard, 1, 2);
-				Place(FanCard, 2, 0, columnSpan: 3);
 				break;
 
 			default:
 				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-				for (var i = 0; i < 6; i++)
+				for (var i = 0; i < 5; i++)
 				{
 					Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 				}
@@ -194,11 +190,30 @@ public partial class MainPage : ContentPage
 				Graph.MinimumHeightRequest = 220;
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 1, 0);
-				Place(FanCard, 2, 0);
-				Place(GraphCard, 3, 0);
-				Place(RamCard, 4, 0);
-				Place(NetCard, 5, 0);
+				Place(GraphCard, 2, 0);
+				Place(RamCard, 3, 0);
+				Place(NetCard, 4, 0);
 				break;
+		}
+
+		// Fan sekmesi: geniş ekranda profiller solda, fanlar sağda; dar ekranda alt alta.
+		FanLayout.ColumnDefinitions.Clear();
+		FanLayout.RowDefinitions.Clear();
+		if (mode == LayoutMode.Narrow)
+		{
+			FanLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+			FanLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			FanLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			Place(ProfileCard, 0, 0);
+			Place(FanCard, 1, 0);
+		}
+		else
+		{
+			FanLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(2, GridUnitType.Star)));
+			FanLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
+			FanLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			Place(ProfileCard, 0, 0);
+			Place(FanCard, 0, 1);
 		}
 
 		if (mode != LayoutMode.Narrow)
@@ -222,7 +237,11 @@ public partial class MainPage : ContentPage
 	{
 		var paired = PairingStore.Load() is not null;
 		EmptyState.IsVisible = !paired;
-		Dashboard.IsVisible = paired;
+		Dashboard.IsVisible = paired && !_fansTab;
+		FanPage.IsVisible = paired && _fansTab;
+		TabBar.IsVisible = paired && !_fullscreen;
+		TabPanelButton.Text = Loc.T("TabPanel");
+		TabFansButton.Text = Loc.T("TabFans");
 		FullscreenButton.IsVisible = paired;
 
 		var link = App.Link;
@@ -343,9 +362,11 @@ public partial class MainPage : ContentPage
 		return (v < 10 && i > 0 ? $"{v:0.0}" : $"{v:0}") + " " + units[i];
 	}
 
-	// ---- Fanlar ----
+	// ---- Fan sekmesi ----
 
+	private bool _fansTab;
 	private string _fanKey = string.Empty;
+	private string _profileKey = string.Empty;
 	private readonly Dictionary<string, (Label Detail, Label Mode)> _fanLabels = [];
 
 	private static readonly (string Key, string Label)[] FanPresets =
@@ -353,16 +374,61 @@ public partial class MainPage : ContentPage
 		("quiet", "FanQuiet"), ("optimal", "FanOptimal"), ("max", "FanMax")
 	];
 
+	private void ShowTab(bool fans)
+	{
+		_fansTab = fans;
+		Dashboard.IsVisible = !fans && PairingStore.Load() is not null;
+		FanPage.IsVisible = fans && PairingStore.Load() is not null;
+		TabPanelButton.Style = TabStyle(!fans);
+		TabFansButton.Style = TabStyle(fans);
+	}
+
+	private static Style TabStyle(bool active) =>
+		(Style)Application.Current!.Resources[active ? "PrimaryButton" : "SecondaryButton"];
+
+	private void TabPanelButton_Clicked(object? sender, EventArgs e) => ShowTab(false);
+
+	private void TabFansButton_Clicked(object? sender, EventArgs e) => ShowTab(true);
+
 	private void RefreshFans(PcSnapshot s)
 	{
 		var fans = s.Fans ?? [];
-		FanCard.IsVisible = fans.Count > 0;
-		FanTitle.Text = Loc.T("Fans");
-		FanAllButton.Text = Loc.T("FanAll");
-		FanAllButton.IsVisible = s.FanCtl is { Remote: true, Enabled: true };
-		FanEmergency.IsVisible = s.FanCtl?.Emergency == true;
-		FanEmergency.Text = Loc.T("FanEmergency");
+		var ctl = s.FanCtl;
 
+		FanTitle.Text = Loc.T("Fans");
+		ProfileTitle.Text = Loc.T("Profiles");
+		FanEmergency.IsVisible = ctl?.Emergency == true;
+		FanEmergency.Text = Loc.T("FanEmergency");
+		FanStatusLabel.Text = ctl is null || !ctl.Remote ? Loc.T("FanRemoteOff")
+			: !ctl.Enabled ? Loc.T("FanCtlOff")
+			: Loc.T("FanTapHint");
+		FanStatusLabel.TextColor = ctl is { Remote: true, Enabled: true } ? Color.FromArgb("#9CA3AF") : Color.FromArgb("#FACC15");
+
+		// Profiller (PC'de kaydedilmiş tüm-fan ayarları)
+		var profiles = ctl?.Profiles ?? [];
+		ProfileHint.Text = profiles.Count == 0 ? Loc.T("NoProfiles") : Loc.T("ProfileHint");
+		var profileKey = string.Join("|", profiles);
+		if (profileKey != _profileKey)
+		{
+			_profileKey = profileKey;
+			ProfileRows.Children.Clear();
+			foreach (var name in profiles)
+			{
+				var profileName = name;
+				var button = new Button
+				{
+					Text = name,
+					Style = TabStyle(false),
+					HeightRequest = 40,
+					Padding = new Thickness(16, 0),
+					Margin = new Thickness(0, 0, 8, 8)
+				};
+				button.Clicked += async (_, _) => await ApplyProfileAsync(profileName);
+				ProfileRows.Children.Add(button);
+			}
+		}
+
+		// Fanlar
 		var key = string.Join("|", fans.Select(f => f.Id));
 		if (key != _fanKey)
 		{
@@ -400,7 +466,7 @@ public partial class MainPage : ContentPage
 		var name = new Label { Text = fan.Name, FontAttributes = FontAttributes.Bold, FontSize = 14, TextColor = Color.FromArgb("#F1F2F6"), LineBreakMode = LineBreakMode.TailTruncation };
 		var detail = new Label { FontSize = 12 };
 		var mode = new Label { FontSize = 12, HorizontalTextAlignment = TextAlignment.End, VerticalOptions = LayoutOptions.Center, TextColor = Color.FromArgb("#60A5FA") };
-		var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], Padding = new Thickness(0, 8), MinimumHeightRequest = 44 };
+		var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], Padding = new Thickness(0, 8), MinimumHeightRequest = 48 };
 		row.Add(new VerticalStackLayout { Children = { name, detail } }, 0, 0);
 		row.Add(mode, 1, 0);
 
@@ -431,6 +497,7 @@ public partial class MainPage : ContentPage
 		return true;
 	}
 
+	/// <summary>Bir fan için yalnızca hazır seçenekler: otomatik, hazır eğriler ve PC'de kaydedilmiş eğriler.</summary>
 	private async Task EditFanAsync(string id)
 	{
 		var fan = App.Link.Latest?.Fans?.FirstOrDefault(f => f.Id == id);
@@ -439,10 +506,19 @@ public partial class MainPage : ContentPage
 			return;
 		}
 
-		var choices = new List<string> { Loc.T("FanAuto"), Loc.T("FanManual") };
+		var saved = App.Link.Latest?.FanCtl?.Curves ?? [];
+		var choices = new List<string> { Loc.T("FanAuto") };
 		choices.AddRange(FanPresets.Select(p => Loc.T(p.Label)));
+		choices.AddRange(saved.Select(name => Loc.T("FanSaved", name)));
+
 		var action = await DisplayActionSheet(fan.Name, Loc.T("Cancel"), null, [.. choices]);
 		if (action is null || action == Loc.T("Cancel"))
+		{
+			return;
+		}
+
+		if (action != Loc.T("FanAuto") && fan.Pump
+			&& !await DisplayAlert(fan.Name, Loc.T("FanPumpWarn"), Loc.T("Yes"), Loc.T("No")))
 		{
 			return;
 		}
@@ -450,61 +526,26 @@ public partial class MainPage : ContentPage
 		if (action == Loc.T("FanAuto"))
 		{
 			await SendAsync(new { cmd = "fan", id, mode = "auto" });
-			return;
 		}
-
-		// Pompa veya sabit hız: sıcaklığa tepki vermediği için önce onay.
-		var risky = fan.Pump || action == Loc.T("FanManual");
-		if (risky && !await DisplayAlert(fan.Name, Loc.T(fan.Pump ? "FanPumpWarn" : "FanManualWarn"), Loc.T("Yes"), Loc.T("No")))
+		else if (FanPresets.FirstOrDefault(p => Loc.T(p.Label) == action) is { Key: not null } preset)
 		{
-			return;
+			await SendAsync(new { cmd = "fan", id, preset = preset.Key });
 		}
-
-		if (action == Loc.T("FanManual"))
+		else if (saved.FirstOrDefault(name => Loc.T("FanSaved", name) == action) is { } curve)
 		{
-			string[] steps = ["30", "40", "50", "60", "70", "80", "90", "100"];
-			var picked = await DisplayActionSheet(Loc.T("FanPercent"), Loc.T("Cancel"), null, steps.Select(x => x + "%").ToArray());
-			if (picked is null || picked == Loc.T("Cancel"))
-			{
-				return;
-			}
-
-			await SendAsync(new { cmd = "fan", id, mode = "manual", percent = int.Parse(picked.TrimEnd('%')) });
-			return;
+			await SendAsync(new { cmd = "fan", id, saved = curve });
 		}
-
-		var preset = FanPresets.First(p => Loc.T(p.Label) == action).Key;
-		await SendAsync(new { cmd = "fan", id, mode = "curve", preset });
 	}
 
-	private async void FanAllButton_Clicked(object? sender, EventArgs e)
+	private async Task ApplyProfileAsync(string name)
 	{
-		if (!await CanControlFansAsync())
+		if (!await CanControlFansAsync()
+			|| !await DisplayAlert(Loc.T("Profiles"), Loc.T("ProfileConfirm", name), Loc.T("Yes"), Loc.T("No")))
 		{
 			return;
 		}
 
-		var choices = FanPresets.Select(p => Loc.T(p.Label)).Append(Loc.T("FanAllAuto")).ToArray();
-		var action = await DisplayActionSheet(Loc.T("FanAll"), Loc.T("Cancel"), null, choices);
-		if (action is null || action == Loc.T("Cancel"))
-		{
-			return;
-		}
-
-		if (!await DisplayAlert(Loc.T("FanAll"), Loc.T("FanAllConfirm", action), Loc.T("Yes"), Loc.T("No")))
-		{
-			return;
-		}
-
-		if (action == Loc.T("FanAllAuto"))
-		{
-			await SendAsync(new { cmd = "fanAll", mode = "auto" });
-		}
-		else
-		{
-			var preset = FanPresets.First(p => Loc.T(p.Label) == action).Key;
-			await SendAsync(new { cmd = "fanAll", mode = "curve", preset });
-		}
+		await SendAsync(new { cmd = "profile", name });
 	}
 
 	private async Task SendAsync(object command)
@@ -582,6 +623,12 @@ public partial class MainPage : ContentPage
 	private void FullscreenButton_Clicked(object? sender, EventArgs e)
 	{
 		_fullscreen = !_fullscreen;
+		if (_fullscreen)
+		{
+			ShowTab(false);
+		}
+
+		TabBar.IsVisible = !_fullscreen;
 		MenuButton.IsVisible = TitleBox.IsVisible = !_fullscreen;
 		UpdateKeepAwake();
 
