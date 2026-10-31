@@ -142,14 +142,22 @@ public partial class FanControlWindow : Window
         }
 
         _testAllActive = false;
+        // Üç sonuç: yanıt veren, hiç dönmeyen (fan takılı değil) ve dönüp hızı değişmeyen. Sadece sonuncusu uyarı gerektirir.
         var verifiable = status.Where(s => s.HasRpm).ToList();
-        var noResponse = verifiable.Where(s => !s.TestOk).Select(s => s.Name).ToList();
+        var responded = verifiable.Count(s => s.TestOk);
+        var noFan = verifiable.Where(s => !s.TestOk && FanControlService.IsNoFan(s.TestBefore, s.TestPeak)).Select(s => s.Name).ToList();
+        var unchanged = verifiable.Where(s => !s.TestOk && !FanControlService.IsNoFan(s.TestBefore, s.TestPeak)).Select(s => s.Name).ToList();
         var noSensor = status.Where(s => !s.HasRpm).Select(s => s.Name).ToList();
 
-        var lines = new List<string> { Loc.T("F.TestAllResult", verifiable.Count - noResponse.Count, verifiable.Count) };
-        if (noResponse.Count > 0)
+        var lines = new List<string> { Loc.T("F.TestAllResult", responded, status.Count) };
+        if (noFan.Count > 0)
         {
-            lines.Add(Loc.T("F.TestAllNoResponse", string.Join(", ", noResponse)));
+            lines.Add(Loc.T("F.TestAllNoFan", string.Join(", ", noFan)));
+        }
+
+        if (unchanged.Count > 0)
+        {
+            lines.Add(Loc.T("F.TestAllSame", string.Join(", ", unchanged)));
         }
 
         if (noSensor.Count > 0)
@@ -158,7 +166,7 @@ public partial class FanControlWindow : Window
         }
 
         TestAllStatusText.Text = string.Join("\n", lines);
-        TestAllStatusText.Foreground = (Brush)FindResource(noResponse.Count == 0 ? "GoodBrush" : "WarnBrush");
+        TestAllStatusText.Foreground = (Brush)FindResource(unchanged.Count == 0 ? "GoodBrush" : "WarnBrush");
     }
 
     private void ShowTestState(TextBlock label, FanStatus? s)
@@ -181,9 +189,14 @@ public partial class FanControlWindow : Window
                 text = Loc.T("F.TestOk", $"{s.TestBefore:0}", $"{s.TestPeak:0}");
                 brush = (Brush)FindResource("GoodBrush");
             }
+            else if (FanControlService.IsNoFan(s.TestBefore, s.TestPeak))
+            {
+                // %100'de bile 0 RPM: büyük olasılıkla bu başlığa fan takılı değil. Arıza değil, bilgi.
+                text = Loc.T("F.TestNoFan");
+            }
             else
             {
-                text = Loc.T("F.TestFail", $"{s.TestBefore:0}", $"{s.TestPeak:0}");
+                text = Loc.T("F.TestSame", $"{s.TestBefore:0}", $"{s.TestPeak:0}");
                 brush = (Brush)FindResource("WarnBrush");
             }
         }

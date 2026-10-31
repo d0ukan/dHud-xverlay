@@ -36,6 +36,14 @@ public sealed class FanControlService : IDisposable
     private const double StallMinPercent = 30;
     private const float SpinningRpm = 50;
 
+    // Ekran kartları sıcaklık düşükken fanı kendileri durdurur (sıfır devir / 0-dB modu); bu arıza değildir.
+    // GPU fanı için yalnızca kart gerçekten sıcakken ve yüksek hız istenmişken dönmemesi arıza sayılır.
+    private const double GpuStallMinTemp = 60;
+    private const double GpuStallMinPercent = 50;
+
+    /// <summary>Aynı fan için iki "fan dönmüyor" bildirimi arasındaki en kısa süre.</summary>
+    private static readonly TimeSpan StallNoticeCooldown = TimeSpan.FromMinutes(10);
+
     private sealed class State
     {
         public double? Last;
@@ -54,6 +62,7 @@ public sealed class FanControlService : IDisposable
         public bool SeenSpinning;
         public int ZeroTicks;
         public bool Stalled;
+        public DateTime LastStallNotice = DateTime.MinValue;
     }
 
     private readonly HardwareMonitorService _monitor;
@@ -206,7 +215,7 @@ public sealed class FanControlService : IDisposable
                 Write(control, state, target);
             }
 
-            DetectStall(channel, state, rpm, testing);
+            DetectStall(channel, state, rpm, testing, gpuTemp, now);
 
             statuses.Add(new FanStatus(channel.Id, channel.Name, channel.IsGpu, channel.Rpm is not null, rpm,
                 channel.Control.Value, state.Taken, testing, state.TestDone, state.TestOk,
@@ -236,11 +245,20 @@ public sealed class FanControlService : IDisposable
     /// dHud'un yüzde yazdığı bir fan daha önce döndüğü halde 0 RPM okunuyorsa uyarır. Hiç dönmemiş fanlar
     /// (devir sensörü bazı fanlarda hep 0 okur) uyarı üretmez.
     /// </summary>
-    private void DetectStall(FanChannel channel, State state, float? rpm, bool testing)
+    private void DetectStall(FanChannel channel, State state, float? rpm, bool testing, double? gpuTemp, DateTime now)
     {
         if (rpm is not float value || testing || !state.Taken)
         {
             state.ZeroTicks = 0;
+            return;
+        }
+
+        // GPU fanı: kart soğukken fanı bilerek durdurması normaldir, sadece sıcakken beklenen hızda dönmemesi arızadır.
+        var minPercent = channel.IsGpu ? GpuStallMinPercent : StallMinPercent;
+        if (channel.IsGpu && gpuTemp is not >= GpuStallMinTemp)
+        {
+            state.ZeroTicks = 0;
+            state.Stalled = false;
             return;
         }
 
@@ -250,13 +268,19 @@ public sealed class FanControlService : IDisposable
             state.ZeroTicks = 0;
             state.Stalled = false;
         }
-        else if (state.SeenSpinning && state.Last >= StallMinPercent)
+        else if (state.SeenSpinning && state.Last >= minPercent)
         {
             state.ZeroTicks++;
             if (state.ZeroTicks >= StallTicks && !state.Stalled)
             {
                 state.Stalled = true;
-                FanStalled?.Invoke(channel.Name, (int)Math.Round(state.Last.Value));
+
+                // Aynı fan için art arda bildirim yağmasın (fan arada dönüp tekrar durabilir).
+                if (now - state.LastStallNotice >= StallNoticeCooldown)
+                {
+                    state.LastStallNotice = now;
+                    FanStalled?.Invoke(channel.Name, (int)Math.Round(state.Last.Value));
+                }
             }
         }
     }
@@ -264,6 +288,9 @@ public sealed class FanControlService : IDisposable
     /// <summary>Test geçti mi: devir en az 100 RPM arttı; ya da fan zaten (≥ %90) en yüksekteydi ve dönüyor.</summary>
     public static bool TestPassed(float rpmBefore, float rpmPeak, float percentBefore) =>
         rpmPeak - rpmBefore >= 100 || (percentBefore >= 90 && rpmPeak > 200);
+
+    /// <summary>Test boyunca fan hiç dönmedi (0 RPM → 0 RPM): bu başlığa fan takılı değil. Arıza sayılmaz.</summary>
+    public static bool IsNoFan(float rpmBefore, float rpmPeak) => rpmBefore <= SpinningRpm && rpmPeak <= SpinningRpm;
 
     /// <summary>Eğrinin sıcaklık kaynağı: CPU, GPU veya ikisinin yüksek olanı (biri okunamıyorsa diğeri).</summary>
     public static double? SourceTemp(FanSource source, double? cpuTemp, double? gpuTemp) => source switch
