@@ -29,6 +29,9 @@ public sealed class PcSnapshot
 	public DeviceReading? Gpu { get; set; }
 	public DeviceReading? Ram { get; set; }
 	public NetReading? Net { get; set; }
+
+	/// <summary>PC'de tam ekran bir oyun açıkken oyunun FPS değeri; yoksa null.</summary>
+	public float? Fps { get; set; }
 }
 
 public enum LinkState

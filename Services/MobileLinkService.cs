@@ -44,6 +44,9 @@ public sealed class MobileLinkService : IDisposable
         _monitor.SnapshotUpdated += OnSnapshot;
     }
 
+    /// <summary>Ölçülen oyun FPS'i (yoksa null). Anlık görüntüyle birlikte cihazlara gönderilir.</summary>
+    public Func<float?>? FpsProvider { get; set; }
+
     /// <summary>Dinleme başlatılamadıysa nedeni (ör. port başka uygulamada kullanımda).</summary>
     public string? LastError { get; private set; }
 
@@ -374,7 +377,7 @@ public sealed class MobileLinkService : IDisposable
         }
     }
 
-    private static byte[] Serialize(SensorSnapshot s) =>
+    private byte[] Serialize(SensorSnapshot s) =>
         Append(JsonSerializer.SerializeToUtf8Bytes(
             new
             {
@@ -384,7 +387,8 @@ public sealed class MobileLinkService : IDisposable
                 cpu = s.Cpu,
                 gpu = s.Gpu,
                 ram = s.Memory,
-                net = s.Network
+                net = s.Network,
+                fps = FpsProvider?.Invoke()
             }, Json));
 
     private static byte[] Append(byte[] json)

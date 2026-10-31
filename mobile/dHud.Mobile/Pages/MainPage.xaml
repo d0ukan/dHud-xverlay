@@ -8,7 +8,7 @@
     <Grid RowDefinitions="Auto,Auto,*" Padding="16,12" RowSpacing="10">
 
         <!-- Üst çubuk -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto">
             <VerticalStackLayout x:Name="TitleBox" VerticalOptions="Center">
                 <HorizontalStackLayout Spacing="8">
                     <BoxView x:Name="StatusDot" WidthRequest="10" HeightRequest="10" CornerRadius="5"
@@ -17,9 +17,11 @@
                 </HorizontalStackLayout>
                 <Label x:Name="StatusLabel" FontSize="12" TextColor="{StaticResource SubtleColor}" />
             </VerticalStackLayout>
-            <Button x:Name="FullscreenButton" Grid.Column="1" Text="⛶" Style="{StaticResource IconButton}"
+            <Label x:Name="FpsLabel" Grid.Column="1" IsVisible="False" VerticalOptions="Center" Margin="0,0,8,0"
+                   FontSize="26" FontAttributes="Bold" TextColor="{StaticResource GoodColor}" />
+            <Button x:Name="FullscreenButton" Grid.Column="2" Text="⛶" Style="{StaticResource IconButton}"
                     Clicked="FullscreenButton_Clicked" />
-            <Button x:Name="MenuButton" Grid.Column="2" Text="⋮" Style="{StaticResource IconButton}"
+            <Button x:Name="MenuButton" Grid.Column="3" Text="⋮" Style="{StaticResource IconButton}"
                     Clicked="MenuButton_Clicked" />
         </Grid>
 

@@ -101,6 +101,9 @@ public partial class SettingsWindow : Window
         }
 
         UpdateHoursPanel.IsEnabled = s.AutoUpdateCheck;
+        FpsCheckBox.IsChecked = s.FpsEnabled;
+        FpsOverlayCheckBox.IsChecked = s.FpsOverlay;
+        FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
         RefreshMobile();
@@ -155,6 +158,8 @@ public partial class SettingsWindow : Window
         s.SnapToEdges = SnapCheckBox.IsChecked == true;
         s.HotkeysEnabled = HotkeysCheckBox.IsChecked == true;
         s.AutoUpdateCheck = AutoUpdateCheckBox.IsChecked == true;
+        s.FpsEnabled = FpsCheckBox.IsChecked == true;
+        s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
         {
@@ -386,6 +391,14 @@ public partial class SettingsWindow : Window
         GpuNameText.Text = "GPU: " + (latest is null ? Loc.T("S.Scanning") : latest.Gpu?.Name ?? Loc.T("S.NotFound"));
 
         RefreshMobile();
+
+        var fps = app.Fps;
+        FpsStatusText.Text = !_settings.Current.FpsEnabled ? string.Empty
+            : fps.Error == "admin" ? Loc.T("S.FpsNeedsAdmin")
+            : fps.Error is { } fpsError ? Loc.T("S.FpsError", fpsError)
+            : fps.Fps is float live ? Loc.T("S.FpsLive", $"{live:0}")
+            : Loc.T("S.FpsWaiting");
+        FpsStatusText.Visibility = FpsStatusText.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 
         HotkeyStatusText.Text = app.HotkeyError ?? string.Empty;
         HotkeyStatusText.Visibility = app.HotkeyError is null ? Visibility.Collapsed : Visibility.Visible;

@@ -200,6 +200,14 @@
                     </Grid>
                     <TextBlock x:Name="HotkeyStatusText" Style="{StaticResource HintText}" Foreground="{StaticResource WarnBrush}" />
 
+                    <TextBlock Text="{h:Loc S.Fps}" Style="{StaticResource SectionHeader}" />
+                    <CheckBox x:Name="FpsCheckBox" Content="{h:Loc S.FpsEnable}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <CheckBox x:Name="FpsOverlayCheckBox" Content="{h:Loc S.FpsOverlay}"
+                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                    <TextBlock Text="{h:Loc S.FpsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="FpsStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+
                     <TextBlock Text="{h:Loc S.Mobile}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="MobileCheckBox" Content="{h:Loc S.MobileEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />

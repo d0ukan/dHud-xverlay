@@ -32,6 +32,7 @@ public partial class App : Application
     private HotkeyService? _hotkeys;
     private MainWindow? _overlay;
     private SettingsWindow? _settingsWindow;
+    private FpsWindow? _fpsWindow;
     private bool? _hotkeysRegisteredFor;
     private AppLanguage? _appliedLanguage;
     private readonly TemperatureAlert _cpuAlert = new("CPU", isGpu: false);
@@ -42,6 +43,7 @@ public partial class App : Application
     public SettingsService Settings { get; } = new();
     public HardwareMonitorService Monitor { get; } = new();
     public MobileLinkService MobileLink { get; private set; } = null!;
+    public FpsMonitor Fps { get; } = new();
     public bool IsElevated { get; private set; }
     public bool IsPawnIoInstalled { get; private set; }
 
@@ -97,7 +99,8 @@ public partial class App : Application
         Settings.Load();
         StartupManager.MigrateLegacy();
 
-        MobileLink = new MobileLinkService(Monitor, Settings);
+        MobileLink = new MobileLinkService(Monitor, Settings) { FpsProvider = () => Fps.Fps };
+        Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
 
         _overlay = new MainWindow();
         _overlay.Show();
@@ -295,6 +298,37 @@ public partial class App : Application
         timer.Start();
     }
 
+    /// <summary>FPS ölçümünü ayara göre başlatır/durdurur; sayaç penceresi yalnızca ölçüm ve sayaç ayarı açıkken görünür.</summary>
+    private void ApplyFps()
+    {
+        var s = Settings.Current;
+        if (s.FpsEnabled)
+        {
+            Fps.Start();
+        }
+        else
+        {
+            Fps.Stop();
+        }
+
+        if (!s.FpsEnabled || !s.FpsOverlay)
+        {
+            _fpsWindow?.Update(null);
+        }
+    }
+
+    private void OnFps(float? fps)
+    {
+        var s = Settings.Current;
+        if (!s.FpsEnabled || !s.FpsOverlay)
+        {
+            return;
+        }
+
+        _fpsWindow ??= new FpsWindow();
+        _fpsWindow.Update(fps);
+    }
+
     private void OnSettingsChanged()
     {
         var s = Settings.Current;
@@ -310,6 +344,7 @@ public partial class App : Application
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
         ConfigureUpdateTimer();
         MobileLink.Apply();
+        ApplyFps();
 
         // Kısayollar yalnızca ayar gerçekten değiştiğinde yeniden kaydedilir.
         if (_hotkeysRegisteredFor != s.HotkeysEnabled)
@@ -478,6 +513,8 @@ public partial class App : Application
     {
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        Fps.Dispose();
+        _fpsWindow?.Close();
         MobileLink?.Dispose();
         Monitor.Dispose();
         ReleaseSingleInstance();

@@ -214,6 +214,13 @@ public partial class MainPage : ContentPage
 
 		if (link.Latest is { } s)
 		{
+			FpsLabel.IsVisible = s.Fps is not null;
+			if (s.Fps is float fps)
+			{
+				FpsLabel.Text = $"{fps:0} FPS";
+				FpsLabel.TextColor = fps >= 60 ? Color.FromArgb("#4ADE80") : fps >= 30 ? Color.FromArgb("#FACC15") : Color.FromArgb("#F87171");
+			}
+
 			ShowDevice(s.Cpu, CpuName, CpuTemp, CpuLoad, CpuLoadBar, CpuClock, CpuPower, CpuFan);
 			ShowDevice(s.Gpu, GpuName, GpuTemp, GpuLoad, GpuLoadBar, GpuClock, GpuPower, GpuFan);
 			GpuVram.Text = s.Gpu is { MemoryUsedGb: float vu, MemoryTotalGb: float vt } ? $"{vu:0.0}/{vt:0} GB" : "--";

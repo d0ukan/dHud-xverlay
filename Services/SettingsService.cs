@@ -112,6 +112,12 @@ public sealed class AppSettings
 
     public static readonly int[] UpdateCheckChoices = [1, 3, 6, 12, 24];
 
+    /// <summary>Oyun FPS'ini ölç (ETW). Mobil uygulamaya da gönderilir. Yönetici yetkisi gerekir.</summary>
+    public bool FpsEnabled { get; set; }
+
+    /// <summary>Oyun açıkken ekranın köşesinde küçük bir FPS sayacı göster.</summary>
+    public bool FpsOverlay { get; set; } = true;
+
     /// <summary>Mobil uygulamanın yerel ağdan bağlanmasına izin ver. Varsayılan kapalı.</summary>
     public bool MobileEnabled { get; set; }
 
