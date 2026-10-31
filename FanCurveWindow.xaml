@@ -36,6 +36,7 @@
             </Grid>
 
             <StackPanel Margin="16,0,16,16">
+                <TextBlock x:Name="CurveNameText" FontWeight="SemiBold" Margin="0,0,0,6" />
                 <local:CurveEditor x:Name="Editor" Height="290" />
                 <TextBlock Text="{h:Loc F.Hint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,8,0,0" />
 
@@ -64,6 +65,17 @@
                     <Button Content="{h:Loc F.PresetMax}" Style="{StaticResource DarkButton}"
                             Click="PresetMax_Click" />
                 </StackPanel>
+
+                <TextBlock Text="{h:Loc F.MyCurves}" Style="{StaticResource SectionHeader}" />
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{h:Loc F.Save}" Style="{StaticResource DarkButton}"
+                            Margin="8,0,0,0" Click="SaveCurve_Click" />
+                    <TextBox x:Name="CurveNameBox" MaxLength="24" Padding="6,3" Background="#1AFFFFFF"
+                             Foreground="{StaticResource TextBrush}" CaretBrush="White"
+                             BorderBrush="#40FFFFFF" BorderThickness="1" KeyDown="CurveNameBox_KeyDown" />
+                </DockPanel>
+                <TextBlock x:Name="SaveStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                <WrapPanel x:Name="SavedPanel" Margin="0,6,0,0" />
             </StackPanel>
         </StackPanel>
     </Border>

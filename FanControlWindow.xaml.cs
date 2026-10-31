@@ -13,6 +13,7 @@ public partial class FanControlWindow : Window
     private readonly SettingsService _settings = App.Current.Settings;
     private readonly DispatcherTimer _timer;
     private readonly Dictionary<string, TextBlock> _liveTexts = [];
+    private readonly Dictionary<string, TextBlock> _curveLabels = [];
     private string _builtFor = string.Empty;
 
     public FanControlWindow()
@@ -73,6 +74,13 @@ public partial class FanControlWindow : Window
                 ? string.Empty
                 : Loc.T("F.Live", s.Rpm is float rpm ? $"{rpm:0}" : "--", s.Percent is float p ? $"{p:0}" : "--");
         }
+
+        // Eğri modundaki fanın yanında eğrinin adı (hazır ayar / kayıtlı ad / Özel). Eğri penceresinde değişince güncellenir.
+        foreach (var (id, label) in _curveLabels)
+        {
+            var curve = _settings.Current.Fans.TryGetValue(id, out var cfg) ? cfg.Curve : FanCurve.Default();
+            label.Text = Loc.T("F.CurveIs", FanCurve.Describe(curve, _settings.Current.CurvePresets));
+        }
     }
 
     private FanSetting GetOrCreate(string id)
@@ -90,6 +98,7 @@ public partial class FanControlWindow : Window
     {
         FanList.Children.Clear();
         _liveTexts.Clear();
+        _curveLabels.Clear();
 
         foreach (var channel in channels)
         {
@@ -135,8 +144,17 @@ public partial class FanControlWindow : Window
         var curveButton = new Button
         {
             Content = Loc.T("F.EditCurve"), Style = (Style)FindResource("DarkButton"),
-            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 0)
+            VerticalAlignment = VerticalAlignment.Center
         };
+        var curveLabel = new TextBlock
+        {
+            Foreground = (Brush)FindResource("SubtleTextBrush"), VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0)
+        };
+        _curveLabels[id] = curveLabel;
+        var curvePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
+        curvePanel.Children.Add(curveButton);
+        curvePanel.Children.Add(curveLabel);
         curveButton.Click += (_, _) =>
         {
             var cfg = GetOrCreate(id);
@@ -146,7 +164,7 @@ public partial class FanControlWindow : Window
         void ApplyModeVisibility(FanMode m)
         {
             manualPanel.Visibility = m == FanMode.Manual ? Visibility.Visible : Visibility.Collapsed;
-            curveButton.Visibility = m == FanMode.Curve ? Visibility.Visible : Visibility.Collapsed;
+            curvePanel.Visibility = m == FanMode.Curve ? Visibility.Visible : Visibility.Collapsed;
         }
 
         ApplyModeVisibility(mode);
@@ -160,7 +178,7 @@ public partial class FanControlWindow : Window
         content.Children.Add(header);
         content.Children.Add(radios);
         content.Children.Add(manualPanel);
-        content.Children.Add(curveButton);
+        content.Children.Add(curvePanel);
 
         return new Border
         {

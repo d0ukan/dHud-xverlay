@@ -118,6 +118,9 @@ public sealed class AppSettings
     /// <summary>Fan kanalı başına ayar (anahtar: sensör kimliği). Kayıt olmayan fan "Otomatik"tir.</summary>
     public Dictionary<string, FanSetting> Fans { get; set; } = [];
 
+    /// <summary>Kullanıcının kaydettiği, adlandırılmış fan eğrileri (tüm fanlar için ortak).</summary>
+    public List<SavedCurve> CurvePresets { get; set; } = [];
+
     /// <summary>Oyun FPS'ini ölç (ETW). Mobil uygulamaya da gönderilir. Yönetici yetkisi gerekir.</summary>
     public bool FpsEnabled { get; set; }
 
@@ -240,6 +243,21 @@ public sealed class SettingsService
         foreach (var fan in s.Fans.Values)
         {
             FanCurve.Sanitize(fan);
+        }
+
+        s.CurvePresets ??= [];
+        s.CurvePresets = s.CurvePresets
+            .Where(p => !string.IsNullOrWhiteSpace(p.Name))
+            .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase).Select(g => g.Last())
+            .Take(FanCurve.MaxSavedCurves)
+            .ToList();
+        foreach (var preset in s.CurvePresets)
+        {
+            preset.Name = preset.Name.Trim();
+            var temp = new FanSetting { Curve = preset.Curve, MinPercent = preset.MinPercent };
+            FanCurve.Sanitize(temp);
+            preset.Curve = temp.Curve;
+            preset.MinPercent = temp.MinPercent;
         }
 
         s.AlertSeconds = Math.Clamp(s.AlertSeconds, 3, 120);

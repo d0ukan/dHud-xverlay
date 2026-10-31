@@ -45,6 +45,14 @@ public sealed class FanSetting
     public List<CurvePoint> Curve { get; set; } = FanCurve.Default();
 }
 
+/// <summary>Kullanıcının adlandırıp kaydettiği fan eğrisi.</summary>
+public sealed class SavedCurve
+{
+    public string Name { get; set; } = string.Empty;
+    public List<CurvePoint> Curve { get; set; } = [];
+    public int MinPercent { get; set; } = 20;
+}
+
 /// <summary>Eğri hesapları. Saf fonksiyonlar; donanıma dokunmaz.</summary>
 public static class FanCurve
 {
@@ -77,6 +85,52 @@ public static class FanCurve
             [P(30, 25), P(50, 35), P(65, 55), P(75, 80), P(85, 100)], 20
         )
     };
+
+    public const int MaxSavedCurves = 20;
+    public const int MaxNameLength = 24;
+
+    /// <summary>İki eğri aynı noktalara sahip mi (sıra önemsiz).</summary>
+    public static bool SameCurve(IReadOnlyList<CurvePoint> a, IReadOnlyList<CurvePoint> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        var left = a.OrderBy(p => p.Temp).ToList();
+        var right = b.OrderBy(p => p.Temp).ToList();
+        return left.Zip(right).All(pair => pair.First.Temp == pair.Second.Temp && pair.First.Percent == pair.Second.Percent);
+    }
+
+    /// <summary>Hazır eğrilerin görünen adı (arayüz diline göre).</summary>
+    public static string PresetName(FanPreset preset) => Loc.T(preset switch
+    {
+        FanPreset.Quiet => "F.PresetQuiet",
+        FanPreset.MaxCold => "F.PresetMax",
+        _ => "F.PresetOptimal"
+    });
+
+    /// <summary>Eğrinin adı: hazır ayarla aynıysa onun adı, kayıtlı eğriyle aynıysa kaydedilen ad, değilse "Özel".</summary>
+    public static string Describe(IReadOnlyList<CurvePoint> curve, IEnumerable<SavedCurve> saved)
+    {
+        foreach (var preset in Enum.GetValues<FanPreset>())
+        {
+            if (SameCurve(curve, Preset(preset).Curve))
+            {
+                return PresetName(preset);
+            }
+        }
+
+        var match = saved.FirstOrDefault(s => SameCurve(curve, s.Curve));
+        return match?.Name ?? Loc.T("F.Custom");
+    }
+
+    /// <summary>Kayıtlı bir eğriye verilemeyecek adlar (hazır ayar adları ve "Özel", iki dilde).</summary>
+    public static bool IsReservedName(string name)
+    {
+        string[] reserved = ["Quiet", "Sessiz", "Optimal", "Max Cold", "Max Soğutma", "Custom", "Özel"];
+        return reserved.Contains(name, StringComparer.OrdinalIgnoreCase);
+    }
 
     private static CurvePoint P(int temp, int percent) => new() { Temp = temp, Percent = percent };
 
