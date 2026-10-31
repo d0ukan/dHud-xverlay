@@ -27,7 +27,7 @@ jobs:
           java-version: 21
 
       - name: Android iş yükünü kur
-        run: dotnet workload install android
+        run: dotnet workload install maui-android
 
       - name: APK derle ve imzala
         env:
