@@ -287,7 +287,8 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
             var span = WidgetGrid.SpanOf(union.Size, spec);
             var preferred = WidgetGrid.NearestCell(union.TopLeft, span, spec);
             var cell = WidgetGrid.FindFree(preferred, span, WidgetGrid.Occupied(others, spec), spec) ?? preferred;
-            return (WidgetGrid.CardOrigin(cell.C, cell.R, spec), WidgetGrid.CellsRect(cell.C, cell.R, span, spec));
+            var snapOrigin = WidgetGrid.CardOrigin(cell.C, cell.R, spec);
+            return (snapOrigin, new Rect(snapOrigin, union.Size));
         }
 
         var inside = new Point(
@@ -472,7 +473,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         if (GridTarget(window) is { } target)
         {
             _preview ??= new SnapPreviewWindow();
-            _preview.ShowAt(WidgetGrid.CellsRect(target.Cell.C, target.Cell.R, target.Span, target.Spec));
+            _preview.ShowAt(new Rect(WidgetGrid.CardOrigin(target.Cell.C, target.Cell.R, target.Spec), window.CardRect.Size));
         }
     }
 

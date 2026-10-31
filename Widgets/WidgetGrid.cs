@@ -3,22 +3,81 @@ using System.Windows;
 namespace DHud.Widgets;
 
 /// <summary>
-/// Widget'ların oturduğu ızgara (macOS masaüstü widget'ları gibi). Izgara, monitörün çalışma alanının genişliğine oranlıdır
-/// (24 sütun), böylece her çözünürlükte benzer görünür. Bir kart, kapladığı hücrelere göre yerleşir ve başka bir widget'ın
-/// (veya overlay'in) hücrelerine girmez. Saf hesaplardır; pencerelere dokunmaz.
+/// Widget'ların oturduğu ince ızgara (macOS masaüstü widget'ları gibi). Izgara, monitörün çalışma alanının genişliğine oranlıdır
+/// (96 sütun, yaklaşık 20 piksellik hücreler), böylece her çözünürlükte benzer ve sıkı görünür. Bir kart, kapladığı hücrelere göre
+/// yerleşir ve başka bir widget'ın (veya bar'ın) hücrelerine girmez. Saf hesaplardır; pencerelere dokunmaz.
 /// </summary>
 public static class WidgetGrid
 {
-    /// <summary>Kart ile hücre kenarı arasındaki boşluk (iki komşu kart arasında 2×Inset boşluk kalır).</summary>
-    public const double Inset = 6;
+    /// <summary>Kart ile hücre kenarı arasındaki boşluk (iki komşu kart arasında en az 2×Inset boşluk kalır).</summary>
+    public const double Inset = 4;
 
-    public const int Columns = 24;
+    public const int Columns = 96;
+
+    private const double MinCell = 14;
 
     public sealed record Spec(Rect Work, double Cell, int Cols, int Rows, double OffsetX, double OffsetY);
 
+    /// <summary>Dolu hücre haritası. Boşluk sorgusu, önceden hesaplanmış toplamlarla (summed-area table) tek adımda yanıtlanır.</summary>
+    public sealed class Occupancy
+    {
+        private readonly bool[,] _cells;
+        private readonly int[,] _sums;
+        private readonly int _cols;
+        private readonly int _rows;
+
+        public Occupancy(int cols, int rows, IEnumerable<(int C, int R)> cells)
+        {
+            _cols = cols;
+            _rows = rows;
+            _cells = new bool[cols, rows];
+            foreach (var (c, r) in cells)
+            {
+                if (c >= 0 && c < cols && r >= 0 && r < rows)
+                {
+                    _cells[c, r] = true;
+                }
+            }
+
+            _sums = new int[cols + 1, rows + 1];
+            for (var c = 0; c < cols; c++)
+            {
+                for (var r = 0; r < rows; r++)
+                {
+                    _sums[c + 1, r + 1] = _sums[c, r + 1] + _sums[c + 1, r] - _sums[c, r] + (_cells[c, r] ? 1 : 0);
+                }
+            }
+        }
+
+        public bool Contains(int c, int r) => c >= 0 && c < _cols && r >= 0 && r < _rows && _cells[c, r];
+
+        public int Count => _sums[_cols, _rows];
+
+        /// <summary>(c, r) köşeli, w×h hücrelik dikdörtgenin tamamı boş mu.</summary>
+        public bool IsFree(int c, int r, int w, int h) =>
+            c >= 0 && r >= 0 && c + w <= _cols && r + h <= _rows
+            && _sums[c + w, r + h] - _sums[c, r + h] - _sums[c + w, r] + _sums[c, r] == 0;
+
+        public bool Overlaps(Occupancy other)
+        {
+            for (var c = 0; c < Math.Min(_cols, other._cols); c++)
+            {
+                for (var r = 0; r < Math.Min(_rows, other._rows); r++)
+                {
+                    if (_cells[c, r] && other._cells[c, r])
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+    }
+
     public static Spec Make(Rect work)
     {
-        var cell = Math.Max(56, Math.Round(work.Width / Columns));
+        var cell = Math.Max(MinCell, Math.Round(work.Width / Columns));
         var cols = Math.Max(1, (int)Math.Floor(work.Width / cell));
         var rows = Math.Max(1, (int)Math.Floor(work.Height / cell));
         return new Spec(work, cell, cols, rows, (work.Width - cols * cell) / 2, (work.Height - rows * cell) / 2);
@@ -41,15 +100,15 @@ public static class WidgetGrid
     public static Point CardOrigin(int c, int r, Spec g) =>
         new(g.Work.Left + g.OffsetX + c * g.Cell + Inset, g.Work.Top + g.OffsetY + r * g.Cell + Inset);
 
-    /// <summary>Bir hücre kümesinin ekrandaki dikdörtgeni (kartın kapladığı alan; önizleme için).</summary>
+    /// <summary>Bir hücre kümesinin ekrandaki dikdörtgeni (kartın kapladığı alan).</summary>
     public static Rect CellsRect(int c, int r, (int W, int H) span, Spec g) =>
         new(g.Work.Left + g.OffsetX + c * g.Cell + Inset, g.Work.Top + g.OffsetY + r * g.Cell + Inset,
             span.W * g.Cell - 2 * Inset, span.H * g.Cell - 2 * Inset);
 
-    /// <summary>Verilen dikdörtgenlerin dokunduğu tüm hücreler.</summary>
-    public static HashSet<(int C, int R)> Occupied(IEnumerable<Rect> rects, Spec g)
+    /// <summary>Verilen dikdörtgenlerin dokunduğu tüm hücrelerin haritası.</summary>
+    public static Occupancy Occupied(IEnumerable<Rect> rects, Spec g)
     {
-        var cells = new HashSet<(int, int)>();
+        var cells = new List<(int, int)>();
         foreach (var rect in rects)
         {
             if (rect.Width <= 0 || rect.Height <= 0)
@@ -70,28 +129,25 @@ public static class WidgetGrid
             }
         }
 
-        return cells;
+        return new Occupancy(g.Cols, g.Rows, cells);
     }
 
     /// <summary>
     /// <paramref name="span"/> büyüklüğündeki bir kartı, tercih edilen hücreye en yakın ve tamamen boş olan konuma yerleştirir.
     /// Boş yer yoksa null.
     /// </summary>
-    public static (int C, int R)? FindFree((int C, int R) preferred, (int W, int H) span, HashSet<(int C, int R)> occupied, Spec g)
+    public static (int C, int R)? FindFree((int C, int R) preferred, (int W, int H) span, Occupancy occupied, Spec g)
     {
         (int C, int R)? best = null;
-        var bestDistance = double.MaxValue;
+        var bestDistance = long.MaxValue;
         for (var r = 0; r <= g.Rows - span.H; r++)
         {
             for (var c = 0; c <= g.Cols - span.W; c++)
             {
-                if (!IsFree(c, r, span, occupied))
-                {
-                    continue;
-                }
-
-                var distance = (c - preferred.C) * (c - preferred.C) + (r - preferred.R) * (r - preferred.R);
-                if (distance < bestDistance)
+                var dc = c - preferred.C;
+                var dr = r - preferred.R;
+                var distance = (long)dc * dc + (long)dr * dr;
+                if (distance < bestDistance && occupied.IsFree(c, r, span.W, span.H))
                 {
                     bestDistance = distance;
                     best = (c, r);
@@ -100,21 +156,5 @@ public static class WidgetGrid
         }
 
         return best;
-    }
-
-    private static bool IsFree(int c, int r, (int W, int H) span, HashSet<(int C, int R)> occupied)
-    {
-        for (var dc = 0; dc < span.W; dc++)
-        {
-            for (var dr = 0; dr < span.H; dr++)
-            {
-                if (occupied.Contains((c + dc, r + dr)))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 }
