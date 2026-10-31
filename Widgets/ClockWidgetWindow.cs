@@ -9,6 +9,8 @@ namespace DHud.Widgets;
 /// <summary>Saat ve tarih kartı; istenirse ikinci bir saat diliminin saatini de gösterir.</summary>
 public sealed class ClockWidgetWindow : WidgetWindowBase
 {
+    protected override WidgetOptions Options => App.Current.Settings.Current.ClockOptions;
+
     private static readonly (string Label, string Id)[] Zones =
     [
         ("UTC", "UTC"),
@@ -25,7 +27,7 @@ public sealed class ClockWidgetWindow : WidgetWindowBase
     private readonly TextBlock _time = new() { FontSize = 36, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
     private readonly TextBlock _date = new() { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 0) };
     private readonly TextBlock _zone = new() { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed };
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly DispatcherTimer _timer = new();
 
     public ClockWidgetWindow()
     {
@@ -48,10 +50,22 @@ public sealed class ClockWidgetWindow : WidgetWindowBase
         };
 
         ContextMenu = BuildMenu();
-        _timer.Tick += (_, _) => Refresh();
-        _timer.Start();
+        // Zamanlayıcı bir sonraki saniyede (saniye gösteriliyorsa) ya da dakikada bir uyanır; arada hiçbir iş yapılmaz.
+        _timer.Tick += (_, _) => { _timer.Stop(); Refresh(); ScheduleNext(); };
         Closed += (_, _) => _timer.Stop();
         Refresh();
+        ScheduleNext();
+        ApplyOptions();
+    }
+
+    private void ScheduleNext()
+    {
+        var now = DateTime.Now;
+        var next = _settings.Current.ClockSeconds
+            ? now.AddSeconds(1).AddTicks(-(now.Ticks % TimeSpan.TicksPerSecond))
+            : now.AddMinutes(1).AddTicks(-(now.Ticks % TimeSpan.TicksPerMinute));
+        _timer.Interval = next - now + TimeSpan.FromMilliseconds(30);
+        _timer.Start();
     }
 
     private void Refresh()
@@ -101,6 +115,8 @@ public sealed class ClockWidgetWindow : WidgetWindowBase
             _settings.Current.ClockSeconds = seconds.IsChecked;
             _settings.NotifyChanged();
             Refresh();
+            _timer.Stop();
+            ScheduleNext();
         };
         menu.Items.Add(seconds);
 

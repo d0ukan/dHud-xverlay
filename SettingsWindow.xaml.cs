@@ -26,6 +26,7 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         Language = XmlLanguage.GetLanguage(Loc.CultureName);
+        BuildWidgetsTab();
 
         // Küçük ekranda pencere ekrandan taşmasın: sekme içeriği kalan yüksekliğe sığar, gerekirse kaydırılır.
         // (başlık, sekmeler, durum kutusu ve düğmeler için yaklaşık 330 px ayrılır)
@@ -112,10 +113,7 @@ public partial class SettingsWindow : Window
         FpsOverlayCheckBox.IsEnabled = s.FpsEnabled;
         GameSummaryCheckBox.IsChecked = s.GameSummary;
         GameSummaryCheckBox.IsEnabled = s.FpsEnabled;
-        WidgetClockCheckBox.IsChecked = s.WidgetClock;
-        WidgetToolsCheckBox.IsChecked = s.WidgetTools;
-        NotesVisibleCheckBox.IsChecked = s.NotesVisible;
-        RemindersPhoneCheckBox.IsChecked = s.RemindersToPhone;
+        RefreshWidgetsTab();
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobileFanCheckBox.IsChecked = s.MobileFanControl;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
@@ -176,10 +174,6 @@ public partial class SettingsWindow : Window
         s.FpsEnabled = FpsCheckBox.IsChecked == true;
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
         s.GameSummary = GameSummaryCheckBox.IsChecked == true;
-        s.WidgetClock = WidgetClockCheckBox.IsChecked == true;
-        s.WidgetTools = WidgetToolsCheckBox.IsChecked == true;
-        s.NotesVisible = NotesVisibleCheckBox.IsChecked == true;
-        s.RemindersToPhone = RemindersPhoneCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
@@ -202,10 +196,181 @@ public partial class SettingsWindow : Window
 
     private void OpenFanButton_Click(object sender, RoutedEventArgs e) => App.Current.OpenFanControl();
 
-    private void NewNoteButton_Click(object sender, RoutedEventArgs e)
+    // ---- Widget'lar sekmesi: her widget'ın ayrı bölümü (kodda kurulur) ----
+
+    private readonly List<Action> _widgetRefresh = [];
+
+    private void BuildWidgetsTab()
     {
-        App.Current.WidgetManager.NewNote();
-        NotesVisibleCheckBox.IsChecked = true;
+        var s = _settings;
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var left = new StackPanel();
+        var right = new StackPanel();
+        Grid.SetColumn(right, 2);
+        grid.Children.Add(left);
+        grid.Children.Add(right);
+
+        left.Children.Add(WidgetSection("clock", "S.WidgetClock", () => s.Current.WidgetClock, v => s.Current.WidgetClock = v,
+            () => s.Current.ClockOptions,
+            extras: panel => panel.Children.Add(WidgetCheck("W.Seconds", () => s.Current.ClockSeconds, v => s.Current.ClockSeconds = v))));
+
+        left.Children.Add(WidgetSection("stopwatch", "S.WidgetStopwatch", () => s.Current.WidgetStopwatch, v => s.Current.WidgetStopwatch = v,
+            () => s.Current.StopwatchOptions));
+
+        right.Children.Add(WidgetSection("tools", "S.WidgetTools", () => s.Current.WidgetTools, v => s.Current.WidgetTools = v,
+            () => s.Current.ToolsOptions,
+            extras: panel => panel.Children.Add(WidgetCheck("S.RemindersPhone", () => s.Current.RemindersToPhone, v => s.Current.RemindersToPhone = v))));
+
+        right.Children.Add(WidgetSection("notes", "S.WidgetNotesTitle", () => s.Current.NotesVisible, v => s.Current.NotesVisible = v,
+            () => s.Current.NotesOptions,
+            extras: panel =>
+            {
+                var button = new Button { Content = Loc.T("W.NewNote"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+                button.SetResourceReference(StyleProperty, "DarkButton");
+                button.Click += (_, _) => App.Current.WidgetManager.NewNote();
+                panel.Children.Add(button);
+            },
+            onTopChanged: pinned => App.Current.WidgetManager.PinAllNotes(pinned)));
+
+        var hint = new TextBlock { Text = Loc.T("S.WidgetsHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 14, 0, 8) };
+        hint.SetResourceReference(StyleProperty, "HintText");
+        Grid.SetColumnSpan(hint, 3);
+        Grid.SetRow(hint, 1);
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(left, 0);
+        Grid.SetRow(right, 0);
+        grid.Children.Add(hint);
+
+        WidgetsTabContent.Children.Add(grid);
+    }
+
+    private void RefreshWidgetsTab()
+    {
+        foreach (var refresh in _widgetRefresh)
+        {
+            refresh();
+        }
+    }
+
+    private CheckBox WidgetCheck(string textKey, Func<bool> get, Action<bool> set)
+    {
+        var box = new CheckBox { Content = Loc.T(textKey) };
+        box.SetResourceReference(StyleProperty, "DarkCheckBox");
+        box.Click += (_, _) =>
+        {
+            if (_loading)
+            {
+                return;
+            }
+
+            set(box.IsChecked == true);
+            _settings.NotifyChanged();
+        };
+        _widgetRefresh.Add(() => box.IsChecked = get());
+        return box;
+    }
+
+    /// <summary>Bir widget'ın bölümü: aç/kapat, (isteğe bağlı) ek seçenekler, görünürlük, hep üstte, kilit, kenara yapış ve konum.</summary>
+    private StackPanel WidgetSection(string key, string titleKey, Func<bool> getOn, Action<bool> setOn, Func<WidgetOptions> options,
+        Action<StackPanel>? extras = null, Action<bool>? onTopChanged = null)
+    {
+        var panel = new StackPanel();
+        var header = new TextBlock { Text = Loc.T(titleKey) };
+        header.SetResourceReference(StyleProperty, "SectionHeader");
+        panel.Children.Add(header);
+
+        var dependents = new List<UIElement>();
+
+        panel.Children.Add(WidgetCheck("S.WidgetShow", getOn, setOn));
+        if (extras is not null)
+        {
+            var extraPanel = new StackPanel();
+            extras(extraPanel);
+            dependents.Add(extraPanel);
+            panel.Children.Add(extraPanel);
+        }
+
+        // Görünürlük
+        var opacityLabel = new TextBlock { Text = Loc.T("S.Opacity"), Margin = new Thickness(0, 8, 0, 0) };
+        var opacityValue = new TextBlock { TextAlignment = TextAlignment.Right, MinWidth = 44 };
+        var opacityRow = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
+        DockPanel.SetDock(opacityValue, Dock.Right);
+        opacityRow.Children.Add(opacityValue);
+        opacityRow.Children.Add(new TextBlock { Text = Loc.T("S.Opacity") });
+        _ = opacityLabel;
+        var slider = new Slider { Minimum = 0.2, Maximum = 1, SmallChange = 0.05, LargeChange = 0.1, TickFrequency = 0.05, IsSnapToTickEnabled = true, Margin = new Thickness(0, 4, 0, 4) };
+        slider.ValueChanged += (_, _) =>
+        {
+            opacityValue.Text = $"{slider.Value:P0}";
+            if (_loading)
+            {
+                return;
+            }
+
+            options().Opacity = slider.Value;
+            _settings.NotifyChanged();
+        };
+        panel.Children.Add(opacityRow);
+        panel.Children.Add(slider);
+        dependents.Add(opacityRow);
+        dependents.Add(slider);
+
+        // Davranış
+        var top = WidgetCheck("S.AlwaysOnTop", () => options().AlwaysOnTop, v =>
+        {
+            options().AlwaysOnTop = v;
+            onTopChanged?.Invoke(v);
+        });
+        var lockBox = WidgetCheck("S.Lock", () => options().LockPosition, v => options().LockPosition = v);
+        var snap = WidgetCheck("S.Snap", () => options().SnapToEdges, v => options().SnapToEdges = v);
+        foreach (var check in new[] { top, lockBox, snap })
+        {
+            panel.Children.Add(check);
+            dependents.Add(check);
+        }
+
+        // Konum
+        var placeLabel = new TextBlock { Text = Loc.T("S.WidgetPlace"), Margin = new Thickness(0, 8, 0, 4) };
+        placeLabel.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
+        var placeRow = new StackPanel { Orientation = Orientation.Horizontal };
+        foreach (var (glyph, corner, tip) in new (string, WidgetCorner, string)[]
+                 {
+                     ("↖", WidgetCorner.TopLeft, "S.PlaceTL"), ("↗", WidgetCorner.TopRight, "S.PlaceTR"),
+                     ("↙", WidgetCorner.BottomLeft, "S.PlaceBL"), ("↘", WidgetCorner.BottomRight, "S.PlaceBR"),
+                     ("◎", WidgetCorner.Center, "S.PlaceC")
+                 })
+        {
+            var button = new Button { Content = glyph, ToolTip = Loc.T(tip), Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(10, 3, 10, 3), FontSize = 14 };
+            button.SetResourceReference(StyleProperty, "DarkButton");
+            var target = corner;
+            button.Click += (_, _) => App.Current.WidgetManager.PlaceAt(key, target);
+            placeRow.Children.Add(button);
+        }
+
+        panel.Children.Add(placeLabel);
+        panel.Children.Add(placeRow);
+        dependents.Add(placeLabel);
+        dependents.Add(placeRow);
+
+        _widgetRefresh.Add(() =>
+        {
+            var o = options();
+            slider.Value = o.Opacity;
+            opacityValue.Text = $"{o.Opacity:P0}";
+            // Widget kapalıyken ayrıntı ayarları soluk ve kullanılamaz.
+            foreach (var element in dependents)
+            {
+                element.IsEnabled = getOn();
+                element.Opacity = getOn() ? 1 : 0.5;
+            }
+        });
+
+        panel.Margin = new Thickness(0, 0, 0, 14);
+        return panel;
     }
 
     private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e) =>

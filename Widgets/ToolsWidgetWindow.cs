@@ -9,6 +9,8 @@ namespace DHud.Widgets;
 /// <summary>Zamanlayıcı, saatli hatırlatıcı ve pomodoro tek kartta.</summary>
 public sealed class ToolsWidgetWindow : WidgetWindowBase
 {
+    protected override WidgetOptions Options => App.Current.Settings.Current.ToolsOptions;
+
     private static readonly int[] QuickMinutes = [5, 10, 15, 25, 45];
 
     private readonly WidgetService _widgets = App.Current.Widgets;
@@ -111,6 +113,7 @@ public sealed class ToolsWidgetWindow : WidgetWindowBase
 
         RebuildActive();
         OnTick();
+        ApplyOptions();
     }
 
     // ---- Eylemler ----

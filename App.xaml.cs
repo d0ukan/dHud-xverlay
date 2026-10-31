@@ -142,9 +142,9 @@ public partial class App : Application
             MobileLink?.SendAlert(message);
         });
         // Uygulama nasıl kapanırsa kapansın fanlar BIOS denetimine geri verilir.
-        AppDomain.CurrentDomain.UnhandledException += (_, _) => FanControl?.ReleaseAll();
-        AppDomain.CurrentDomain.ProcessExit += (_, _) => FanControl?.ReleaseAll();
-        SessionEnding += (_, _) => FanControl?.ReleaseAll();
+        AppDomain.CurrentDomain.UnhandledException += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
+        SessionEnding += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
 
         RemoteFan = new RemoteFanService(Monitor, Settings, FanControl);
         RemoteFan.Changed += summary =>

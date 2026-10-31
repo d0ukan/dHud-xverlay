@@ -130,6 +130,15 @@ public sealed class AppSettings
     /// <summary>Tüm fanların ayarını saklayan profiller ("Oyun", "Gece" vb.).</summary>
     public List<FanProfile> FanProfiles { get; set; } = [];
 
+    /// <summary>Widget'ların ayrı ayrı görünüm/davranış ayarları (Ayarlar → Widget'lar sekmesi).</summary>
+    public WidgetOptions ClockOptions { get; set; } = new();
+    public WidgetOptions ToolsOptions { get; set; } = new();
+    public WidgetOptions NotesOptions { get; set; } = new();
+    public WidgetOptions StopwatchOptions { get; set; } = new();
+
+    /// <summary>Kronometre widget'ı.</summary>
+    public bool WidgetStopwatch { get; set; }
+
     /// <summary>Masaüstü saat widget'ı.</summary>
     public bool WidgetClock { get; set; }
     public bool ClockSeconds { get; set; }
@@ -281,6 +290,11 @@ public sealed class SettingsService
         {
             FanCurve.Sanitize(fan);
         }
+
+        s.ClockOptions = (s.ClockOptions ?? new()).Normalized();
+        s.ToolsOptions = (s.ToolsOptions ?? new()).Normalized();
+        s.NotesOptions = (s.NotesOptions ?? new()).Normalized();
+        s.StopwatchOptions = (s.StopwatchOptions ?? new()).Normalized();
 
         s.MobileBlockedFans = (s.MobileBlockedFans ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
 

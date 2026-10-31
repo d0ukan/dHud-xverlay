@@ -29,6 +29,11 @@ public sealed class StickyNoteWindow : WidgetWindowBase
 
     public StickyNote Note => _note;
 
+    protected override WidgetOptions Options => App.Current.Settings.Current.NotesOptions;
+
+    // Her notun kendi iğnesi vardır; grup ayarı (Widget'lar sekmesi) tüm notların iğnesini birden değiştirir.
+    protected override bool WantsTopmost => _note.Pinned;
+
     public StickyNoteWindow(StickyNote note)
     {
         _note = note;
@@ -75,6 +80,8 @@ public sealed class StickyNoteWindow : WidgetWindowBase
             _note.Text = _text.Text;
             _widgets.ScheduleSave();
         };
+        _text.LostKeyboardFocus += (_, _) => _widgets.Flush();
+        Closed += (_, _) => _widgets.Flush();
         Grid.SetRow(_text, 1);
         root.Children.Add(_text);
 
@@ -105,8 +112,8 @@ public sealed class StickyNoteWindow : WidgetWindowBase
 
         Card.Child = root;
         ApplyColor();
-        Topmost = note.Pinned;
         UpdatePinVisual();
+        ApplyOptions();
 
         var def = DefaultSpot(Math.Max(0, _widgets.Data.Notes.IndexOf(note)) + 1, note.Width);
         Place(note.Left, note.Top, def.Left, def.Top);
@@ -143,7 +150,7 @@ public sealed class StickyNoteWindow : WidgetWindowBase
     private void ApplyColor()
     {
         var (card, accent) = Palette[Math.Clamp(_note.Color, 0, Palette.Length - 1)];
-        Card.Background = new SolidColorBrush(card);
+        SetCardColor(card);
         _header.BorderBrush = new SolidColorBrush(accent);
         _header.BorderThickness = new Thickness(0, 3, 0, 0);
     }
@@ -158,7 +165,7 @@ public sealed class StickyNoteWindow : WidgetWindowBase
     private void TogglePin()
     {
         _note.Pinned = !_note.Pinned;
-        Topmost = _note.Pinned;
+        ApplyOptions();
         UpdatePinVisual();
         _widgets.ScheduleSave();
     }

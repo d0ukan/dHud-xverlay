@@ -106,13 +106,14 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 
 ## Widget'lar
 
-*Ayarlar → Behavior → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır, neredeyse hiç CPU kullanmaz ve her şey bilgisayarında kalır.
+*Ayarlar → Widget'lar.* Masaüstünde istediğin yere sürükleyebileceğin küçük koyu kartlar. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz (saat dakikada bir uyanır, kronometre yalnızca çalışırken yenilenir). Her widget'ın kendi bölümü vardır: **görünürlük** (kart saydamlığı), **hep üstte**, **konumu kilitle**, **ekran kenarına yapış** ve hızlı **şuraya taşı** düğmeleri (köşeler / orta). Widget'lar ekranın dışına çıkarılamaz.
 
 - **Saat:** saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi (sağ tık).
 - **Yapışkan notlar:** istediğin kadar (en fazla 30). Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
+- **Kronometre:** başlat / duraklat, tur ve sıfırla.
 - **Zamanlayıcı, hatırlatıcı ve pomodoro:** hızlı zamanlayıcılar (5 / 10 / 15 / 25 / 45 dk veya kendi süren), saate göre hatırlatıcı (saat geçtiyse yarın) ve pomodoro (25 dk odak, 5 dk mola, 4 turdan sonra uzun mola). Süre dolunca bildirim ve ses alırsın; istersen telefona da bildirim gider.
 
-Notlar ve hatırlatıcılar yalnızca `%AppData%\dHud\widgets.json` dosyasında saklanır. Overlay gibi widget'lar da özel tam ekran oyunların üstünde görünemez.
+Notlar yazdıkça kaydedilir (saniyenin kesri içinde; ayrıca nottan çıkınca, dHud kapanırken ve Windows kapanırken tekrar); dosya güvenli şekilde değiştirilir ve bir `.bak` kopyası tutulur, yani elektrik kesilse bile yarım dosya kalmaz. Notlar ve hatırlatıcılar yalnızca `%AppData%\dHud\widgets.json` dosyasında saklanır. Overlay gibi widget'lar da özel tam ekran oyunların üstünde görünemez.
 
 ## Android yardımcı uygulaması
 

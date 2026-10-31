@@ -106,13 +106,14 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 
 ## Widgets
 
-*Settings → Behavior → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default, use almost no CPU, and everything stays on your PC.
+*Settings → Widgets.* Small dark cards you can drag anywhere on the desktop. All are off by default and use almost no CPU (the clock wakes once a minute, the stopwatch only redraws while it runs). Every widget has its own section with **visibility** (card opacity), **always on top**, **lock position**, **snap to screen edges** and quick **move to** buttons (corners / center). Widgets can never be dragged off the screen.
 
 - **Clock:** time and date, optional seconds and a second time zone (right-click).
 - **Sticky notes:** as many as you like (up to 30). Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
+- **Stopwatch:** start / pause, laps and reset.
 - **Timer, reminders and pomodoro:** quick timers (5 / 10 / 15 / 25 / 45 min or your own), reminders at a clock time (tomorrow if it has already passed) and a pomodoro (25 min focus, 5 min break, long break after 4 rounds). When time is up you get a notification and a sound, and optionally a notification on your phone.
 
-Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.
+Notes are saved as you type (within a fraction of a second, and again when you leave the note, close dHud or shut Windows down); the file is replaced safely and a `.bak` copy is kept, so a power cut cannot leave you with a half-written file. Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.
 
 ## Android companion app
 

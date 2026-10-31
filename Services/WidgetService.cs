@@ -5,6 +5,38 @@ using System.Windows.Threading;
 
 namespace DHud.Services;
 
+/// <summary>Bir widget'ın (veya not grubunun) görünüm ve davranış ayarı.</summary>
+public sealed class WidgetOptions
+{
+    /// <summary>Kartın zemin görünürlüğü (yazılar hep net kalır). 0.2–1.</summary>
+    public double Opacity { get; set; } = 1.0;
+
+    /// <summary>Diğer pencerelerin üstünde dursun.</summary>
+    public bool AlwaysOnTop { get; set; } = true;
+
+    /// <summary>Sürüklenerek taşınamasın.</summary>
+    public bool LockPosition { get; set; }
+
+    /// <summary>Bırakılınca ekran kenarına/köşesine yapışsın (ekran dışına çıkmama her zaman geçerlidir).</summary>
+    public bool SnapToEdges { get; set; } = true;
+
+    public WidgetOptions Normalized()
+    {
+        Opacity = double.IsNaN(Opacity) ? 1.0 : Math.Clamp(Opacity, 0.2, 1.0);
+        return this;
+    }
+}
+
+/// <summary>Widget'ı ekranın neresine yerleştirileceği.</summary>
+public enum WidgetCorner
+{
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+    Center
+}
+
 /// <summary>Widget penceresinin ekrandaki konumu.</summary>
 public sealed class WidgetPos
 {
@@ -41,6 +73,7 @@ public sealed class WidgetData
 {
     public WidgetPos? ClockPos { get; set; }
     public WidgetPos? ToolsPos { get; set; }
+    public WidgetPos? StopwatchPos { get; set; }
     public List<StickyNote> Notes { get; set; } = [];
     public List<Reminder> Reminders { get; set; } = [];
 }
@@ -67,17 +100,50 @@ public sealed class WidgetService
     public const int MaxReminders = 50;
     public const int MaxNoteLength = 20000;
 
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    // Henüz taşınmamış bir notun konumu NaN'dir; bu sayı JSON'a yazılamazsa tüm dosya kaydedilemezdi.
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+    };
 
-    private readonly string _filePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dHud", "widgets.json");
+    private readonly string _filePath;
 
-    private readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(600) };
+    /// <param name="filePath">Test için; boşsa %AppData%\dHud\widgets.json.</param>
+    public WidgetService(string? filePath = null)
+    {
+        _filePath = filePath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dHud", "widgets.json");
+    }
+
+    private readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromSeconds(1) };
     private bool _dirty;
     private int _focusRounds;
 
     public WidgetData Data { get; private set; } = new();
+
+    /// <summary>Kronometre (bellekte tutulur; uygulama kapanınca sıfırlanır). Çalışırken gösterimi pencere yeniler.</summary>
+    public System.Diagnostics.Stopwatch Watch { get; } = new();
+
+    /// <summary>Kronometre tur süreleri (kümülatif).</summary>
+    public List<TimeSpan> Laps { get; } = [];
+
+    public const int MaxLaps = 99;
+
+    public void WatchLap()
+    {
+        if (Watch.IsRunning && Laps.Count < MaxLaps)
+        {
+            Laps.Add(Watch.Elapsed);
+        }
+    }
+
+    public void WatchReset()
+    {
+        Watch.Reset();
+        Laps.Clear();
+    }
 
     public PomodoroPhase Phase { get; private set; }
     public DateTime PhaseEndUtc { get; private set; }
@@ -94,18 +160,8 @@ public sealed class WidgetService
 
     public void Load()
     {
-        try
-        {
-            if (File.Exists(_filePath))
-            {
-                Data = JsonSerializer.Deserialize<WidgetData>(File.ReadAllText(_filePath), JsonOptions) ?? new WidgetData();
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Widget verisi okunamadı: {ex.Message}");
-            Data = new WidgetData();
-        }
+        // Ana dosya bozuksa (ör. yazarken elektrik gitti) bir önceki sağlam kopyadan (.bak) devam edilir.
+        Data = TryRead(_filePath) ?? TryRead(_filePath + ".bak") ?? new WidgetData();
 
         Data.Notes ??= [];
         Data.Reminders ??= [];
@@ -120,7 +176,37 @@ public sealed class WidgetService
 
         _saveTimer.Tick += (_, _) => Flush();
         _tick.Tick += (_, _) => Tick();
-        _tick.Start();
+        UpdateTick();
+    }
+
+    private static WidgetData? TryRead(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? JsonSerializer.Deserialize<WidgetData>(File.ReadAllText(path), JsonOptions) : null;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Widget verisi okunamadı ({Path.GetFileName(path)}): {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Saniyelik zamanlayıcı yalnızca bir hatırlatıcı/zamanlayıcı veya pomodoro varken çalışır;
+    /// hiçbiri yokken uygulama bu yüzden boşuna uyanmaz.
+    /// </summary>
+    private void UpdateTick()
+    {
+        var needed = Data.Reminders.Count > 0 || Phase != PomodoroPhase.Off;
+        if (needed && !_tick.IsEnabled)
+        {
+            _tick.Start();
+        }
+        else if (!needed && _tick.IsEnabled)
+        {
+            _tick.Stop();
+        }
     }
 
     /// <summary>Değişiklik var; kısa bir gecikmeyle diske yazılır.</summary>
@@ -144,7 +230,19 @@ public sealed class WidgetService
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-            File.WriteAllText(_filePath, JsonSerializer.Serialize(Data, JsonOptions));
+
+            // Önce geçici dosyaya yaz, sonra dosyayı tek hamlede değiştir (eskisi .bak olarak kalır):
+            // yazarken elektrik gitse bile notlar ya eski ya yeni haliyle sağlam kalır, yarım dosya oluşmaz.
+            var temp = _filePath + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(Data, JsonOptions));
+            if (File.Exists(_filePath))
+            {
+                File.Replace(temp, _filePath, _filePath + ".bak");
+            }
+            else
+            {
+                File.Move(temp, _filePath);
+            }
         }
         catch (Exception ex)
         {
@@ -186,6 +284,7 @@ public sealed class WidgetService
         var reminder = new Reminder { Text = text.Trim(), DueUtc = dueUtc, Kind = kind };
         Data.Reminders.Add(reminder);
         ScheduleSave();
+        UpdateTick();
         RemindersChanged?.Invoke();
         return reminder;
     }
@@ -195,6 +294,7 @@ public sealed class WidgetService
         if (Data.Reminders.Remove(reminder))
         {
             ScheduleSave();
+            UpdateTick();
             RemindersChanged?.Invoke();
         }
     }
@@ -228,6 +328,7 @@ public sealed class WidgetService
     public void StopPomodoro()
     {
         Phase = PomodoroPhase.Off;
+        UpdateTick();
         RemindersChanged?.Invoke();
     }
 
@@ -250,6 +351,7 @@ public sealed class WidgetService
             _ => PomodoroLongBreakMinutes
         };
         PhaseEndUtc = DateTime.UtcNow.AddMinutes(minutes);
+        UpdateTick();
         RemindersChanged?.Invoke();
     }
 
@@ -289,6 +391,7 @@ public sealed class WidgetService
         if (due.Count > 0)
         {
             ScheduleSave();
+            UpdateTick();
             RemindersChanged?.Invoke();
             foreach (var reminder in due)
             {

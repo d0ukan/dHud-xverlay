@@ -41,10 +41,11 @@
             </Grid>
 
             <!-- Sekmeler -->
-            <UniformGrid Columns="4" Margin="12,0">
+            <UniformGrid Columns="5" Margin="12,0">
                 <RadioButton x:Name="AppearanceTab" Content="{h:Loc S.Tab.Appearance}" GroupName="Tabs" Style="{StaticResource TabHeader}" IsChecked="True" />
                 <RadioButton x:Name="MetricsTab" Content="{h:Loc S.Tab.Metrics}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
                 <RadioButton x:Name="BehaviorTab" Content="{h:Loc S.Tab.Behavior}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
+                <RadioButton x:Name="WidgetsTab" Content="{h:Loc S.Tab.Widgets}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
                 <RadioButton x:Name="AlertsTab" Content="{h:Loc S.Tab.Alerts}" GroupName="Tabs" Style="{StaticResource TabHeader}" />
             </UniformGrid>
             <Rectangle Height="1" Fill="{StaticResource DividerBrush}" />
@@ -264,19 +265,6 @@
                     <TextBlock Text="{h:Loc S.FpsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                     <TextBlock x:Name="FpsStatusText" Style="{StaticResource HintText}" TextWrapping="Wrap" />
 
-                    <TextBlock Text="{h:Loc S.Widgets}" Style="{StaticResource SectionHeader}" />
-                    <CheckBox x:Name="WidgetClockCheckBox" Content="{h:Loc S.WidgetClock}"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="WidgetToolsCheckBox" Content="{h:Loc S.WidgetTools}"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="NotesVisibleCheckBox" Content="{h:Loc S.WidgetNotes}"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <CheckBox x:Name="RemindersPhoneCheckBox" Content="{h:Loc S.RemindersPhone}"
-                              Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
-                    <Button Content="{h:Loc W.NewNote}" Style="{StaticResource DarkButton}" HorizontalAlignment="Left"
-                            Margin="0,6,0,0" Click="NewNoteButton_Click" />
-                    <TextBlock Text="{h:Loc S.WidgetsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
-
                     <TextBlock Text="{h:Loc S.Mobile}" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="MobileCheckBox" Content="{h:Loc S.MobileEnable}"
                               Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
@@ -297,6 +285,10 @@
 
                     </StackPanel>
                 </Grid>
+
+                <!-- ============ WIDGET'LAR (içerik kodda kurulur: BuildWidgetsTab) ============ -->
+                <Grid x:Name="WidgetsTabContent"
+                      Visibility="{Binding IsChecked, ElementName=WidgetsTab, Converter={StaticResource BoolToVisibility}}" />
 
                 <!-- ============ UYARILAR ============ -->
                 <Grid Visibility="{Binding IsChecked, ElementName=AlertsTab, Converter={StaticResource BoolToVisibility}}">
