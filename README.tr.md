@@ -111,7 +111,14 @@ Her anakart yazılımla fan kontrolüne izin vermez; o durumda dHud "kontrol edi
 - **Saat:** saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi (sağ tık).
 - **Yapışkan notlar:** istediğin kadar (en fazla 30). Yazdıkça kaydedilir; her notun kendi rengi, boyutu ve *hep üstte tut* düğmesi vardır. Tepsi menüsünden veya Ayarlar'dan yeni not açılır; hepsi silinmeden gizlenebilir.
 - **Kronometre:** başlat / duraklat, tur ve sıfırla.
-- **Hava durumu:** seçtiğin şehir için şimdiki sıcaklık, hissedilen, rüzgâr ve 3 günlük tahmin (°C veya °F). İnternet kullanan tek widget'tır (bkz. *Gizlilik*), varsayılan kapalıdır ve şehir seçene kadar hiçbir şey yapmaz.
+- **Sistem özeti:** CPU, GPU, VRAM, RAM, disk ve ağ değerleri ince çubuklarla tek büyük kartta (overlay'den bağımsız).
+- **Yapılacaklar listesi:** Enter ile iş ekle, tik at, bitenleri temizle.
+- **Gün sayacı:** herhangi bir tarih için "12 gün kaldı" (tatil, sınav, doğum günü…).
+- **Hızlı başlatıcı:** en sevdiğin uygulama, dosya ve klasörler simge olarak. Öğeler Windows Gezgini üzerinden açılır; dHud yönetici olarak çalışsa bile uygulamalar normal (yönetici olmayan) yetkiyle başlar.
+- **Pano geçmişi:** son 10 kopyalanan metin; birine tıklayınca tekrar kopyalanır. Yalnızca bellekte tutulur, diske yazılmaz, widget kapalıyken hiçbir şey toplanmaz ve parola yöneticilerinin gizli işaretlediği kopyalar atlanır.
+- **Ses ve mikrofon:** varsayılan aygıtlar için ses kaydırıcısı, sessize alma ve mikrofonu kapatma düğmesi.
+- **Takvim:** bir `.ics` dosyasından veya bağlantısından önümüzdeki 7 gün (tekrarlayan etkinlikler dahil). Hesap girişi yok: bir dosya ya da takviminin verdiği gizli iCal adresi kullanılır.
+- **Hava durumu:** seçtiğin şehir için şimdiki sıcaklık, hissedilen, rüzgâr ve 3 günlük tahmin (°C veya °F). İnternet kullanan tek widget'tır (bkz. *Gizlilik*), varsayılan kapalıdır ve şehir seçene kadar hiçbir şey yapmaz. (İndirilen tek şey daha var: bir takvim *bağlantısı* girersen o indirilir, girmezsen hiçbir şey olmaz.)
 - **Zamanlayıcı, hatırlatıcı ve pomodoro:** hızlı zamanlayıcılar (5 / 10 / 15 / 25 / 45 dk veya kendi süren), saate göre hatırlatıcı (saat geçtiyse yarın) ve pomodoro (25 dk odak, 5 dk mola, 4 turdan sonra uzun mola). Süre dolunca bildirim ve ses alırsın; istersen telefona da bildirim gider.
 
 Notlar yazdıkça kaydedilir (saniyenin kesri içinde; ayrıca nottan çıkınca, dHud kapanırken ve Windows kapanırken tekrar); dosya güvenli şekilde değiştirilir ve bir `.bak` kopyası tutulur, yani elektrik kesilse bile yarım dosya kalmaz. Notlar ve hatırlatıcılar yalnızca `%AppData%\dHud\widgets.json` dosyasında saklanır. Overlay gibi widget'lar da özel tam ekran oyunların üstünde görünemez.

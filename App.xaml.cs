@@ -411,8 +411,9 @@ public partial class App : Application
     public void ApplyMonitorFlags()
     {
         var s = Settings.Current;
-        Monitor.CpuEnabled = s.ShowCpu || s.ShowCores || s.FanControlEnabled;
-        Monitor.GpuEnabled = s.ShowGpu || s.FanControlEnabled;
+        var sysInfo = s.Extra(WidgetIds.SysInfo).Enabled;
+        Monitor.CpuEnabled = s.ShowCpu || s.ShowCores || s.FanControlEnabled || sysInfo;
+        Monitor.GpuEnabled = s.ShowGpu || s.FanControlEnabled || sysInfo;
         Monitor.FanEnabled = s.ShowFan || s.FanControlEnabled || FanWindowOpen;
     }
 
@@ -459,7 +460,7 @@ public partial class App : Application
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
         ApplyMonitorFlags();
-        Monitor.Network.Enabled = s.ShowNetwork;
+        Monitor.Network.Enabled = s.ShowNetwork || s.Extra(WidgetIds.SysInfo).Enabled;
         Monitor.Network.PingEnabled = s.ShowPing;
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
         ConfigureUpdateTimer();

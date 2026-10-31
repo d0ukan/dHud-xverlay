@@ -8,6 +8,9 @@ namespace DHud.Services;
 /// <summary>Bir widget'ın (veya not grubunun) görünüm ve davranış ayarı.</summary>
 public sealed class WidgetOptions
 {
+    /// <summary>Widget açık mı (yeni widget'lar için; eski beş widget kendi ayarını kullanır).</summary>
+    public bool Enabled { get; set; }
+
     /// <summary>Kartın zemin görünürlüğü (yazılar hep net kalır). 0.2–1.</summary>
     public double Opacity { get; set; } = 1.0;
 
@@ -25,6 +28,20 @@ public sealed class WidgetOptions
         Opacity = double.IsNaN(Opacity) ? 1.0 : Math.Clamp(Opacity, 0.2, 1.0);
         return this;
     }
+}
+
+/// <summary>Genel (kimlikle yönetilen) widget'ların kimlikleri.</summary>
+public static class WidgetIds
+{
+    public const string Clipboard = "clipboard";
+    public const string Todo = "todo";
+    public const string SysInfo = "sysinfo";
+    public const string Audio = "audio";
+    public const string Calendar = "calendar";
+    public const string Countdown = "countdown";
+    public const string Launcher = "launcher";
+
+    public static readonly string[] Extra = [Clipboard, Todo, SysInfo, Audio, Calendar, Countdown, Launcher];
 }
 
 /// <summary>Widget'ı ekranın neresine yerleştirileceği.</summary>
@@ -68,9 +85,39 @@ public sealed class Reminder
     public string Kind { get; set; } = "reminder";
 }
 
-/// <summary>widgets.json içeriği: notlar, hatırlatıcılar ve widget konumları.</summary>
+/// <summary>Yapılacaklar listesi maddesi.</summary>
+public sealed class TodoItem
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Text { get; set; } = string.Empty;
+    public bool Done { get; set; }
+}
+
+/// <summary>Gün sayacı: bir tarihe kaç gün kaldı / kaç gün geçti.</summary>
+public sealed class Countdown
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = string.Empty;
+    public DateTime Date { get; set; } = DateTime.Today;
+}
+
+/// <summary>Hızlı başlatıcıdaki bir kısayol.</summary>
+public sealed class LauncherItem
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+}
+
+/// <summary>widgets.json içeriği: notlar, hatırlatıcılar, listeler ve widget konumları.</summary>
 public sealed class WidgetData
 {
+    /// <summary>Genel widget konumları (kimlik → konum): pano, yapılacaklar, sistem, ses, takvim, gün sayacı, başlatıcı.</summary>
+    public Dictionary<string, WidgetPos> Positions { get; set; } = [];
+    public List<TodoItem> Todos { get; set; } = [];
+    public List<Countdown> Countdowns { get; set; } = [];
+    public List<LauncherItem> Launchers { get; set; } = [];
+
     public WidgetPos? ClockPos { get; set; }
     public WidgetPos? ToolsPos { get; set; }
     public WidgetPos? StopwatchPos { get; set; }
@@ -100,6 +147,9 @@ public sealed class WidgetService
     public const int MaxNotes = 30;
     public const int MaxReminders = 50;
     public const int MaxNoteLength = 20000;
+    public const int MaxTodos = 60;
+    public const int MaxCountdowns = 20;
+    public const int MaxLaunchers = 12;
 
     // Henüz taşınmamış bir notun konumu NaN'dir; bu sayı JSON'a yazılamazsa tüm dosya kaydedilemezdi.
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -166,6 +216,10 @@ public sealed class WidgetService
 
         Data.Notes ??= [];
         Data.Reminders ??= [];
+        Data.Positions ??= [];
+        Data.Todos = (Data.Todos ?? []).Take(MaxTodos).ToList();
+        Data.Countdowns = (Data.Countdowns ?? []).Take(MaxCountdowns).ToList();
+        Data.Launchers = (Data.Launchers ?? []).Where(l => !string.IsNullOrWhiteSpace(l.Path)).Take(MaxLaunchers).ToList();
         Data.Notes = Data.Notes.Take(MaxNotes).ToList();
         foreach (var note in Data.Notes)
         {

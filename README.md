@@ -111,7 +111,14 @@ Not every motherboard allows software fan control; dHud shows "no controllable f
 - **Clock:** time and date, optional seconds and a second time zone (right-click).
 - **Sticky notes:** as many as you like (up to 30). Text is saved as you type, each note has its own colour, size and *keep on top* switch. Create one from the tray menu or Settings; hide them all without deleting.
 - **Stopwatch:** start / pause, laps and reset.
-- **Weather:** current temperature, feels-like, wind and a 3-day forecast for a city you pick (°C or °F). It is the only widget that uses the internet (see *Privacy*), is off by default and does nothing until you choose a city.
+- **System summary:** CPU, GPU, VRAM, RAM, disk and network on thin bars in one big card (independent from the overlay).
+- **To-do list:** add a task with Enter, tick it off, clear the finished ones.
+- **Day counter:** "12 days left" for any date (holiday, exam, birthday…).
+- **Quick launcher:** your favourite apps, files and folders as icons. Items are opened through Windows Explorer, so apps start with normal (not administrator) rights even though dHud runs elevated.
+- **Clipboard history:** the last 10 copied texts; click one to copy it again. Kept in memory only, never written to disk, nothing is collected while the widget is off, and copies that password managers mark as private are skipped.
+- **Sound and microphone:** volume slider, mute, and a microphone mute button for the default devices.
+- **Calendar:** the next 7 days from an `.ics` file or link (including repeating events). No account sign-in: use a file, or the secret iCal address your calendar provides.
+- **Weather:** current temperature, feels-like, wind and a 3-day forecast for a city you pick (°C or °F). It is the only widget that uses the internet (see *Privacy*), is off by default and does nothing until you choose a city. (A calendar *link* is the only other thing that is downloaded, and only if you enter one.)
 - **Timer, reminders and pomodoro:** quick timers (5 / 10 / 15 / 25 / 45 min or your own), reminders at a clock time (tomorrow if it has already passed) and a pomodoro (25 min focus, 5 min break, long break after 4 rounds). When time is up you get a notification and a sound, and optionally a notification on your phone.
 
 Notes are saved as you type (within a fraction of a second, and again when you leave the note, close dHud or shut Windows down); the file is replaced safely and a `.bak` copy is kept, so a power cut cannot leave you with a half-written file. Notes and reminders are stored only in `%AppData%\dHud\widgets.json`. Like the overlay, widgets cannot appear over exclusive-fullscreen games.

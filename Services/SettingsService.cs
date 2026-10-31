@@ -137,6 +137,23 @@ public sealed class AppSettings
     public WidgetOptions StopwatchOptions { get; set; } = new();
     public WidgetOptions WeatherOptions { get; set; } = new();
 
+    /// <summary>Yeni widget'ların ayarları (kimlik → ayar). Kimlikler: <see cref="WidgetIds.Extra"/>.</summary>
+    public Dictionary<string, WidgetOptions> ExtraWidgets { get; set; } = [];
+
+    /// <summary>Takvim widget'ının kaynağı: bir .ics dosyasının yolu veya https:// adresi (boş = takvim yok).</summary>
+    public string CalendarSource { get; set; } = string.Empty;
+
+    /// <summary>Bir genel widget'ın ayarı (yoksa varsayılanla oluşturulur).</summary>
+    public WidgetOptions Extra(string id)
+    {
+        if (!ExtraWidgets.TryGetValue(id, out var options))
+        {
+            ExtraWidgets[id] = options = new WidgetOptions();
+        }
+
+        return options;
+    }
+
     /// <summary>Hava durumu widget'ı (varsayılan kapalı; açıkken internete çıkar, bkz. WeatherService).</summary>
     public bool WidgetWeather { get; set; }
 
@@ -308,6 +325,13 @@ public sealed class SettingsService
         s.NotesOptions = (s.NotesOptions ?? new()).Normalized();
         s.StopwatchOptions = (s.StopwatchOptions ?? new()).Normalized();
         s.WeatherOptions = (s.WeatherOptions ?? new()).Normalized();
+        s.ExtraWidgets ??= [];
+        foreach (var id in WidgetIds.Extra)
+        {
+            s.Extra(id).Normalized();
+        }
+
+        s.CalendarSource = (s.CalendarSource ?? string.Empty).Trim();
         s.WeatherPlace ??= string.Empty;
         if (s.WeatherLat is not (>= -90 and <= 90) || s.WeatherLon is not (>= -180 and <= 180))
         {

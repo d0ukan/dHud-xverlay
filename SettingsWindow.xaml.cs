@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using System.IO;
 using System.Windows.Media.Imaging;
 using DHud.Services;
+using DHud.Widgets;
 using QRCoder;
 
 namespace DHud;
@@ -254,6 +255,65 @@ public partial class SettingsWindow : Window
             },
             onTopChanged: pinned => App.Current.WidgetManager.PinAllNotes(pinned)));
 
+        // Genel widget'lar: açma/kapama WidgetOptions.Enabled üzerinden.
+        WidgetOptions Extra(string id) => s.Current.Extra(id);
+        StackPanel Generic(string id, string titleKey, Action<StackPanel>? extras = null) =>
+            WidgetSection(id, titleKey, () => Extra(id).Enabled, v => Extra(id).Enabled = v, () => Extra(id), extras);
+
+        left.Children.Add(Generic(WidgetIds.SysInfo, "S.WidgetSysInfo"));
+        left.Children.Add(Generic(WidgetIds.Todo, "S.WidgetTodo"));
+        left.Children.Add(Generic(WidgetIds.Countdown, "S.WidgetCountdown"));
+        left.Children.Add(Generic(WidgetIds.Launcher, "S.WidgetLauncher"));
+        right.Children.Add(Generic(WidgetIds.Clipboard, "S.WidgetClipboard", panel =>
+        {
+            var clear = new Button { Content = Loc.T("W.ClipClear"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+            clear.SetResourceReference(StyleProperty, "DarkButton");
+            clear.Click += (_, _) => ClipboardWidgetWindow.ClearHistory();
+            panel.Children.Add(clear);
+            var note = new TextBlock { Text = Loc.T("S.ClipboardPrivacy"), TextWrapping = TextWrapping.Wrap };
+            note.SetResourceReference(StyleProperty, "HintText");
+            panel.Children.Add(note);
+        }));
+        right.Children.Add(Generic(WidgetIds.Audio, "S.WidgetAudio"));
+        right.Children.Add(Generic(WidgetIds.Calendar, "S.WidgetCalendar", panel =>
+        {
+            var label = new TextBlock { Text = Loc.T("S.CalendarSource"), Margin = new Thickness(0, 6, 0, 2) };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
+            var box = new TextBox { Padding = new Thickness(6, 3, 6, 3), Background = new SolidColorBrush(Color.FromArgb(0x1A, 255, 255, 255)), BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 255, 255, 255)), BorderThickness = new Thickness(1), CaretBrush = Brushes.White, ToolTip = Loc.T("S.CalendarHint") };
+            box.SetResourceReference(Control.ForegroundProperty, "TextBrush");
+            void Commit()
+            {
+                if (_loading || s.Current.CalendarSource == box.Text.Trim())
+                {
+                    return;
+                }
+
+                s.Current.CalendarSource = box.Text.Trim();
+                s.NotifyChanged();
+            }
+
+            box.LostFocus += (_, _) => Commit();
+            box.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Commit(); } };
+            _widgetRefresh.Add(() => { if (!box.IsKeyboardFocusWithin) { box.Text = s.Current.CalendarSource; } });
+
+            var browse = new Button { Content = Loc.T("S.CalendarBrowse"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+            browse.SetResourceReference(StyleProperty, "DarkButton");
+            browse.Click += (_, _) =>
+            {
+                var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "iCalendar (*.ics)|*.ics|*.*|*.*", CheckFileExists = true };
+                if (dialog.ShowDialog() == true)
+                {
+                    box.Text = dialog.FileName;
+                    Commit();
+                }
+            };
+            var hintText = new TextBlock { Text = Loc.T("S.CalendarHint"), TextWrapping = TextWrapping.Wrap };
+            hintText.SetResourceReference(StyleProperty, "HintText");
+            panel.Children.Add(label);
+            panel.Children.Add(box);
+            panel.Children.Add(browse);
+            panel.Children.Add(hintText);
+        }));
         var hint = new TextBlock { Text = Loc.T("S.WidgetsHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 14, 0, 8) };
         hint.SetResourceReference(StyleProperty, "HintText");
         Grid.SetColumnSpan(hint, 3);

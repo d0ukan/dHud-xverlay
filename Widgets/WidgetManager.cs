@@ -12,6 +12,20 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
     private WeatherWidgetWindow? _weather;
     private readonly Dictionary<string, StickyNoteWindow> _notes = [];
 
+    // Kimlikle yönetilen genel widget'lar (pano, yapılacaklar, sistem, ses, takvim, gün sayacı, başlatıcı).
+    private readonly Dictionary<string, WidgetWindowBase> _extras = [];
+
+    private static readonly Dictionary<string, Func<WidgetWindowBase>> ExtraFactories = new()
+    {
+        [WidgetIds.Clipboard] = () => new ClipboardWidgetWindow(),
+        [WidgetIds.Todo] = () => new TodoWidgetWindow(),
+        [WidgetIds.SysInfo] = () => new SysInfoWidgetWindow(),
+        [WidgetIds.Audio] = () => new AudioWidgetWindow(),
+        [WidgetIds.Calendar] = () => new CalendarWidgetWindow(),
+        [WidgetIds.Countdown] = () => new CountdownWidgetWindow(),
+        [WidgetIds.Launcher] = () => new LauncherWidgetWindow()
+    };
+
     /// <summary>Ayar veya not listesi değişti: pencereleri buna göre eşitler ve görünüm ayarlarını yeniler.</summary>
     public void Apply()
     {
@@ -21,6 +35,21 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         Sync(s.WidgetTools, ref _tools, () => new ToolsWidgetWindow());
         Sync(s.WidgetStopwatch, ref _stopwatch, () => new StopwatchWidgetWindow());
         Sync(s.WidgetWeather, ref _weather, () => new WeatherWidgetWindow());
+
+        foreach (var (id, factory) in ExtraFactories)
+        {
+            var want = s.Extra(id).Enabled;
+            if (want && !_extras.ContainsKey(id))
+            {
+                var window = factory();
+                _extras[id] = window;
+                window.Show();
+            }
+            else if (!want && _extras.Remove(id, out var old))
+            {
+                old.Close();
+            }
+        }
 
         // Silinen veya gizlenen notların pencereleri kapanır.
         var wanted = s.NotesVisible ? widgets.Data.Notes.Select(n => n.Id).ToHashSet() : [];
@@ -48,6 +77,12 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         _stopwatch?.ApplyOptions();
         _weather?.ApplyOptions();
         _weather?.Reload();
+        (_extras.GetValueOrDefault(WidgetIds.Calendar) as CalendarWidgetWindow)?.Reload();
+        foreach (var window in _extras.Values)
+        {
+            window.ApplyOptions();
+        }
+
         foreach (var window in _notes.Values)
         {
             window.ApplyOptions();
@@ -89,6 +124,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
             case "tools": _tools?.MoveToCorner(corner); break;
             case "stopwatch": _stopwatch?.MoveToCorner(corner); break;
             case "weather": _weather?.MoveToCorner(corner); break;
+            case var id when _extras.TryGetValue(id, out var extra): extra.MoveToCorner(corner); break;
             case "notes":
                 var index = 0;
                 foreach (var window in _notes.Values)
@@ -109,6 +145,10 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         if (_tools is not null) yield return _tools;
         if (_stopwatch is not null) yield return _stopwatch;
         if (_weather is not null) yield return _weather;
+        foreach (var window in _extras.Values)
+        {
+            yield return window;
+        }
         foreach (var window in _notes.Values)
         {
             yield return window;
@@ -210,6 +250,12 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         _stopwatch = null;
         _weather?.Close();
         _weather = null;
+        foreach (var window in _extras.Values)
+        {
+            window.Close();
+        }
+
+        _extras.Clear();
         foreach (var window in _notes.Values)
         {
             window.Close();

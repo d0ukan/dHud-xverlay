@@ -299,6 +299,82 @@ public abstract class WidgetWindowBase : Window
         return false;
     }
 
+    /// <summary>Genel widget'lar için: kayıtlı konumu (kimlikle) uygular ve taşındıkça kaydeder.</summary>
+    protected void RestorePosition(string id, int index, double width)
+    {
+        var widgets = App.Current.Widgets;
+        widgets.Data.Positions.TryGetValue(id, out var pos);
+        var def = DefaultSpot(index, width);
+        Place(pos?.Left ?? double.NaN, pos?.Top ?? double.NaN, def.Left, def.Top);
+        Moved += p =>
+        {
+            widgets.Data.Positions[id] = new WidgetPos { Left = p.X, Top = p.Y };
+            widgets.ScheduleSave();
+        };
+    }
+
+    /// <summary>Başlık satırı: solda başlık, sağda (isteğe bağlı) ek düğmeler ve "gizle" düğmesi.</summary>
+    protected Grid TitleBar(string title, string id, params UIElement[] extraButtons)
+    {
+        var bar = new Grid();
+        bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        bar.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+
+        var all = extraButtons.Append(IconButton("✕", Loc.T("W.Hide"), (_, _) =>
+        {
+            App.Current.Settings.Current.Extra(id).Enabled = false;
+            App.Current.Settings.NotifyChanged();
+        })).ToList();
+        for (var i = 0; i < all.Count; i++)
+        {
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(all[i], i + 1);
+            bar.Children.Add(all[i]);
+        }
+
+        return bar;
+    }
+
+    /// <summary>Başlık altı küçük bölüm başlığı / soluk metin.</summary>
+    protected TextBlock Subtle(string text, double size = 12)
+    {
+        var block = new TextBlock { Text = text, FontSize = size, TextWrapping = TextWrapping.Wrap };
+        block.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
+        return block;
+    }
+
+    /// <summary>Koyu temalı küçük düğme.</summary>
+    protected Button SmallButton(string text, Action onClick, double minWidth = 0)
+    {
+        var button = new Button { Content = text, Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(10, 3, 10, 3), MinWidth = minWidth };
+        button.SetResourceReference(FrameworkElement.StyleProperty, "DarkButton");
+        button.Click += (_, _) => onClick();
+        return button;
+    }
+
+    /// <summary>Koyu temalı tek satır metin kutusu.</summary>
+    protected TextBox Field(int maxLength = 100)
+    {
+        var box = new TextBox
+        {
+            Padding = new Thickness(6, 3, 6, 3),
+            Background = new SolidColorBrush(Color.FromArgb(0x1A, 255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 255, 255, 255)),
+            BorderThickness = new Thickness(1),
+            CaretBrush = Brushes.White,
+            MaxLength = maxLength
+        };
+        box.SetResourceReference(Control.ForegroundProperty, "TextBrush");
+        return box;
+    }
+
     /// <summary>Küçük bir simge düğmesi (✕, +, 📌 ...).</summary>
     protected Button IconButton(string glyph, string tooltip, RoutedEventHandler onClick)
     {
