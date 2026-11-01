@@ -8,7 +8,8 @@ namespace DHud.Widgets;
 /// <summary>Sürüklerken widget'ın oturacağı ızgara hücrelerini gösteren yarı saydam, tıklamayı geçiren çerçeve.</summary>
 public sealed class SnapPreviewWindow : Window
 {
-    public SnapPreviewWindow()
+    /// <param name="line">true: hizalama kılavuzu (ince, dolu çizgi); false: oturulacak hücreleri gösteren çerçeve.</param>
+    public SnapPreviewWindow(bool line = false)
     {
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
@@ -21,13 +22,19 @@ public sealed class SnapPreviewWindow : Window
         Focusable = false;
 
         var accent = (Color)(Application.Current.TryFindResource("AccentColor") ?? Color.FromRgb(0x3B, 0x82, 0xF6));
-        Content = new System.Windows.Controls.Border
-        {
-            CornerRadius = new CornerRadius(12),
-            Background = new SolidColorBrush(Color.FromArgb(0x33, accent.R, accent.G, accent.B)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0xB0, accent.R, accent.G, accent.B)),
-            BorderThickness = new Thickness(2)
-        };
+        Content = line
+            ? new System.Windows.Controls.Border
+            {
+                CornerRadius = new CornerRadius(1),
+                Background = new SolidColorBrush(Color.FromArgb(0xE0, accent.R, accent.G, accent.B))
+            }
+            : new System.Windows.Controls.Border
+            {
+                CornerRadius = new CornerRadius(12),
+                Background = new SolidColorBrush(Color.FromArgb(0x33, accent.R, accent.G, accent.B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0xB0, accent.R, accent.G, accent.B)),
+                BorderThickness = new Thickness(2)
+            };
 
         SourceInitialized += (_, _) =>
         {

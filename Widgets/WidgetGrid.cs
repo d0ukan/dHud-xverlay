@@ -116,6 +116,184 @@ public static class WidgetGrid
         Bottom = 8
     }
 
+    // ---- Komşu kartlarla hizalama (snapping) ----
+
+    /// <summary>Bir kenar, komşunun kenar çizgisine bu kadar hücre yaklaşınca ona yapışır (8 px'lik hücrede ≈ 24 px).</summary>
+    public const int AlignTolerance = 3;
+
+    /// <summary>Hücre cinsinden dikdörtgen: sol üst hücre ve kapladığı hücre sayısı.</summary>
+    public sealed record CellRect(int C, int R, int W, int H)
+    {
+        public int Right => C + W;
+        public int Bottom => R + H;
+    }
+
+    /// <summary>Hizayı gösteren çizgi (piksel). Dikeyse <c>Pos</c> x'tir ve <c>From..To</c> y aralığıdır; yataysa tersi.</summary>
+    public sealed record Guide(bool Vertical, double Pos, double From, double To);
+
+    private static double LineX(int col, Spec g) => g.Work.Left + g.OffsetX + col * g.Cell;
+
+    private static double LineY(int row, Spec g) => g.Work.Top + g.OffsetY + row * g.Cell;
+
+    /// <summary>
+    /// Bir kartın piksel dikdörtgenine en yakın hücre çizgileri (ızgara sınırlarına kırpılır). Izgaraya oturmuş kartlarda tam, otomatik
+    /// boyutlu kartlarda en fazla yarım hücre (≈4 px) sapmayla; hizalama için kullanılır (doluluk için <see cref="Occupied"/>).
+    /// </summary>
+    public static CellRect CellsOf(Rect rect, Spec g)
+    {
+        var c0 = (int)Math.Round((rect.Left - Inset - g.Work.Left - g.OffsetX) / g.Cell);
+        var c1 = (int)Math.Round((rect.Right + Inset - g.Work.Left - g.OffsetX) / g.Cell);
+        var r0 = (int)Math.Round((rect.Top - Inset - g.Work.Top - g.OffsetY) / g.Cell);
+        var r1 = (int)Math.Round((rect.Bottom + Inset - g.Work.Top - g.OffsetY) / g.Cell);
+        c0 = Math.Clamp(c0, 0, g.Cols - 1);
+        r0 = Math.Clamp(r0, 0, g.Rows - 1);
+        c1 = Math.Clamp(c1, c0 + 1, g.Cols);
+        r1 = Math.Clamp(r1, r0 + 1, g.Rows);
+        return new CellRect(c0, r0, c1 - c0, r1 - r0);
+    }
+
+    /// <summary>
+    /// <paramref name="edge"/> çizgisini komşuların kenar çizgilerine yaklaştırır. Aynı taraf (sol-sol, sağ-sağ, üst-üst, alt-alt) her komşuyla;
+    /// bitişik (sol-komşunun sağı...) yalnızca karşı eksende komşuyla örtüşen kartlarla düşünülür. Yakın değilse çizgi değişmez.
+    /// </summary>
+    private static int SnapEdge(int edge, bool isStart, bool xAxis, int perpStart, int perpEnd, IReadOnlyList<CellRect> neighbors, int tolerance)
+    {
+        var best = edge;
+        var bestDistance = tolerance + 1;
+        foreach (var n in neighbors)
+        {
+            var same = xAxis ? (isStart ? n.C : n.Right) : (isStart ? n.R : n.Bottom);
+            if (Math.Abs(same - edge) < bestDistance)
+            {
+                best = same;
+                bestDistance = Math.Abs(same - edge);
+            }
+
+            var nStart = xAxis ? n.R : n.C;
+            var nEnd = xAxis ? n.Bottom : n.Right;
+            if (nStart < perpEnd + tolerance && nEnd > perpStart - tolerance)
+            {
+                var touch = xAxis ? (isStart ? n.Right : n.C) : (isStart ? n.Bottom : n.R);
+                if (Math.Abs(touch - edge) < bestDistance)
+                {
+                    best = touch;
+                    bestDistance = Math.Abs(touch - edge);
+                }
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// Sürüklenerek bırakılan kartın hücresini komşularla hizalar: sol/sağ/üst/alt kenarı bir komşunun aynı tarafındaki kenara (veya bitişiğine)
+    /// <paramref name="tolerance"/> hücre içinde yaklaşmışsa o hücreye kayar; yalnızca boş (çakışmayan) hücreler seçilir.
+    /// </summary>
+    public static (int C, int R) AlignCell((int C, int R) cell, (int W, int H) span, IReadOnlyList<CellRect> neighbors, Occupancy occupied, Spec g, int tolerance)
+    {
+        var (c, r) = cell;
+
+        var bestC = c;
+        var bestD = tolerance + 1;
+        void TryX(int candidate)
+        {
+            var d = Math.Abs(candidate - c);
+            if (d < bestD && candidate >= 0 && candidate + span.W <= g.Cols && occupied.IsFree(candidate, r, span.W, span.H))
+            {
+                bestD = d;
+                bestC = candidate;
+            }
+        }
+
+        foreach (var n in neighbors)
+        {
+            TryX(n.C);
+            TryX(n.Right - span.W);
+            if (n.R < r + span.H + tolerance && n.Bottom > r - tolerance)
+            {
+                TryX(n.Right);
+                TryX(n.C - span.W);
+            }
+        }
+
+        c = bestC;
+        var bestR = r;
+        bestD = tolerance + 1;
+        void TryY(int candidate)
+        {
+            var d = Math.Abs(candidate - r);
+            if (d < bestD && candidate >= 0 && candidate + span.H <= g.Rows && occupied.IsFree(c, candidate, span.W, span.H))
+            {
+                bestD = d;
+                bestR = candidate;
+            }
+        }
+
+        foreach (var n in neighbors)
+        {
+            TryY(n.R);
+            TryY(n.Bottom - span.H);
+            if (n.C < c + span.W + tolerance && n.Right > c - tolerance)
+            {
+                TryY(n.Bottom);
+                TryY(n.R - span.H);
+            }
+        }
+
+        return (c, bestR);
+    }
+
+    /// <summary>Kartın hangi kenarları bir komşunun aynı taraftaki kenarıyla aynı çizgide: gösterilecek kılavuzlar (piksel).</summary>
+    public static List<Guide> GuidesFor(CellRect me, IReadOnlyList<CellRect> neighbors, Spec g)
+    {
+        var result = new List<Guide>();
+
+        void Add(bool vertical, double pos, double meFrom, double meTo, double nFrom, double nTo)
+        {
+            var from = Math.Min(meFrom, nFrom);
+            var to = Math.Max(meTo, nTo);
+            var index = result.FindIndex(x => x.Vertical == vertical && Math.Abs(x.Pos - pos) < 0.5);
+            if (index >= 0)
+            {
+                result[index] = result[index] with { From = Math.Min(result[index].From, from), To = Math.Max(result[index].To, to) };
+            }
+            else
+            {
+                result.Add(new Guide(vertical, pos, from, to));
+            }
+        }
+
+        double Top(CellRect r) => LineY(r.R, g) + Inset;
+        double Bottom(CellRect r) => LineY(r.Bottom, g) - Inset;
+        double Left(CellRect r) => LineX(r.C, g) + Inset;
+        double Right(CellRect r) => LineX(r.Right, g) - Inset;
+
+        foreach (var n in neighbors)
+        {
+            if (n.C == me.C)
+            {
+                Add(true, Left(me), Top(me), Bottom(me), Top(n), Bottom(n));
+            }
+
+            if (n.Right == me.Right)
+            {
+                Add(true, Right(me), Top(me), Bottom(me), Top(n), Bottom(n));
+            }
+
+            if (n.R == me.R)
+            {
+                Add(false, Top(me), Left(me), Right(me), Left(n), Right(n));
+            }
+
+            if (n.Bottom == me.Bottom)
+            {
+                Add(false, Bottom(me), Left(me), Right(me), Left(n), Right(n));
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Kartın piksel boyutunu verilen hücre kapsamına çevirir (kenarlar ızgara çizgilerine oturur, komşu kartla 2×Inset boşluk kalır).</summary>
     public static Size SizeOf((int W, int H) span, Spec g) => new(span.W * g.Cell - 2 * Inset, span.H * g.Cell - 2 * Inset);
 
@@ -123,7 +301,8 @@ public static class WidgetGrid
     /// Kartın seçili kenarları <paramref name="delta"/> kadar çekilince oluşan hücre kapsamı: hareket eden kenarlar en yakın ızgara çizgisine
     /// oturur, diğer kenarlar sabit kalır. En küçük boyut ve ızgara sınırları korunur. Saf hesap; pencerelere dokunmaz.
     /// </summary>
-    public static (int C, int R, int W, int H) Resize(Rect card, Edges edges, Vector delta, (int W, int H) min, Spec g)
+    public static (int C, int R, int W, int H) Resize(Rect card, Edges edges, Vector delta, (int W, int H) min, Spec g,
+        IReadOnlyList<CellRect>? neighbors = null, int tolerance = 0)
     {
         int Col(double x, double shift) => (int)Math.Round((x + shift - g.Work.Left - g.OffsetX) / g.Cell);
         int Row(double y, double shift) => (int)Math.Round((y + shift - g.Work.Top - g.OffsetY) / g.Cell);
@@ -137,6 +316,30 @@ public static class WidgetGrid
         var c1 = Col(card.Right + (right ? delta.X : 0), Inset);
         var r0 = Row(card.Top + (top ? delta.Y : 0), -Inset);
         var r1 = Row(card.Bottom + (bottom ? delta.Y : 0), Inset);
+
+        // Komşu kartların kenar çizgilerine yapışma (hareket eden kenarlar için).
+        if (neighbors is { Count: > 0 } && tolerance > 0)
+        {
+            if (left)
+            {
+                c0 = SnapEdge(c0, true, true, r0, r1, neighbors, tolerance);
+            }
+
+            if (right)
+            {
+                c1 = SnapEdge(c1, false, true, r0, r1, neighbors, tolerance);
+            }
+
+            if (top)
+            {
+                r0 = SnapEdge(r0, true, false, c0, c1, neighbors, tolerance);
+            }
+
+            if (bottom)
+            {
+                r1 = SnapEdge(r1, false, false, c0, c1, neighbors, tolerance);
+            }
+        }
 
         (c0, c1) = FitAxis(c0, c1, left, right, Math.Min(min.W, g.Cols), g.Cols);
         (r0, r1) = FitAxis(r0, r1, top, bottom, Math.Min(min.H, g.Rows), g.Rows);

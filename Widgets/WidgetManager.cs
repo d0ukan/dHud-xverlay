@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using DHud.Services;
 
 namespace DHud.Widgets;
@@ -406,7 +407,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
     }
 
     /// <summary>Izgara modunda widget'ın oturacağı hücre: bulunduğu yere en yakın, başka widget/overlay hücrelerine girmeyen konum.</summary>
-    private (WidgetGrid.Spec Spec, (int W, int H) Span, (int C, int R) Cell)? GridTarget(WidgetWindowBase window)
+    private (WidgetGrid.Spec Spec, (int W, int H) Span, (int C, int R) Cell, List<WidgetGrid.Guide> Guides)? GridTarget(WidgetWindowBase window, bool align = false)
     {
         if (window.WorkAreaRect() is not Rect work)
         {
@@ -417,15 +418,63 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         var self = window.CardRect;
         var span = WidgetGrid.SpanOf(self.Size, spec);
         var preferred = WidgetGrid.NearestCell(self.TopLeft, span, spec);
-        var occupied = WidgetGrid.Occupied(OtherRects(window), spec);
-        return (spec, span, WidgetGrid.FindFree(preferred, span, occupied, spec) ?? preferred);
+        var others = OtherRects(window);
+        var occupied = WidgetGrid.Occupied(others, spec);
+        var cell = WidgetGrid.FindFree(preferred, span, occupied, spec) ?? preferred;
+        var guides = new List<WidgetGrid.Guide>();
+
+        // Kullanıcı sürüklüyorsa kenarlar komşuların kenar çizgilerine yapışır (Alt basılıyken kapalı).
+        if (align && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+        {
+            var neighbors = others.Select(o => WidgetGrid.CellsOf(o, spec)).ToList();
+            cell = WidgetGrid.AlignCell(cell, span, neighbors, occupied, spec, WidgetGrid.AlignTolerance);
+            guides = WidgetGrid.GuidesFor(new WidgetGrid.CellRect(cell.C, cell.R, span.W, span.H), neighbors, spec);
+        }
+
+        return (spec, span, cell, guides);
+    }
+
+    // ---- Hizalama kılavuzları ----
+
+    private readonly List<SnapPreviewWindow> _guideWindows = [];
+
+    /// <summary>Hizalanan kenarları gösteren ince çizgileri çizer (en çok 8).</summary>
+    public void ShowGuides(IEnumerable<WidgetGrid.Guide> guides)
+    {
+        var list = guides.Take(8).ToList();
+        while (_guideWindows.Count < list.Count)
+        {
+            _guideWindows.Add(new SnapPreviewWindow(line: true));
+        }
+
+        for (var i = 0; i < _guideWindows.Count; i++)
+        {
+            if (i >= list.Count)
+            {
+                _guideWindows[i].Hide();
+                continue;
+            }
+
+            var g = list[i];
+            _guideWindows[i].ShowAt(g.Vertical
+                ? new Rect(g.Pos - 1, g.From, 2, Math.Max(2, g.To - g.From))
+                : new Rect(g.From, g.Pos - 1, Math.Max(2, g.To - g.From), 2));
+        }
+    }
+
+    public void HideGuides()
+    {
+        foreach (var window in _guideWindows)
+        {
+            window.Hide();
+        }
     }
 
     /// <summary>
     /// Widget'ı yerleştirir: ızgara modunda en yakın boş hücreye oturur; serbest modda (ızgara kapalı) yalnızca başka kartın/overlay'in
     /// üstüne binmemesi sağlanır. Boş yer bulunamazsa olduğu gibi kalır.
     /// </summary>
-    public void Resolve(WidgetWindowBase window)
+    public void Resolve(WidgetWindowBase window, bool align = false)
     {
         if (_resolving || !window.IsLoaded)
         {
@@ -443,7 +492,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         {
             if (window.SnapToGrid)
             {
-                if (GridTarget(window) is { } target)
+                if (GridTarget(window, align) is { } target)
                 {
                     var origin = WidgetGrid.CardOrigin(target.Cell.C, target.Cell.R, target.Spec);
                     var now = window.CardRect.TopLeft;
@@ -497,14 +546,20 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
             return;
         }
 
-        if (GridTarget(window) is { } target)
+        if (GridTarget(window, align: true) is { } target)
         {
             _preview ??= new SnapPreviewWindow();
             _preview.ShowAt(new Rect(WidgetGrid.CardOrigin(target.Cell.C, target.Cell.R, target.Spec), window.CardRect.Size));
+            ShowGuides(target.Guides);
         }
     }
 
-    public void HidePreview() => _preview?.Hide();
+    public void HidePreview()
+    {
+        _preview?.Hide();
+        HideGuides();
+    }
+
     /// <summary>
     /// <paramref name="self"/> boyutundaki kartı, <paramref name="others"/> ile çakışmayacak ve <paramref name="work"/> içinde kalacak
     /// en yakın konuma taşır (komşunun sağı/solu/altı/üstü). Böyle bir konum yoksa null.
@@ -551,6 +606,12 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
     {
         _preview?.Close();
         _preview = null;
+        foreach (var guide in _guideWindows)
+        {
+            guide.Close();
+        }
+
+        _guideWindows.Clear();
         _clock?.Close();
         _clock = null;
         _tools?.Close();

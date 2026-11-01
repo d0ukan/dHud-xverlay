@@ -158,7 +158,7 @@ public abstract class WidgetWindowBase : Window
     private Size _natural;
     private readonly ScaleTransform _zoom = new(1, 1);
 
-    private sealed record ResizeSession(Rect Card, Point Mouse, WidgetGrid.Spec Spec, List<Rect> Others, WidgetGrid.Edges Edges, (int W, int H) Min)
+    private sealed record ResizeSession(Rect Card, Point Mouse, WidgetGrid.Spec Spec, List<Rect> Others, List<WidgetGrid.CellRect> Neighbors, WidgetGrid.Edges Edges, (int W, int H) Min)
     {
         public (int C, int R, int W, int H)? Last { get; set; }
     }
@@ -288,7 +288,8 @@ public abstract class WidgetWindowBase : Window
         _resizing = true;
         var spec = WidgetGrid.Make(work);
         var others = App.Current.WidgetManager?.OtherCards(this) ?? [];
-        _session = new ResizeSession(CardRect, ScreenDip(), spec, others, edges, MinSpan(spec));
+        var neighbors = others.Select(o => WidgetGrid.CellsOf(o, spec)).ToList();
+        _session = new ResizeSession(CardRect, ScreenDip(), spec, others, neighbors, edges, MinSpan(spec));
     }
 
     private void ResizeStep()
@@ -299,7 +300,9 @@ public abstract class WidgetWindowBase : Window
         }
 
         var d = ScreenDip() - s.Mouse;
-        var (c, r, w, h) = WidgetGrid.Resize(s.Card, s.Edges, d, s.Min, s.Spec);
+        // Komşu kartların kenar çizgilerine yapışma; Alt tuşu basılıyken kapalı (ince ayar).
+        var align = !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
+        var (c, r, w, h) = WidgetGrid.Resize(s.Card, s.Edges, d, s.Min, s.Spec, align ? s.Neighbors : null, WidgetGrid.AlignTolerance);
         if (s.Last == (c, r, w, h))
         {
             return;
@@ -312,6 +315,7 @@ public abstract class WidgetWindowBase : Window
         }
 
         s.Last = (c, r, w, h);
+        App.Current.WidgetManager?.ShowGuides(WidgetGrid.GuidesFor(new WidgetGrid.CellRect(c, r, w, h), s.Neighbors, s.Spec));
         Left = rect.Left - CardPad;
         Top = rect.Top - CardPad;
         Width = rect.Width + 2 * CardPad;
@@ -323,6 +327,7 @@ public abstract class WidgetWindowBase : Window
         var session = _session;
         _session = null;
         _resizing = false;
+        App.Current.WidgetManager?.HideGuides();
         if (session?.Last is { } last)
         {
             Options.SpanW = last.W;
@@ -690,7 +695,7 @@ public abstract class WidgetWindowBase : Window
         }
 
         KeepInsideWorkArea();
-        App.Current.WidgetManager?.Resolve(this); // bırakılan yerde başka widget/overlay varsa en yakın boş yere kayar
+        App.Current.WidgetManager?.Resolve(this, align: true); // bırakılan yerde başka widget/overlay varsa en yakın boş yere kayar; komşu kenarlara yapışır
         Moved?.Invoke(new Point(Left, Top));
     }
 

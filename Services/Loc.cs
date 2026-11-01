@@ -177,7 +177,7 @@ public static class Loc
         ["W.TodoEmpty"] = ("Nothing to do. Nice!", "Yapılacak bir şey yok. Güzel!"),
         ["W.TodoLeft"] = ("{0} left", "{0} kaldı"),
         ["W.TodoFull"] = ("The list is full ({0}).", "Liste dolu ({0})."),
-        ["W.ResizeHint"] = ("Drag to resize (snaps to the grid). Double-click: automatic size", "Boyutlandırmak için sürükle (ızgaraya oturur). Çift tık: otomatik boyut"),
+        ["W.ResizeHint"] = ("Drag to resize (snaps to the grid and to neighbouring widgets; hold Alt to disable). Double-click: automatic size", "Boyutlandırmak için sürükle (ızgaraya ve komşu widget'lara yapışır; Alt basılıyken kapalı). Çift tık: otomatik boyut"),
         ["W.TodoSubAdd"] = ("Add sub-task", "Alt görev ekle"),
         ["W.TodoSubHint"] = ("Sub-task, Enter to add (Esc to close)", "Alt görev, Enter ile ekle (Esc kapatır)"),
         ["W.TodoSubFull"] = ("At most {0} sub-tasks per task.", "Bir görevde en fazla {0} alt görev olur."),
