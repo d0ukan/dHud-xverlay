@@ -95,6 +95,7 @@ public sealed class ProcessMonitor : IDisposable
     private readonly ConcurrentDictionary<int, long> _netBytes = new();
     private readonly object _gate = new();
     private TraceEventSession? _session;
+    private readonly object _sampleGate = new();   // Sample (arka plan) ve Reset (arayüz) aynı anda çalışmasın
     private List<ProcSample> _previous = [];
     private long _previousTick;
 
@@ -190,31 +191,37 @@ public sealed class ProcessMonitor : IDisposable
     /// <summary>Widget yeniden göründü: eski örnek bayat olduğundan bir sonraki örnek yalnızca başlangıç noktası olur.</summary>
     public void Reset()
     {
-        _previous = [];
-        _netBytes.Clear();
+        lock (_sampleGate)
+        {
+            _previous = [];
+            _netBytes.Clear();
+        }
     }
 
     /// <summary>Şimdiki örneği alır ve bir öncekiyle karşılaştırıp satırları verir (ilk çağrıda boş liste: karşılaştıracak örnek yok).</summary>
     public List<ProcRow> Sample()
     {
-        var current = Capture();
-        var tick = Stopwatch.GetTimestamp();
-        var net = _netBytes.IsEmpty ? null : DrainNetwork();
-
-        List<ProcRow> rows;
-        if (_previous.Count == 0)
+        var current = Capture();   // kilit dışında: yavaş kısım
+        lock (_sampleGate)
         {
-            rows = [];
-        }
-        else
-        {
-            var seconds = (tick - _previousTick) / (double)Stopwatch.Frequency;
-            rows = ProcessTable.Compute(_previous, current, seconds, Cores, net);
-        }
+            var tick = Stopwatch.GetTimestamp();
+            var net = _netBytes.IsEmpty ? null : DrainNetwork();
 
-        _previous = current;
-        _previousTick = tick;
-        return rows;
+            List<ProcRow> rows;
+            if (_previous.Count == 0)
+            {
+                rows = [];
+            }
+            else
+            {
+                var seconds = (tick - _previousTick) / (double)Stopwatch.Frequency;
+                rows = ProcessTable.Compute(_previous, current, seconds, Cores, net);
+            }
+
+            _previous = current;
+            _previousTick = tick;
+            return rows;
+        }
     }
 
     private Dictionary<int, long> DrainNetwork()
