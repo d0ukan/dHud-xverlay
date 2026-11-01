@@ -37,6 +37,7 @@ public static class Loc
 		["UpToDate"] = ("dHud Mobile is up to date ({0}).", "dHud Mobile güncel ({0})."),
 		["UpdateAvail"] = ("Update available: {0}", "Güncelleme var: {0}"),
 		["Install"] = ("Install", "Kur"),
+		["UpdateDownload"] = ("Download", "İndir"),
 		["Downloading"] = ("Downloading…", "İndiriliyor…"),
 		["AllowInstall"] = ("Allow dHud to install updates in the next screen, then try again.",
 			"Sonraki ekranda dHud'un güncelleme kurmasına izin ver, sonra tekrar dene."),

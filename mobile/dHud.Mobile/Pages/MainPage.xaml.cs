@@ -1173,7 +1173,12 @@ public partial class MainPage : ContentPage
 		if (_update is not null)
 		{
 			UpdateLabel.Text = Loc.T("UpdateAvail", _update.Tag);
-			InstallButton.Text = Loc.T("Install");
+			if (_downloadedTag != _update.Tag)
+			{
+				_downloadedPath = null;   // yeni bir sürüm çıktı: önceki indirme geçersiz
+			}
+
+			InstallButton.Text = Loc.T(_downloadedPath is null ? "UpdateDownload" : "Install");
 		}
 		else if (manual)
 		{
@@ -1188,24 +1193,45 @@ public partial class MainPage : ContentPage
 			return;
 		}
 
+		// İki adım: önce "İndir" (indirme yüzdesi görünür), bitince düğme "Kur" olur; "Kur" Android kurulum ekranını açar.
+		if (_downloadedPath is { } ready && File.Exists(ready) && _downloadedTag == _update.Tag)
+		{
+			try
+			{
+				if (!AppUpdater.Install(ready))
+				{
+					await DisplayAlert("dHud", Loc.T("AllowInstall"), Loc.T("Ok"));
+				}
+			}
+			catch (Exception ex)
+			{
+				await DisplayAlert("dHud", Loc.T("UpdateFailed", ex.Message), Loc.T("Ok"));
+			}
+
+			return;
+		}
+
 		InstallButton.IsEnabled = false;
 		InstallButton.Text = Loc.T("Downloading");
 		try
 		{
-			var path = await AppUpdater.DownloadAsync(_update, null);
-			if (!AppUpdater.Install(path))
-			{
-				await DisplayAlert("dHud", Loc.T("AllowInstall"), Loc.T("Ok"));
-			}
+			var progress = new Progress<double>(p => InstallButton.Text = $"{Loc.T("Downloading")} {p:P0}");
+			_downloadedPath = await AppUpdater.DownloadAsync(_update, progress);
+			_downloadedTag = _update.Tag;
+			InstallButton.Text = Loc.T("Install");
 		}
 		catch (Exception ex)
 		{
+			_downloadedPath = null;
+			InstallButton.Text = Loc.T("UpdateDownload");
 			await DisplayAlert("dHud", Loc.T("UpdateFailed", ex.Message), Loc.T("Ok"));
 		}
 		finally
 		{
 			InstallButton.IsEnabled = true;
-			InstallButton.Text = Loc.T("Install");
 		}
 	}
+
+	private string? _downloadedPath;
+	private string? _downloadedTag;
 }
