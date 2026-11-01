@@ -204,9 +204,48 @@ public static class StartupManager
         }
     }
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern uint GetOEMCP();
+
+    /// <summary>
+    /// schtasks çıktısının kod sayfası. Kültürün OEM kod sayfası bazı sistemlerde geçersiz çıkar (ör. 1 = "yok"; hata veriyordu);
+    /// o zaman Windows'un kendi OEM kod sayfası, o da olmazsa UTF-8 kullanılır.
+    /// </summary>
+    internal static Encoding OemEncoding()
+    {
+        foreach (var page in new[] { (uint)CultureInfo.CurrentCulture.TextInfo.OEMCodePage, GetOemCodePageOrZero() })
+        {
+            if (page > 3 && page != 42)
+            {
+                try
+                {
+                    return Encoding.GetEncoding((int)page);
+                }
+                catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+                {
+                    // sıradaki adayı dene
+                }
+            }
+        }
+
+        return Encoding.UTF8;
+    }
+
+    private static uint GetOemCodePageOrZero()
+    {
+        try
+        {
+            return GetOEMCP();
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+            return 0;
+        }
+    }
+
     private static (int ExitCode, string Output) RunSchtasks(string arguments)
     {
-        var oemEncoding = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+        var oemEncoding = OemEncoding();
         var psi = new ProcessStartInfo("schtasks.exe", arguments)
         {
             UseShellExecute = false,
