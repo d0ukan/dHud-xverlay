@@ -5,9 +5,6 @@ using System.Text.Json;
 
 namespace dHud.Mobile.Services;
 
-/// <summary>Ana ekran widget'ının göstereceği son değerler.</summary>
-public sealed record WidgetData(float? Cpu, float? Gpu, float? Fps, string Pc, long Timestamp);
-
 /// <summary>Widget için son ölçümü saklar (uygulama kapalıyken de widget son değeri gösterebilsin).</summary>
 public static class WidgetCache
 {
@@ -18,7 +15,7 @@ public static class WidgetCache
 		try
 		{
 			var data = new WidgetData(s.Cpu?.Temperature, s.Gpu?.Temperature, s.Fps, s.Pc ?? string.Empty,
-				DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+				DateTimeOffset.UtcNow.ToUnixTimeSeconds(), s.Cpu?.Load, s.Gpu?.Load, s.Ram?.Load, s.Disk?.UsedPercent);
 			Preferences.Set(Key, JsonSerializer.Serialize(data));
 		}
 		catch (Exception)

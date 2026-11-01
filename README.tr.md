@@ -71,6 +71,10 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 
 *Ayarlar → Widget'lar.* Her widget, aç/kapat anahtarı olan küçük bir karttır; **Ayarlar** düğmesi görünürlük, hep üstte, kilit ve "köşeye taşı" düğmelerini açar. Widget'lar macOS masaüstü widget'ları gibi ince bir ızgaraya oturur: sürüklerken oturacağı yer vurgulanır. Bir widget'ı **kenarından veya köşesinden** çekerek boyutlandırabilirsin: boyut ızgara hücrelerine oturur, kartlar puzzle parçaları gibi yan yana dizilir; içerik de karta göre büyür ve küçülür (listelerde yazı büyür ve daha çok satır görünür, saat ve göstergeler orantılı ölçeklenir). Bir widget normal boyutundan küçültülemez, böylece yazılar ve göstergeler okunur kalır; yalnızca büyütebilirsin. Kenarlar ayrıca komşu widget'ların kenarlarına yapışır (hizayı ince mavi bir kılavuz çizgi gösterir); hem boyutlandırırken hem widget'ı bırakırken geçerlidir, **Alt** tuşuna basılıyken kapanır. Kenara çift tıklayınca otomatik boyuta dönersin. Birbirinin ve barın üstüne binmez, ekranın dışına çıkarılamaz. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz.
 
+**Renk temaları:** *Ayarlar → Widget'lar* sayfasının üstünden sekiz temadan birini seç (Grafit, Gece mavisi, Orman, Şarap, Mor, Kehribar, Turkuaz ve Açık tema). Tüm widget'ların kart ve vurgu rengini birlikte değiştirir; yapışkan notlar kendi renklerini korur.
+
+**Tam ekran uygulamalar:** film, sunum veya oyun tam ekran çalışırken widget'lar kendini gizler, çıkınca geri gelir (*Ayarlar → Behavior → Tam ekran uygulamalar*). Üstteki bar varsayılan olarak kalır, böylece oyunda sıcaklıkları izleyebilirsin; onu da gizlemek istersen *Üstteki barı da gizle* kutusunu işaretle.
+
 <p align="center"><img src="docs/images/widgets-tr.png" alt="Diğer widget'lar" /></p>
 
 | Widget | Ne yapar |
@@ -146,6 +150,10 @@ dHud'u **yerel ağında** (aynı Wi-Fi) aynı koyu temayla yansıtır.
 3. Uygulamada **QR kodu tara**'ya dokun. Üstteki nokta yeşile döner.
 
 Canlı değerleri ve sıcaklık grafiğini gösterir, uyarılarda titreşir ve bildirim verir, hatırlatıcılarını ve oyun özetini gösterir; tabletler için **tam ekran panel** (ekranı korumak için yavaşça kayar ve kararır) ve **ana ekran widget'ı** vardır. IP adresi değişirse PC'yi kendisi yeniden bulur, tek dokunuşla güncellenir.
+
+**Telefondan görevler:** *Görevler* sekmesi PC'ndeki yapılacaklar listesini gösterir. Görev ve alt görev ekleyebilir, işaretleyebilir, silebilir ve birkaç dokunuşla hatırlatıcı kurabilirsin; PC'de hemen görünür ve orada çalar (telefona hatırlatıcı açıksa telefonda da). Varsayılan açıktır; **Mobil uygulama yapılacakları ve hatırlatıcıları yönetebilsin** ile kapatılır. Telefon notlarını ve panonu hiç görmez.
+
+**Ana ekran widget'ı boyutları:** tek satır yaparsan yalnızca CPU ve GPU sıcaklığı, iki satırda sıcaklık ve FPS, üç veya daha fazla satırda yük yüzdeleri ile RAM ve disk çubukları da görünür.
 
 **Telefondan fan:** ayrı bir *Fanlar* sekmesi. Varsayılan kapalı: PC'de **Mobil uygulama fan ayarlarını değiştirebilsin** kutusunu işaretle. Telefon yalnızca hazır seçenekleri seçebilir (Otomatik, Sessiz / Optimal / Max Cold, kayıtlı eğrilerin, kayıtlı bir profil) ve fan kontrolünü açıp kapatabilir. PC'de her fanın **Telefondan değiştirilebilsin** kutusu vardır ve tüm güvenlik kuralları geçerlidir.
 

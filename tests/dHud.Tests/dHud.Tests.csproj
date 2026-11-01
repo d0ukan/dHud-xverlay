@@ -29,6 +29,7 @@
   <ItemGroup>
     <Compile Include="..\..\mobile\dHud.Mobile\Services\Models.cs" Link="Support\Mobile\Models.cs" />
     <Compile Include="..\..\mobile\dHud.Mobile\Controls\FitMath.cs" Link="Support\Mobile\FitMath.cs" />
+    <Compile Include="..\..\mobile\dHud.Mobile\Services\WidgetLayout.cs" Link="Support\Mobile\WidgetLayout.cs" />
   </ItemGroup>
 
   <ItemGroup>

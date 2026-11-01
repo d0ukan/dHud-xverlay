@@ -207,6 +207,18 @@ public sealed class AppSettings
     /// <summary>Oyun oturumu bitince (en az 2 dakika) ortalama FPS, %1 düşük ve sıcaklık özetini göster.</summary>
     public bool GameSummary { get; set; } = true;
 
+    /// <summary>Eşleşmiş telefon yapılacaklara madde ekleyebilir/işaretleyebilir ve hatırlatıcı kurabilir.</summary>
+    public bool MobileTasks { get; set; } = true;
+
+    /// <summary>Widget renk teması (bkz. <see cref="DHud.Widgets.WidgetThemes"/>): kart zemini, vurgu rengi, açık/koyu.</summary>
+    public string WidgetTheme { get; set; } = "graphite";
+
+    /// <summary>Tam ekran uygulama (film, sunum, oyun) açıkken widget'lar kendini gizler; çıkınca geri gelir.</summary>
+    public bool HideWidgetsOnFullscreen { get; set; } = true;
+
+    /// <summary>Aynı durumda üstteki bar da gizlensin (oyunda bar genelde istenir, o yüzden varsayılan kapalı).</summary>
+    public bool HideBarOnFullscreen { get; set; }
+
     /// <summary>Mobil uygulamanın yerel ağdan bağlanmasına izin ver. Varsayılan kapalı.</summary>
     public bool MobileEnabled { get; set; }
 

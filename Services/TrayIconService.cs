@@ -22,6 +22,12 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.ToolStripMenuItem _profilesItem;
     private bool _overlayVisible = true;
 
+    /// <summary>
+    /// true: tepsi simgesi hiç gösterilmez (ölçüm/otomatik test örnekleri). Zorla kapatılan süreçlerin simgeleri tepside "hayalet"
+    /// olarak kalır; test örnekleri bu yüzden simge oluşturmaz. <c>--no-tray</c> ile de açılabilir.
+    /// </summary>
+    public static bool Suppressed { get; set; }
+
     public event EventHandler? ToggleOverlayRequested;
     public event EventHandler? SettingsRequested;
     public event EventHandler? ClickThroughToggleRequested;
@@ -83,7 +89,7 @@ public sealed class TrayIconService : IDisposable
             Icon = _icon,
             Text = "dHud",
             ContextMenuStrip = menu,
-            Visible = true
+            Visible = !Suppressed
         };
         _notifyIcon.DoubleClick += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
         _notifyIcon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke(this, EventArgs.Empty);

@@ -116,9 +116,44 @@ public abstract class WidgetWindowBase : Window
     public void ApplyOptions()
     {
         Topmost = WantsTopmost;
+        ApplyTheme();
         var alpha = (byte)Math.Clamp(Math.Round(_cardColor.A * Options.Opacity), 0, 255);
         Card.Background = new SolidColorBrush(Color.FromArgb(alpha, _cardColor.R, _cardColor.G, _cardColor.B));
         ApplySize();
+    }
+
+    // ---- Renk teması ----
+
+    /// <summary>Genel widget teması bu pencereye uygulanır mı (notlar kendi renklerini kullanır).</summary>
+    protected virtual bool UsesTheme => true;
+
+    private ResourceDictionary? _lightResources;
+    private bool _lightApplied;
+
+    /// <summary>Kart zemini, vurgu rengi ve (açık temada) yazı/düğme stillerini pencerenin kaynaklarına uygular.</summary>
+    private void ApplyTheme()
+    {
+        if (!UsesTheme)
+        {
+            return;
+        }
+
+        var theme = WidgetThemes.Get(App.Current.Settings.Current.WidgetTheme);
+        _cardColor = theme.Card;
+        Resources["AccentColor"] = theme.Accent;
+        Resources["AccentBrush"] = new SolidColorBrush(theme.Accent);
+
+        if (theme.Light && !_lightApplied)
+        {
+            _lightResources ??= new ResourceDictionary { Source = new Uri("pack://application:,,,/WidgetLight.xaml", UriKind.Absolute) };
+            Resources.MergedDictionaries.Add(_lightResources);
+            _lightApplied = true;
+        }
+        else if (!theme.Light && _lightApplied && _lightResources is not null)
+        {
+            Resources.MergedDictionaries.Remove(_lightResources);
+            _lightApplied = false;
+        }
     }
 
     // ---- Boyutlandırma (ızgaraya oturan, içeriği orantılı büyüyen/küçülen) ----
@@ -779,12 +814,13 @@ public abstract class WidgetWindowBase : Window
         var box = new TextBox
         {
             Padding = new Thickness(6, 3, 6, 3),
-            Background = new SolidColorBrush(Color.FromArgb(0x1A, 255, 255, 255)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 255, 255, 255)),
             BorderThickness = new Thickness(1),
-            CaretBrush = Brushes.White,
             MaxLength = maxLength
         };
+        // Renkler temaya göre değişir (açık temada koyu yazı, koyu imleç).
+        box.SetResourceReference(Control.BackgroundProperty, "FieldBackgroundBrush");
+        box.SetResourceReference(Control.BorderBrushProperty, "FieldBorderBrush");
+        box.SetResourceReference(System.Windows.Controls.Primitives.TextBoxBase.CaretBrushProperty, "TextBrush");
         box.SetResourceReference(Control.ForegroundProperty, "TextBrush");
         return box;
     }
@@ -795,9 +831,9 @@ public abstract class WidgetWindowBase : Window
         var button = new Button
         {
             Content = glyph,
-            ToolTip = tooltip,
-            Style = (Style)FindResource("WidgetIconButton")
+            ToolTip = tooltip
         };
+        button.SetResourceReference(FrameworkElement.StyleProperty, "WidgetIconButton");   // dinamik: tema değişince stil de değişir
         button.Click += onClick;
         return button;
     }

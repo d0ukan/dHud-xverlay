@@ -36,6 +36,7 @@ public partial class MainPage : ContentPage
 		App.Link.Changed += Refresh;
 		App.Link.AlertReceived += OnAlert;
 		App.Link.CommandResult += OnCommandResult;
+		App.Link.TasksChanged += RefreshTasks;
 
 		// Ekran koruyucu: herhangi bir dokunuş (karartılmışken karartma katmanı dahil) paneli uyandırır.
 		var wakeTap = new TapGestureRecognizer();
@@ -242,6 +243,26 @@ public partial class MainPage : ContentPage
 				break;
 		}
 
+		// Görevler sekmesi: geniş ekranda yapılacaklar solda, hatırlatıcılar sağda; dar ekranda alt alta.
+		TasksLayout.ColumnDefinitions.Clear();
+		TasksLayout.RowDefinitions.Clear();
+		if (mode == LayoutMode.Narrow)
+		{
+			TasksLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+			TasksLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			TasksLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			Place(TodoCard, 0, 0);
+			Place(ReminderCard, 1, 0);
+		}
+		else
+		{
+			TasksLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
+			TasksLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(2, GridUnitType.Star)));
+			TasksLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			Place(TodoCard, 0, 0);
+			Place(ReminderCard, 0, 1);
+		}
+
 		// Fan sekmesi: geniş ekranda profiller solda, fanlar sağda; dar ekranda alt alta.
 		FanLayout.ColumnDefinitions.Clear();
 		FanLayout.RowDefinitions.Clear();
@@ -286,11 +307,12 @@ public partial class MainPage : ContentPage
 	{
 		var paired = PairingStore.Load() is not null;
 		EmptyState.IsVisible = !paired;
-		Dashboard.IsVisible = paired && !_fansTab;
-		FanPage.IsVisible = paired && _fansTab;
+		ApplyTabs();
 		TabBar.IsVisible = paired && !_fullscreen;
 		TabPanelButton.Text = Loc.T("TabPanel");
 		TabFansButton.Text = Loc.T("TabFans");
+		TabTasksButton.Text = Loc.T("TabTasks");
+		RefreshTasks();
 		FullscreenButton.IsVisible = paired;
 
 		var link = App.Link;
@@ -416,7 +438,14 @@ public partial class MainPage : ContentPage
 
 	// ---- Fan sekmesi ----
 
-	private bool _fansTab;
+	private enum Tab
+	{
+		Panel,
+		Fans,
+		Tasks
+	}
+
+	private Tab _tab = Tab.Panel;
 	private string _fanKey = string.Empty;
 	private string _profileKey = string.Empty;
 	private readonly Dictionary<string, (Label Detail, Label Mode)> _fanLabels = [];
@@ -426,21 +455,36 @@ public partial class MainPage : ContentPage
 		("quiet", "FanQuiet"), ("optimal", "FanOptimal"), ("max", "FanMax")
 	];
 
-	private void ShowTab(bool fans)
+	private void ShowTab(Tab tab)
 	{
-		_fansTab = fans;
-		Dashboard.IsVisible = !fans && PairingStore.Load() is not null;
-		FanPage.IsVisible = fans && PairingStore.Load() is not null;
-		TabPanelButton.Style = TabStyle(!fans);
-		TabFansButton.Style = TabStyle(fans);
+		_tab = tab;
+		ApplyTabs();
+		if (tab == Tab.Tasks)
+		{
+			RefreshTasks();
+		}
+	}
+
+	/// <summary>Seçili sekmeye göre sayfaları ve sekme düğmelerini gösterir.</summary>
+	private void ApplyTabs()
+	{
+		var paired = PairingStore.Load() is not null;
+		Dashboard.IsVisible = paired && _tab == Tab.Panel;
+		FanPage.IsVisible = paired && _tab == Tab.Fans;
+		TasksPage.IsVisible = paired && _tab == Tab.Tasks;
+		TabPanelButton.Style = TabStyle(_tab == Tab.Panel);
+		TabFansButton.Style = TabStyle(_tab == Tab.Fans);
+		TabTasksButton.Style = TabStyle(_tab == Tab.Tasks);
 	}
 
 	private static Style TabStyle(bool active) =>
 		(Style)Application.Current!.Resources[active ? "PrimaryButton" : "SecondaryButton"];
 
-	private void TabPanelButton_Clicked(object? sender, EventArgs e) => ShowTab(false);
+	private void TabPanelButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Panel);
 
-	private void TabFansButton_Clicked(object? sender, EventArgs e) => ShowTab(true);
+	private void TabFansButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Fans);
+
+	private void TabTasksButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Tasks);
 
 	private void RefreshFans(PcSnapshot s)
 	{
@@ -693,14 +737,223 @@ public partial class MainPage : ContentPage
 			return;
 		}
 
-		var key = error switch
-		{
-			"disabled" => "FanRemoteOff",
-			"fanctl" => "FanCtlOff",
-			"blocked" => "FanLocked",
-			_ => "FanSendFailed"
-		};
+		var isTask = cmd.StartsWith("todo", StringComparison.Ordinal) || cmd.StartsWith("reminder", StringComparison.Ordinal);
+		var key = isTask
+			? error switch
+			{
+				"disabled" => "TasksOff",
+				"full" => "TaskFull",
+				_ => "TaskFailed"
+			}
+			: error switch
+			{
+				"disabled" => "FanRemoteOff",
+				"fanctl" => "FanCtlOff",
+				"blocked" => "FanLocked",
+				_ => "FanSendFailed"
+			};
 		await DisplayAlert("dHud", Loc.T(key), Loc.T("Ok"));
+	}
+
+	// ---- Görevler sekmesi ----
+
+	private string _tasksKey = string.Empty;
+	private static readonly int[] ReminderMinutes = [5, 15, 30, 60, 120];
+
+	/// <summary>Görev listesini ve hatırlatıcıları PC'den gelen özetle çizer; değişmediyse yeniden kurmaz (yazarken klavye kapanmasın).</summary>
+	private void RefreshTasks()
+	{
+		TodoTitle.Text = Loc.T("Todos");
+		TodoEntry.Placeholder = Loc.T("TodoPlaceholder");
+		TodoAddButton.Text = Loc.T("TodoAdd");
+		ReminderTitle.Text = Loc.T("Reminders");
+		ReminderHint.Text = Loc.T("ReminderHint");
+		ReminderEntry.Placeholder = Loc.T("ReminderPlaceholder");
+
+		var state = App.Link.Tasks;
+		var message = state is null ? Loc.T("TasksOldPc") : !state.Enabled ? Loc.T("TasksOff") : null;
+		TasksStatus.IsVisible = message is not null;
+		TasksStatus.Text = message ?? string.Empty;
+		var usable = state is { Enabled: true };
+		TodoEntry.IsEnabled = TodoAddButton.IsEnabled = ReminderEntry.IsEnabled = usable;
+
+		BuildReminderPresets(usable);
+
+		var todos = usable ? state!.Todos ?? [] : [];
+		var reminders = usable ? state!.Reminders ?? [] : [];
+		var key = string.Join("|", todos.Select(t => $"{t.Id}:{t.Text}:{t.Done}:{string.Join(",", (t.Subs ?? []).Select(s => $"{s.Id}:{s.Text}:{s.Done}"))}"))
+			+ "#" + string.Join("|", reminders.Select(r => $"{r.Id}:{r.Text}:{r.Due}"));
+		if (key == _tasksKey)
+		{
+			return;
+		}
+
+		_tasksKey = key;
+		TodoRows.Children.Clear();
+		if (todos.Count == 0)
+		{
+			TodoRows.Children.Add(new Label { Text = Loc.T("TodoEmpty"), FontSize = 12, TextColor = Color.FromArgb("#9CA3AF"), Margin = new Thickness(0, 6) });
+		}
+
+		foreach (var todo in todos.OrderBy(t => t.Done))
+		{
+			TodoRows.Children.Add(TodoRow(todo, parent: null));
+			foreach (var sub in todo.Subs ?? [])
+			{
+				TodoRows.Children.Add(TodoRow(sub, parent: todo));
+			}
+		}
+
+		ReminderRows.Children.Clear();
+		if (usable && reminders.Count == 0)
+		{
+			ReminderRows.Children.Add(new Label { Text = Loc.T("ReminderNone"), FontSize = 12, TextColor = Color.FromArgb("#9CA3AF"), Margin = new Thickness(0, 6) });
+		}
+
+		foreach (var reminder in reminders)
+		{
+			ReminderRows.Children.Add(ReminderRow(reminder));
+		}
+	}
+
+	private Grid TodoRow(TodoInfo item, TodoInfo? parent)
+	{
+		var isSub = parent is not null;
+		var check = new CheckBox { IsChecked = item.Done, VerticalOptions = LayoutOptions.Center, Color = Color.FromArgb("#3B82F6") };
+		var id = item.Id;
+		check.CheckedChanged += async (_, e) =>
+		{
+			if (e.Value != item.Done)
+			{
+				await App.Link.SendCommandAsync(new { cmd = "todoToggle", id, done = e.Value });
+			}
+		};
+
+		var label = new Label
+		{
+			Text = item.Text,
+			FontSize = isSub ? 14 : 16,
+			VerticalOptions = LayoutOptions.Center,
+			LineBreakMode = LineBreakMode.WordWrap,
+			TextColor = item.Done ? Color.FromArgb("#7B8494") : Color.FromArgb("#F1F2F6"),
+			TextDecorations = item.Done ? TextDecorations.Strikethrough : TextDecorations.None
+		};
+
+		var row = new Grid
+		{
+			ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto)],
+			Margin = new Thickness(isSub ? 28 : 0, 0, 0, 0),
+			MinimumHeightRequest = 44
+		};
+		row.Add(check, 0, 0);
+		row.Add(label, 1, 0);
+
+		if (!isSub)
+		{
+			var add = new Button { Text = "＋", Style = (Style)Application.Current!.Resources["IconButton"] };
+			add.Clicked += async (_, _) =>
+			{
+				var text = await DisplayPromptAsync("dHud", Loc.T("TodoSubPrompt", item.Text), Loc.T("TodoAdd"), Loc.T("Cancel"), maxLength: 200);
+				if (!string.IsNullOrWhiteSpace(text))
+				{
+					await App.Link.SendCommandAsync(new { cmd = "todoAdd", text, parent = id });
+				}
+			};
+			row.Add(add, 2, 0);
+		}
+
+		var delete = new Button { Text = "✕", Style = (Style)Application.Current!.Resources["IconButton"] };
+		delete.Clicked += async (_, _) =>
+		{
+			if (!isSub && (item.Subs?.Count ?? 0) > 0
+				&& !await DisplayAlert("dHud", Loc.T("TodoDeleteAsk", item.Text), Loc.T("Delete"), Loc.T("Cancel")))
+			{
+				return;
+			}
+
+			await App.Link.SendCommandAsync(new { cmd = "todoDelete", id });
+		};
+		row.Add(delete, 3, 0);
+		return row;
+	}
+
+	private Grid ReminderRow(ReminderInfo reminder)
+	{
+		var due = DateTimeOffset.FromUnixTimeSeconds(reminder.Due).ToLocalTime();
+		var minutes = Math.Max(0, (int)Math.Ceiling((due - DateTimeOffset.Now).TotalMinutes));
+		var texts = new VerticalStackLayout { VerticalOptions = LayoutOptions.Center };
+		texts.Children.Add(new Label { Text = reminder.Text, FontSize = 15, TextColor = Color.FromArgb("#F1F2F6"), LineBreakMode = LineBreakMode.TailTruncation });
+		texts.Children.Add(new Label { Text = $"{due:HH:mm} · {Loc.T("MinShort", minutes)}", FontSize = 12, TextColor = Color.FromArgb("#9CA3AF") });
+
+		var delete = new Button { Text = "✕", Style = (Style)Application.Current!.Resources["IconButton"] };
+		var id = reminder.Id;
+		delete.Clicked += async (_, _) => await App.Link.SendCommandAsync(new { cmd = "reminderDelete", id });
+
+		var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], MinimumHeightRequest = 48 };
+		row.Add(texts, 0, 0);
+		row.Add(delete, 1, 0);
+		return row;
+	}
+
+	private void BuildReminderPresets(bool usable)
+	{
+		if (ReminderPresets.Children.Count == 0)
+		{
+			foreach (var minutes in ReminderMinutes)
+			{
+				var value = minutes;
+				ReminderPresets.Children.Add(PresetButton(Loc.T("MinShort", minutes), async () => await AddReminderAsync(value)));
+			}
+
+			ReminderPresets.Children.Add(PresetButton(Loc.T("ReminderCustom"), async () =>
+			{
+				var answer = await DisplayPromptAsync("dHud", Loc.T("ReminderCustomAsk"), keyboard: Keyboard.Numeric, maxLength: 4);
+				if (int.TryParse(answer, out var custom) && custom is >= 1 and <= 1440)
+				{
+					await AddReminderAsync(custom);
+				}
+			}));
+		}
+
+		foreach (var child in ReminderPresets.Children.OfType<Button>())
+		{
+			child.IsEnabled = usable;
+		}
+	}
+
+	private static Button PresetButton(string text, Func<Task> onClick)
+	{
+		var button = new Button { Text = text, Style = TabStyle(false), HeightRequest = 40, Padding = new Thickness(16, 0), Margin = new Thickness(0, 0, 8, 8) };
+		button.Clicked += async (_, _) => await onClick();
+		return button;
+	}
+
+	private async Task AddReminderAsync(int minutes)
+	{
+		var text = string.IsNullOrWhiteSpace(ReminderEntry.Text) ? Loc.T("ReminderDefault") : ReminderEntry.Text.Trim();
+		if (await App.Link.SendCommandAsync(new { cmd = "reminderAdd", text, minutes }))
+		{
+			ReminderEntry.Text = string.Empty;
+		}
+	}
+
+	private async void TodoAddButton_Clicked(object? sender, EventArgs e) => await AddTodoAsync();
+
+	private async void TodoEntry_Completed(object? sender, EventArgs e) => await AddTodoAsync();
+
+	private async Task AddTodoAsync()
+	{
+		var text = TodoEntry.Text?.Trim();
+		if (string.IsNullOrEmpty(text))
+		{
+			return;
+		}
+
+		if (await App.Link.SendCommandAsync(new { cmd = "todoAdd", text }))
+		{
+			TodoEntry.Text = string.Empty;
+			TodoEntry.Focus();   // arka arkaya eklenebilsin
+		}
 	}
 
 	// ---- Eşleştirme ----
@@ -761,7 +1014,7 @@ public partial class MainPage : ContentPage
 		_fullscreen = !_fullscreen;
 		if (_fullscreen)
 		{
-			ShowTab(false);
+			ShowTab(Tab.Panel);
 		}
 
 		TabBar.IsVisible = !_fullscreen;

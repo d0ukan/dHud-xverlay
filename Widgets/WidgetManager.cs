@@ -27,6 +27,63 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         [WidgetIds.Launcher] = () => new LauncherWidgetWindow()
     };
 
+    private bool _suspended;
+
+    /// <summary>Widget'lar geçici gizli mi (tam ekran uygulama açıkken)?</summary>
+    public bool Suspended => _suspended;
+
+    /// <summary>
+    /// Tam ekran uygulama açıkken tüm widget'ları gizler / çıkınca geri getirir. Gizliyken yeni açılan widget'lar da gösterilmez;
+    /// geri gelirken pencereler odak çalmaz (not pencereleri normalde odak alır).
+    /// </summary>
+    public void SetSuspended(bool suspended)
+    {
+        if (_suspended == suspended)
+        {
+            return;
+        }
+
+        _suspended = suspended;
+        foreach (var window in AllWindows().ToList())
+        {
+            if (suspended)
+            {
+                window.Hide();
+            }
+            else
+            {
+                ShowQuietly(window);
+            }
+        }
+
+        if (!suspended)
+        {
+            RaiseAll();
+        }
+    }
+
+    private static void ShowQuietly(WidgetWindowBase window)
+    {
+        if (window.IsVisible)
+        {
+            return;
+        }
+
+        var activated = window.ShowActivated;
+        window.ShowActivated = false;
+        window.Show();
+        window.ShowActivated = activated;
+    }
+
+    /// <summary>Yeni açılan pencereyi gösterir; widget'lar geçici gizliyse (tam ekran) bekletir.</summary>
+    private void ShowNew(WidgetWindowBase window)
+    {
+        if (!_suspended)
+        {
+            window.Show();
+        }
+    }
+
     /// <summary>Ayar veya not listesi değişti: pencereleri buna göre eşitler ve görünüm ayarlarını yeniler.</summary>
     public void Apply()
     {
@@ -44,7 +101,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
             {
                 var window = factory();
                 _extras[id] = window;
-                window.Show();
+                ShowNew(window);
             }
             else if (!want && _extras.Remove(id, out var old))
             {
@@ -68,7 +125,7 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
                 {
                     var window = new StickyNoteWindow(note);
                     _notes[note.Id] = window;
-                    window.Show();
+                    ShowNew(window);
                 }
             }
         }
@@ -634,12 +691,12 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         _notes.Clear();
     }
 
-    private static void Sync<T>(bool wanted, ref T? window, Func<T> create) where T : System.Windows.Window
+    private void Sync<T>(bool wanted, ref T? window, Func<T> create) where T : WidgetWindowBase
     {
         if (wanted && window is null)
         {
             window = create();
-            window.Show();
+            ShowNew(window);
         }
         else if (!wanted && window is not null)
         {

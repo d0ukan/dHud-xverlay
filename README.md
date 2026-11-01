@@ -71,6 +71,10 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 
 *Settings → Widgets.* Every widget is a small card with an on/off switch; **Options** opens its visibility, always-on-top, lock and "move to corner" buttons. Widgets snap to a fine grid like macOS desktop widgets: while you drag, the spot it will take is highlighted. Drag any **edge or corner** to resize a widget: it snaps to whole grid cells, so cards line up like puzzle pieces, and the content grows and shrinks with the card (lists get wider text and show more rows, clocks and gauges scale proportionally). A widget can't be made smaller than its normal size, so text and gauges stay readable; you can only make it larger. Edges also snap to the edges of neighbouring widgets (a thin blue guide line shows the alignment), both while resizing and when you drop a widget; hold **Alt** to switch that off. Double-click an edge to go back to the automatic size. They never overlap each other or the bar and can't be dragged off-screen. All are off by default and use almost no CPU.
 
+**Colour themes:** pick one of eight (Graphite, Midnight, Forest, Wine, Violet, Amber, Teal and a Light theme) at the top of *Settings → Widgets*. It changes the card and accent colour of all widgets at once; sticky notes keep their own colours.
+
+**Full-screen apps:** while a film, presentation or game is running full screen, the widgets hide themselves and come back when you leave (*Settings → Behavior → Full-screen apps*). The top bar stays by default so you can still watch temperatures in games; tick *Hide the top bar too* if you want it hidden as well.
+
 <p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
 
 | Widget | What it does |
@@ -146,6 +150,10 @@ Mirrors dHud on your **local network** (same Wi-Fi), in the same dark theme.
 3. In the app tap **Scan QR code**. The dot at the top turns green.
 
 It shows live values and a temperature graph, vibrates and notifies on alerts, shows your reminders and the game summary, and has a **full-screen dashboard** for tablets (it slowly shifts and dims to protect the screen) and a **home-screen widget**. It finds your PC again if its IP address changes and updates itself with one tap.
+
+**Tasks from the phone:** a *Tasks* tab lists your PC's to-do list. Add tasks and sub-tasks, tick or delete them, and set a reminder in a few taps; it shows up on your PC at once and rings there (and on the phone if you enabled reminders to phone). On by default; switch it off with **Let the mobile app manage to-dos and reminders**. The phone never sees your notes or clipboard.
+
+**Home-screen widget sizes:** make it one row tall for just CPU and GPU temperatures, two rows for temperatures and FPS, three or more rows to also see load percentages and RAM and disk bars.
 
 **Fans from the phone:** a separate *Fans* tab. Off by default: tick **Let the mobile app change fan settings** on the PC. The phone can only pick ready-made options (Auto, Quiet / Optimal / Max Cold, your saved curves, a saved profile) and switch fan control on or off. Each fan has an **Allow control from phone** checkbox on the PC, and all safety rules still apply.
 

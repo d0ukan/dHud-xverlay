@@ -67,6 +67,40 @@ public sealed class MobileLinkService : IDisposable
     /// <summary>Cihazdan gelen komutu uygular (ana iş parçacığına taşır). Dönüş: null = başarılı, aksi halde hata kodu.</summary>
     public Func<JsonElement, Task<string?>>? CommandHandler { get; set; }
 
+    /// <summary>Telefona gönderilecek görev özeti (yapılacaklar, hatırlatıcılar). Çağıran, güvenli iş parçacığına geçmekle yükümlüdür.</summary>
+    public Func<object?>? TasksProvider { get; set; }
+
+    private string? _lastTasksJson;
+
+    /// <summary>Görev özetini bağlı tüm telefonlara gönderir; son gönderilenle aynıysa göndermez (not yazarken boşuna trafik olmasın).</summary>
+    public void SendTasks(bool force = false)
+    {
+        if (TasksProvider?.Invoke() is not { } state)
+        {
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(new { tasks = state }, Json);
+        Client[] targets;
+        lock (_gate)
+        {
+            if (_clients.Count == 0 || (!force && json == _lastTasksJson))
+            {
+                _lastTasksJson = json;
+                return;
+            }
+
+            _lastTasksJson = json;
+            targets = [.. _clients];
+        }
+
+        var data = Append(Encoding.UTF8.GetBytes(json));
+        foreach (var client in targets)
+        {
+            _ = SendReliableAsync(client, data);
+        }
+    }
+
     /// <summary>Dinleme başlatılamadıysa nedeni (ör. port başka uygulamada kullanımda).</summary>
     public string? LastError { get; private set; }
 
@@ -346,6 +380,12 @@ public sealed class MobileLinkService : IDisposable
             if (_monitor.Latest is { } latest)
             {
                 await WriteAsync(stream, Serialize(latest), ct).ConfigureAwait(false);
+            }
+
+            // Yeni bağlanan telefon güncel görev listesini hemen alsın.
+            if (TasksProvider?.Invoke() is { } tasks)
+            {
+                await WriteAsync(stream, Append(JsonSerializer.SerializeToUtf8Bytes(new { tasks }, Json)), ct).ConfigureAwait(false);
             }
 
             // İstemci bağlantıyı kapatana kadar bekle; veri OnSnapshot ile gönderilir, gelen satırlar komuttur.

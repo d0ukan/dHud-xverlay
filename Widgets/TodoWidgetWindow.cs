@@ -78,6 +78,10 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
         RestorePosition(WidgetIds.Todo, 5, 296);
         Rebuild();
         ApplyOptions();
+
+        // Telefon bir madde ekleyip işaretleyince açık widget kendiliğinden yenilenir.
+        _widgets.TodosChangedExternally += Rebuild;
+        Closed += (_, _) => _widgets.TodosChangedExternally -= Rebuild;
     }
 
     private static double AutoListMaxHeight => Math.Max(300, SystemParameters.WorkArea.Height * 0.6);

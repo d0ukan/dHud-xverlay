@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Varsayılan 4×2 hücre (orta düzen). Küçültülünce tek satır (küçük), büyütülünce 3+ satır (büyük) düzene geçer. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
     android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="70dp"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_dhud"
     android:resizeMode="horizontal|vertical"

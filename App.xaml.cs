@@ -32,6 +32,7 @@ public partial class App : Application
     private TrayIconService? _tray;
     private HotkeyService? _hotkeys;
     private MainWindow? _overlay;
+    private FullscreenWatcher? _fullscreen;
     private SettingsWindow? _settingsWindow;
     private FanControlWindow? _fanWindow;
     private FpsWindow? _fpsWindow;
@@ -49,6 +50,7 @@ public partial class App : Application
     public FpsMonitor Fps { get; } = new();
     public FanControlService FanControl { get; private set; } = null!;
     public RemoteFanService RemoteFan { get; private set; } = null!;
+    public RemoteTaskService RemoteTasks { get; private set; } = null!;
     public WidgetService Widgets { get; private set; } = null!;
     public WidgetManager WidgetManager { get; private set; } = null!;
     public ProfileService Profiles { get; private set; } = null!;
@@ -181,10 +183,13 @@ public partial class App : Application
             DiagLog.Add("crash", a.ExceptionObject is Exception ex ? ex : new InvalidOperationException(a.ExceptionObject?.ToString()));
             FanControl?.ReleaseAll();
             Widgets?.Flush();
+            _tray?.Dispose();
         };
-        AppDomain.CurrentDomain.ProcessExit += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
-        SessionEnding += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); };
+        // Nasıl kapanırsa kapansın tepsi simgesi kaldırılır (aksi halde tepside hayalet simge kalır).
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); _tray?.Dispose(); };
+        SessionEnding += (_, _) => { FanControl?.ReleaseAll(); Widgets?.Flush(); _tray?.Dispose(); };
 
+        RemoteTasks = new RemoteTaskService(Widgets, Settings);
         RemoteFan = new RemoteFanService(Monitor, Settings, FanControl);
         RemoteFan.Changed += summary =>
         {
@@ -192,11 +197,38 @@ public partial class App : Application
             _fanWindow?.Reload();
         };
         // Ölçümde kullanıcının çalışan dHud'uyla çakışmasın diye rastgele port, keşif kapalı.
-        MobileLink = new MobileLinkService(Monitor, Settings, bench ? 0 : MobileLinkService.DefaultPort, bench ? -1 : MobileLinkService.DefaultDiscoveryPort)
+        // Test kancası: DHUD_MOBILE_PORT ile başka bir port (kullanıcının çalışan dHud'uyla çakışmadan uçtan uca deneme için); keşif kapalı.
+        var testPort = int.TryParse(Environment.GetEnvironmentVariable("DHUD_MOBILE_PORT"), out var p) && p is > 1023 and < 65536 ? p : (int?)null;
+        MobileLink = new MobileLinkService(Monitor, Settings,
+            bench ? 0 : testPort ?? MobileLinkService.DefaultPort,
+            bench || testPort is not null ? -1 : MobileLinkService.DefaultDiscoveryPort)
         {
             FpsProvider = () => Fps.Fps,
             FanProvider = () => RemoteFan.BuildState(),
-            CommandHandler = command => Dispatcher.InvokeAsync(() => RemoteFan.Apply(command)).Task
+            // Yapılacak/hatırlatıcı komutları görev servisine, geri kalanı (fan) fan servisine gider; ikisi de ana iş parçacığında çalışır.
+            CommandHandler = command => Dispatcher.InvokeAsync(() =>
+                command.TryGetProperty("cmd", out var cmd) && RemoteTaskService.IsTaskCommand(cmd.GetString())
+                    ? RemoteTasks.Apply(command)
+                    : RemoteFan.Apply(command)).Task,
+            TasksProvider = () => Dispatcher.Invoke(() => RemoteTasks.BuildState())
+        };
+
+        // Widget verisi değişince (yapılacak eklendi/işaretlendi, hatırlatıcı kuruldu...) telefondaki liste kısa bir gecikmeyle tazelenir.
+        var tasksTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        tasksTimer.Tick += (_, _) =>
+        {
+            tasksTimer.Stop();
+            MobileLink.SendTasks();
+        };
+        Widgets.DataChanged += () =>
+        {
+            tasksTimer.Stop();
+            tasksTimer.Start();
+        };
+        Widgets.RemindersChanged += () =>
+        {
+            tasksTimer.Stop();
+            tasksTimer.Start();
         };
         Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
 
@@ -237,6 +269,7 @@ public partial class App : Application
             _overlay.Show();
         }
 
+        TrayIconService.Suppressed = bench || e.Args.Contains("--no-tray") || e.Args.Contains("--allow-multiple");
         _tray = new TrayIconService(ToggleOverlayShortcut, ToggleClickThroughShortcut);
         _tray.SettingsRequested += (_, _) => OpenSettings();
         _tray.ToggleOverlayRequested += (_, _) => ToggleOverlay();
@@ -261,6 +294,11 @@ public partial class App : Application
         };
 
         _hotkeys = new HotkeyService();
+
+        // Tam ekran uygulama (film, sunum, oyun) açıkken widget'lar (ve isteğe bağlı bar) kendini gizler.
+        _fullscreen = new FullscreenWatcher();
+        _fullscreen.Changed += _ => ApplyFullscreenVisibility();
+        _fullscreen.Start();
 
         Settings.Changed += (_, _) => OnSettingsChanged();
         OnSettingsChanged();
@@ -654,10 +692,11 @@ public partial class App : Application
         var needOthers = s.Extra(WidgetIds.SysInfo).Enabled || s.MobileEnabled;
         Monitor.Network.Enabled = (s.ShowOverlay && s.ShowNetwork) || needOthers;
         Monitor.Network.PingEnabled = (s.ShowOverlay && s.ShowPing) || s.MobileEnabled;
-        ApplyOverlayVisibility();
+        ApplyFullscreenVisibility();   // (içinde ApplyOverlayVisibility de çağrılır)
         _tray?.SetStates(_overlay?.IsVisible == true, s.ClickThrough, s.LockPosition);
         ConfigureUpdateTimer();
         MobileLink.Apply();
+        MobileLink.SendTasks();   // "telefon görevleri yönetebilir" ayarı değişmiş olabilir; aynıysa gönderilmez
         ApplyFps();
         WidgetManager.Apply();
 
@@ -804,6 +843,14 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Tam ekran durumuna ve ayara göre widget'ları ve barı gizler / geri getirir.</summary>
+    private void ApplyFullscreenVisibility()
+    {
+        var hideWidgets = _fullscreen?.IsFullscreen == true && Settings.Current.HideWidgetsOnFullscreen;
+        WidgetManager?.SetSuspended(hideWidgets);
+        ApplyOverlayVisibility();
+    }
+
     /// <summary>Bar'ın görünürlüğünü ayara göre uygular; geri gelirse widget'lar bar'ın yerinden kayar.</summary>
     private void ApplyOverlayVisibility()
     {
@@ -812,7 +859,8 @@ public partial class App : Application
             return;
         }
 
-        var want = Settings.Current.ShowOverlay;
+        // Tam ekran uygulama açıkken (ve ayarlıysa) bar da gizlenir; ShowOverlay kullanıcının kalıcı seçimi olarak değişmez.
+        var want = Settings.Current.ShowOverlay && !(_fullscreen?.IsFullscreen == true && Settings.Current.HideBarOnFullscreen);
         if (want && !_overlay.IsVisible)
         {
             _overlay.Show();

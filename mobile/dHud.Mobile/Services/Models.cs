@@ -90,6 +90,31 @@ public sealed class PcSnapshot
 	public float? Fps { get; set; }
 }
 
+/// <summary>PC'deki yapılacaklar listesinin bir maddesi (alt görevler <see cref="Subs"/> içinde).</summary>
+public sealed class TodoInfo
+{
+	public string Id { get; set; } = string.Empty;
+	public string Text { get; set; } = string.Empty;
+	public bool Done { get; set; }
+	public List<TodoInfo>? Subs { get; set; }
+}
+
+/// <summary>PC'de kurulu bir hatırlatıcı. Due: UTC unix saniyesi.</summary>
+public sealed class ReminderInfo
+{
+	public string Id { get; set; } = string.Empty;
+	public string Text { get; set; } = string.Empty;
+	public long Due { get; set; }
+}
+
+/// <summary>PC'nin gönderdiği görev özeti (<c>{"tasks":{...}}</c> mesajı). Enabled=false: PC telefondan görev yönetimine izin vermiyor.</summary>
+public sealed class TasksState
+{
+	public bool Enabled { get; set; }
+	public List<TodoInfo>? Todos { get; set; }
+	public List<ReminderInfo>? Reminders { get; set; }
+}
+
 public enum LinkState
 {
 	Idle,

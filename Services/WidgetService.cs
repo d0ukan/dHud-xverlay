@@ -328,9 +328,18 @@ public sealed class WidgetService
         }
     }
 
+    /// <summary>Widget verisi değişti (her kayıt isteğinde tetiklenir; telefondaki görev listesini güncel tutmak için dinlenir).</summary>
+    public event Action? DataChanged;
+
+    /// <summary>Yapılacaklar listesi widget dışından (telefon) değişti; açık widget yeniden çizilmeli.</summary>
+    public event Action? TodosChangedExternally;
+
+    public void RaiseTodosChangedExternally() => TodosChangedExternally?.Invoke();
+
     /// <summary>Değişiklik var; kısa bir gecikmeyle diske yazılır.</summary>
     public void ScheduleSave()
     {
+        DataChanged?.Invoke();
         _dirty = true;
         _saveTimer.Stop();
         _saveTimer.Start();

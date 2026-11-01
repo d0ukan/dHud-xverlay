@@ -38,7 +38,8 @@ public sealed class SysInfoWidgetWindow : WidgetWindowBase
 
             var label = new TextBlock { Text = key, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 4) };
             label.SetResourceReference(TextBlock.ForegroundProperty, "SubtleTextBrush");
-            var track = new Border { Width = BarWidth, Height = 6, CornerRadius = new CornerRadius(3), Background = new SolidColorBrush(Color.FromArgb(0x30, 255, 255, 255)), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+            var track = new Border { Width = BarWidth, Height = 6, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+            track.SetResourceReference(Border.BackgroundProperty, "BarTrackBrush");   // açık temada koyu, koyu temada açık
             var fill = new Border { Width = 0, Height = 6, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left };
             var trackHost = new Grid { Width = BarWidth, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
             trackHost.Children.Add(track);

@@ -10,6 +10,9 @@
         <SolidColorBrush x:Key="TextBrush" Color="#FFF1F2F6" />
         <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF9CA3AF" />
         <SolidColorBrush x:Key="DividerBrush" Color="#22FFFFFF" />
+        <SolidColorBrush x:Key="BarTrackBrush" Color="#30FFFFFF" />
+        <SolidColorBrush x:Key="FieldBackgroundBrush" Color="#1AFFFFFF" />
+        <SolidColorBrush x:Key="FieldBorderBrush" Color="#40FFFFFF" />
         <SolidColorBrush x:Key="GoodBrush" Color="#FF4ADE80" />
         <SolidColorBrush x:Key="WarnBrush" Color="#FFFACC15" />
         <SolidColorBrush x:Key="HotBrush" Color="#FFF87171" />
@@ -95,8 +98,8 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Box" Property="BorderBrush" Value="#B3FFFFFF" />

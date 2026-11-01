@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Markup;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Media.Imaging;
@@ -120,9 +121,12 @@ public partial class SettingsWindow : Window
         ShowOverlayCheckBox.IsChecked = s.ShowOverlay;
         GameSummaryCheckBox.IsChecked = s.GameSummary;
         GameSummaryCheckBox.IsEnabled = s.FpsEnabled;
+        HideWidgetsFsCheckBox.IsChecked = s.HideWidgetsOnFullscreen;
+        HideBarFsCheckBox.IsChecked = s.HideBarOnFullscreen;
         RefreshWidgetsTab();
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobileFanCheckBox.IsChecked = s.MobileFanControl;
+        MobileTasksCheckBox.IsChecked = s.MobileTasks;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
         RefreshMobile();
         VersionText.Text = UpdateService.CurrentVersionText;
@@ -182,8 +186,11 @@ public partial class SettingsWindow : Window
         s.FpsOverlay = FpsOverlayCheckBox.IsChecked == true;
         s.ShowOverlay = ShowOverlayCheckBox.IsChecked == true;
         s.GameSummary = GameSummaryCheckBox.IsChecked == true;
+        s.HideWidgetsOnFullscreen = HideWidgetsFsCheckBox.IsChecked == true;
+        s.HideBarOnFullscreen = HideBarFsCheckBox.IsChecked == true;
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
+        s.MobileTasks = MobileTasksCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
         {
             s.UpdateCheckHours = int.Parse((string)hours.Tag);
@@ -328,6 +335,7 @@ public partial class SettingsWindow : Window
             panel.Children.Add(hintText);
         }));
         var root = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
+        root.Children.Add(BuildThemePicker());
         foreach (var (titleKey, panel) in new[] { ("S.GroupTime", timePanel), ("S.GroupNotes", notesPanel), ("S.GroupSystem", systemPanel) })
         {
             var title = new TextBlock { Text = Loc.T(titleKey) };
@@ -340,6 +348,73 @@ public partial class SettingsWindow : Window
         hint.SetResourceReference(StyleProperty, "HintText");
         root.Children.Add(hint);
         WidgetsTabContent.Children.Add(root);
+    }
+
+    /// <summary>Widget renk teması seçici: her tema bir renk topu (kart rengi + ortada vurgu noktası); seçili olanın çevresi parlar.</summary>
+    private FrameworkElement BuildThemePicker()
+    {
+        var panel = new StackPanel();
+        var header = new TextBlock { Text = Loc.T("S.WidgetTheme") };
+        header.SetResourceReference(StyleProperty, "SectionHeader");
+        panel.Children.Add(header);
+
+        var row = new WrapPanel();
+        var swatches = new List<(WidgetTheme Theme, Border Ring)>();
+        foreach (var theme in WidgetThemes.All)
+        {
+            var dot = new Ellipse { Width = 10, Height = 10, Fill = new SolidColorBrush(theme.Accent), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var ball = new Border
+            {
+                Width = 30,
+                Height = 30,
+                CornerRadius = new CornerRadius(15),
+                Background = new SolidColorBrush(Color.FromRgb(theme.Card.R, theme.Card.G, theme.Card.B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0x66, 255, 255, 255)),
+                BorderThickness = new Thickness(1),
+                Child = dot
+            };
+            var ring = new Border
+            {
+                Margin = new Thickness(0, 0, 8, 0),
+                Padding = new Thickness(2),
+                CornerRadius = new CornerRadius(18),
+                BorderThickness = new Thickness(2),
+                BorderBrush = Brushes.Transparent,
+                Cursor = Cursors.Hand,
+                ToolTip = Loc.T(theme.NameKey),
+                Child = ball,
+                Background = Brushes.Transparent
+            };
+            var id = theme.Id;
+            ring.MouseLeftButtonUp += (_, _) =>
+            {
+                if (_settings.Current.WidgetTheme != id)
+                {
+                    _settings.Current.WidgetTheme = id;
+                    _settings.NotifyChanged();
+                }
+            };
+            swatches.Add((theme, ring));
+            row.Children.Add(ring);
+        }
+
+        void Refresh()
+        {
+            var current = WidgetThemes.Get(_settings.Current.WidgetTheme).Id;
+            foreach (var (theme, ring) in swatches)
+            {
+                ring.BorderBrush = theme.Id == current ? new SolidColorBrush(theme.Accent) : Brushes.Transparent;
+            }
+        }
+
+        _widgetRefresh.Add(Refresh);
+        Refresh();
+        panel.Children.Add(row);
+        var hint = new TextBlock { Text = Loc.T("S.WidgetThemeHint"), TextWrapping = TextWrapping.Wrap };
+        hint.SetResourceReference(StyleProperty, "HintText");
+        hint.Margin = new Thickness(0, 4, 0, 0);
+        panel.Children.Add(hint);
+        return panel;
     }
 
     private void RefreshWidgetsTab()

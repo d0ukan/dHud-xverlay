@@ -35,6 +35,12 @@ public sealed class PcLink
 	/// <summary>PC bir komutu yanıtladığında (ana iş parçacığında): komut adı, başarı, hata kodu (disabled/fanctl/nofan/bad).</summary>
 	public event Action<string, bool, string?>? CommandResult;
 
+	/// <summary>PC'deki yapılacaklar / hatırlatıcılar (bağlı değilse veya PC eski sürümse null).</summary>
+	public TasksState? Tasks { get; private set; }
+
+	/// <summary>Görev özeti güncellendi (ana iş parçacığında).</summary>
+	public event Action? TasksChanged;
+
 	public void Start(PairingInfo info)
 	{
 		Stop();
@@ -47,6 +53,7 @@ public sealed class PcLink
 		_cts?.Cancel();
 		_cts = null;
 		Latest = null;
+		Tasks = null;
 		CpuTemp.Clear();
 		GpuTemp.Clear();
 		SetState(LinkState.Idle);
@@ -221,6 +228,18 @@ public sealed class PcLink
 					MainThread.BeginInvokeOnMainThread(() => AlertReceived?.Invoke(text, kind));
 				}
 
+				continue;
+			}
+
+			// Görev özeti (yapılacaklar + hatırlatıcılar): bağlanınca ve PC'de değişince gelir.
+			if (doc.RootElement.TryGetProperty("tasks", out var tasks))
+			{
+				var state = tasks.Deserialize<TasksState>(Json);
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					Tasks = state;
+					TasksChanged?.Invoke();
+				});
 				continue;
 			}
 

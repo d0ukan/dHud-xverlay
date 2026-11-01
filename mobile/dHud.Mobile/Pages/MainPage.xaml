@@ -227,10 +227,40 @@
             </Grid>
         </ScrollView>
 
+        <!-- Görevler sekmesi: PC'deki yapılacaklara madde / alt görev ekle, işaretle, sil; hatırlatıcı kur -->
+        <ScrollView x:Name="TasksPage" Grid.Row="2" IsVisible="False">
+            <Grid x:Name="TasksLayout" ColumnSpacing="12" RowSpacing="12">
+                <Border x:Name="TodoCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label x:Name="TodoTitle" Style="{StaticResource TitleLabel}" />
+                        <Label x:Name="TasksStatus" FontSize="12" IsVisible="False" TextColor="{StaticResource HotColor}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Entry x:Name="TodoEntry" MaxLength="200" ReturnType="Done" TextColor="{StaticResource TextColor}"
+                                   PlaceholderColor="{StaticResource SubtleColor}" Completed="TodoEntry_Completed" />
+                            <Button x:Name="TodoAddButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" HeightRequest="42"
+                                    Padding="16,0" Clicked="TodoAddButton_Clicked" />
+                        </Grid>
+                        <VerticalStackLayout x:Name="TodoRows" Spacing="2" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="ReminderCard" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label x:Name="ReminderTitle" Style="{StaticResource TitleLabel}" />
+                        <Label x:Name="ReminderHint" FontSize="12" TextColor="{StaticResource SubtleColor}" />
+                        <Entry x:Name="ReminderEntry" MaxLength="200" ReturnType="Done" TextColor="{StaticResource TextColor}"
+                               PlaceholderColor="{StaticResource SubtleColor}" />
+                        <FlexLayout x:Name="ReminderPresets" Wrap="Wrap" JustifyContent="Start" />
+                        <VerticalStackLayout x:Name="ReminderRows" Spacing="2" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </ScrollView>
+
         <!-- Sekmeler -->
-        <Grid x:Name="TabBar" Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="8">
+        <Grid x:Name="TabBar" Grid.Row="3" ColumnDefinitions="*,*,*" ColumnSpacing="8">
             <Button x:Name="TabPanelButton" Style="{StaticResource PrimaryButton}" HeightRequest="42" Clicked="TabPanelButton_Clicked" />
             <Button x:Name="TabFansButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabFansButton_Clicked" />
+            <Button x:Name="TabTasksButton" Grid.Column="2" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabTasksButton_Clicked" />
         </Grid>
 
         <!-- Ekran koruyucu: tam ekran panel bir süre dokunulmazsa kararır (dokununca geri gelir) -->
