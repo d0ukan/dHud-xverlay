@@ -219,6 +219,9 @@ public sealed class AppSettings
     /// <summary>Bir widget kapanınca altındakiler yukarı kayıp boşluğu kapatır; widget geri açılınca hepsi eski yerine döner.</summary>
     public bool CloseWidgetGaps { get; set; } = true;
 
+    /// <summary>Pano geçmişi metnin yanında kopyalanan görüntüleri (ekran görüntüsü vb.) de saklasın (yalnızca bellekte).</summary>
+    public bool ClipboardImages { get; set; } = true;
+
     /// <summary>Aynı durumda üstteki bar da gizlensin (oyunda bar genelde istenir, o yüzden varsayılan kapalı).</summary>
     public bool HideBarOnFullscreen { get; set; }
 

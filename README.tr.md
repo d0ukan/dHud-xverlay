@@ -93,7 +93,7 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 | **Hava durumu** | Şehrin için güncel hava ve 3 günlük tahmin. İnternet kullanır (Borsa ve takvim bağlantısı gibi); şehir seçene kadar kapalı. |
 | **Sistem özeti** | CPU, GPU, VRAM, RAM, disk ve ağ çubuklarla. |
 | **Hızlı başlatıcı** | Sık kullandığın uygulama ve dosyalar simge olarak (yönetici yetkisi olmadan açılır). |
-| **Pano geçmişi** | Son 10 kopyalanan metin. Yalnızca bellekte tutulur; parola yöneticilerinin gizli kopyaları atlanır. |
+| **Pano geçmişi** | Son 10 kopyalanan öğe: metinler ve istersen ekran görüntüsü gibi görüntüler (küçük önizleme; tıklayınca tekrar kopyalanır; en çok 5 görüntü, yaklaşık 60 MB). Yalnızca bellekte tutulur, diske yazılmaz; parola yöneticilerinin gizli kopyaları atlanır. Görüntüler widget ayarlarından kapatılabilir. |
 | **Ses ve mikrofon** | Ses düzeyi, sessize alma ve mikrofon kapatma. |
 | **Medya oynatıcı** | Çalan parça (Spotify, tarayıcı, VLC... hangi uygulama olursa) kapağı, ilerlemesi ve önceki / oynat-duraklat / sonraki düğmeleriyle. Windows'un kendi medya denetimini kullanır. |
 | **Görev yöneticisi** | Basit bir sürüm: hangi uygulama ne kadar **CPU, RAM, disk ve internet** kullanıyor. Aynı uygulamanın işlemleri (tarayıcının onlarca sekmesi) tek satırda toplanır; sütuna tıklayınca ona göre sıralanır. İnternet sütunu için dHud'un yönetici olarak çalışması gerekir. |

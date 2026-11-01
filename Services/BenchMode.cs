@@ -181,6 +181,9 @@ internal sealed class BenchMode
         // S10 — boşluk kapatma doğruluğu (gerçek pencereler)
         await GapCloseAsync();
 
+        // S11 — pano görüntü yakalama doğruluğu (gerçek pano)
+        await ClipboardImageAsync();
+
         // S9 — uzun soak (isteğe bağlı)
         if (_soakMinutes > 0)
         {
@@ -261,6 +264,122 @@ internal sealed class BenchMode
             problems += (int)_extra["gapOverlapsReopened"];
             _extra["gapCloseMoved"] = movedCount;
             _extra["gapCloseProblems"] = problems;
+        });
+    }
+
+
+    /// <summary>
+    /// S11 — gerçek pano: görüntü kopyalanınca widget yakalar (1920×1080), metin varsa yalnızca metin alınır, tıklayınca görüntü panoya geri gelir,
+    /// ayar kapalıyken görüntü alınmaz. Sorun sayısı "clipboardProblems" (0 = tamam). Pano içeriği ölçümden sonra geri konur.
+    /// </summary>
+    private async Task ClipboardImageAsync()
+    {
+        await AllWidgetsAsync(false);
+        await Measure("S11 Pano: görüntü yakalama (doğruluk)", "Gerçek panoya görüntü ve metin konur; widget'ın yakalaması, geri kopyalaması ve ayar kapalıyken atlaması denetlenir.", async _ =>
+        {
+            string? savedText = null;
+            System.Windows.Media.Imaging.BitmapSource? savedImage = null;
+            try
+            {
+                if (Clipboard.ContainsText()) savedText = Clipboard.GetText();
+                else if (Clipboard.ContainsImage()) savedImage = Clipboard.GetImage();
+            }
+            catch (COMException)
+            {
+                // pano meşgul: eski içerik geri konamaz
+            }
+
+            var problems = 0;
+            try
+            {
+                _app.Settings.Current.ClipboardImages = true;
+                await Configure(s => s.Extra(WidgetIds.Clipboard).Enabled = true, 600);
+                ClipboardWidgetWindow.ClearHistory();
+                var window = Application.Current.Windows.OfType<ClipboardWidgetWindow>().First();
+
+                var pixels = new byte[1920 * 1080 * 4];
+                for (var i = 0; i < pixels.Length; i += 4)
+                {
+                    pixels[i] = (byte)(i / 4 % 1920 / 8);
+                    pixels[i + 1] = (byte)(i / 4 / 1920 / 5);
+                    pixels[i + 2] = 90;
+                    pixels[i + 3] = 255;
+                }
+
+                var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(1920, 1080, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, pixels, 1920 * 4);
+                bitmap.Freeze();
+
+                Clipboard.SetImage(bitmap);
+                await Pause(2000);
+                var first = ClipboardWidgetWindow.Snapshot();
+                _extra["imagesCaptured"] = first.Count(e => e.IsImage);
+                if (first.Count != 1 || !first[0].IsImage || first[0].Width != 1920 || first[0].Height != 1080)
+                {
+                    problems++;
+                }
+
+                // Metin + görüntü birlikte (Excel/Word gibi): yalnızca metin alınmalı.
+                var both = new DataObject();
+                both.SetText("birlikte");
+                both.SetImage(bitmap);
+                Clipboard.SetDataObject(both, true);
+                await Pause(1200);
+                var second = ClipboardWidgetWindow.Snapshot();
+                if (second.Count != 2 || second[0].Text != "birlikte")
+                {
+                    problems++;
+                }
+
+                // Geri kopyala: pano yine aynı boyutta görüntü vermeli.
+                var image = second.First(e => e.IsImage);
+                window.CopyBackForTest(image);
+                await Pause(500);
+                var back = Clipboard.ContainsImage() ? Clipboard.GetImage() : null;
+                if (back is null || back.PixelWidth != 1920 || back.PixelHeight != 1080)
+                {
+                    problems++;
+                }
+
+                await Pause(800);
+                var afterCopyBack = ClipboardWidgetWindow.Snapshot().Count;   // kendi yazdığı geçmişe tekrar eklenmemeli
+                if (afterCopyBack != 2)
+                {
+                    problems++;
+                }
+
+                // Ayar kapalı: yeni bir görüntü alınmamalı.
+                _app.Settings.Current.ClipboardImages = false;
+                var small = System.Windows.Media.Imaging.BitmapSource.Create(64, 64, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, new byte[64 * 64 * 4], 64 * 4);
+                Clipboard.SetImage(small);
+                await Pause(1200);
+                if (ClipboardWidgetWindow.Snapshot().Count != 2)
+                {
+                    problems++;
+                }
+            }
+            catch (Exception ex)
+            {
+                problems += 100;
+                _extra["clipboardException"] = 1;
+                DiagLog.Add("bench", ex);
+                File.WriteAllText(Path.Combine(_outDir, "clipboard-error.txt"), ex.ToString());
+            }
+            finally
+            {
+                _app.Settings.Current.ClipboardImages = true;
+                try
+                {
+                    if (savedText is not null) Clipboard.SetText(savedText);
+                    else if (savedImage is not null) Clipboard.SetImage(savedImage);
+                    else Clipboard.Clear();
+                }
+                catch (COMException)
+                {
+                    // eski içerik geri konamadı
+                }
+            }
+
+            _extra["clipboardProblems"] = problems;
         });
     }
 

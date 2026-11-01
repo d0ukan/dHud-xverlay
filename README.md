@@ -93,7 +93,7 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 | **Weather** | Current weather and a 3-day forecast for your city. Uses the internet (as do Markets and a calendar link); off until you pick a city. |
 | **System summary** | CPU, GPU, VRAM, RAM, disk and network on bars. |
 | **Quick launcher** | Your favourite apps and files as icons (opened without administrator rights). |
-| **Clipboard history** | The last 10 copied texts. Kept in memory only; password managers' private copies are skipped. |
+| **Clipboard history** | The last 10 copied items: texts and, if you like, images such as screenshots (a small preview; click to copy it again; at most 5 images, about 60 MB). Kept in memory only, never saved to disk; password managers' private copies are skipped. Images can be turned off in the widget's settings. |
 | **Sound and microphone** | Volume, mute and microphone mute. |
 | **Media player** | The track that is playing (any app: Spotify, browser, VLC...) with cover, progress and previous / play-pause / next buttons. Uses Windows' own media controls. |
 | **Task manager** | A simple version: which app uses how much **CPU, RAM, disk and internet**. Processes of the same app (a browser's many tabs) are summed in one row; click a column to sort. The internet column needs dHud to run as administrator. |

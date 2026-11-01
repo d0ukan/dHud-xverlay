@@ -139,6 +139,7 @@ internal static class ScreenshotGenerator
         app.Widgets.AddReminder(L("Stand up and stretch", "Kalk ve esne"), DateTime.UtcNow.AddMinutes(18), "reminder");
         app.Widgets.AddReminder(L("Tea timer", "Çay zamanlayıcı"), DateTime.UtcNow.AddMinutes(4).AddSeconds(30), "timer");
         ClipboardWidgetWindow.SeedDemo(["https://github.com/d0ukan/dHud-xverlay", L("Meeting at 15:30, room B", "Toplantı 15:30, B odası"), "192.168.0.26"]);
+        ClipboardWidgetWindow.AddDemoImage(1920, 1080);
 
         // Hazır profiller (Profiller sekmesinde görünsün)
         app.Profiles.Save("Gaming");

@@ -286,6 +286,9 @@ public partial class SettingsWindow : Window
         Add(Generic(WidgetIds.Launcher, "S.WidgetLauncher"));
         Add(Generic(WidgetIds.Clipboard, "S.WidgetClipboard", panel =>
         {
+            var images = WidgetCheck("S.ClipboardImages", () => s.Current.ClipboardImages, v => s.Current.ClipboardImages = v);
+            images.ToolTip = Loc.T("S.ClipboardImagesTip");
+            panel.Children.Add(images);
             var clear = new Button { Content = Loc.T("W.ClipClear"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
             clear.SetResourceReference(StyleProperty, "DarkButton");
             clear.Click += (_, _) => ClipboardWidgetWindow.ClearHistory();
