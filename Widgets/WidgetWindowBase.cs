@@ -70,7 +70,15 @@ public abstract class WidgetWindowBase : Window
             BorderBrush = new LinearGradientBrush(Color.FromArgb(0x40, 255, 255, 255), Color.FromArgb(0x14, 255, 255, 255), 90),
             Effect = new DropShadowEffect { Color = Colors.Black, BlurRadius = 18, ShadowDepth = 0, Opacity = 0.55 }
         };
-        Content = Card;
+        // Kart + kenar/köşe tutamaçları (boyutlandırma). Tutamaçlar kartın etrafındaki saydam gölge payında ve kartın dış kenarındadır.
+        var shell = new Grid();
+        shell.Children.Add(Card);
+        Content = shell;
+        if (Resizable)
+        {
+            AddGrips(shell);
+            Card.SizeChanged += (_, _) => UpdateZoom();
+        }
 
         SourceInitialized += OnSourceInitialized;
         MouseLeftButtonDown += OnMouseDown;
@@ -78,7 +86,7 @@ public abstract class WidgetWindowBase : Window
         // İçerik büyüyünce (yeni hatırlatıcı, tur listesi, not boyutu) komşunun üstüne taşmasın.
         SizeChanged += (_, _) =>
         {
-            if (IsLoaded)
+            if (IsLoaded && !_resizing)
             {
                 Dispatcher.BeginInvoke(() => App.Current.WidgetManager?.Resolve(this), System.Windows.Threading.DispatcherPriority.Background);
             }
@@ -108,6 +116,282 @@ public abstract class WidgetWindowBase : Window
         Topmost = WantsTopmost;
         var alpha = (byte)Math.Clamp(Math.Round(_cardColor.A * Options.Opacity), 0, 255);
         Card.Background = new SolidColorBrush(Color.FromArgb(alpha, _cardColor.R, _cardColor.G, _cardColor.B));
+        ApplySize();
+    }
+
+    // ---- Boyutlandırma (ızgaraya oturan, içeriği orantılı büyüyen/küçülen) ----
+
+    /// <summary>Kenarlardan/köşelerden çekilerek boyutlandırılabilir mi (notlar kendi tutamacını kullanır).</summary>
+    protected virtual bool Resizable => true;
+
+    /// <summary>
+    /// true: içerik yalnızca genişliğe göre büyür/küçülür, fazla yükseklik daha çok satır gösterir (listeler);
+    /// false: içerik kartın içine orantılı sığar (saat, hava durumu gibi görsel widget'lar).
+    /// </summary>
+    protected virtual bool ZoomByWidth => false;
+
+    private const double MinZoom = 0.5;
+    private const double MaxZoom = 3.0;
+    private const double MinCardWidth = 96;
+    private const double MinCardHeight = 64;
+
+    private bool _resizing;
+    private bool _custom;                       // kullanıcı boyutu veriyor (içerik sarmalanmış)
+    private UIElement? _content;                // widget'ın kendi içeriği (Card.Child)
+    private Border? _holder;                    // içerik doğal genişlikte burada durur
+    private Size _natural;
+    private readonly ScaleTransform _zoom = new(1, 1);
+
+    private sealed record ResizeSession(Rect Card, Point Mouse, WidgetGrid.Spec Spec, List<Rect> Others, WidgetGrid.Edges Edges, (int W, int H) Min)
+    {
+        public (int C, int R, int W, int H)? Last { get; set; }
+    }
+
+    private ResizeSession? _session;
+
+    private static ControlTemplate InvisibleGrip()
+    {
+        var factory = new FrameworkElementFactory(typeof(Border));
+        factory.SetValue(Border.BackgroundProperty, Brushes.Transparent); // saydam ama fareyi yakalar
+        return new ControlTemplate(typeof(Thumb)) { VisualTree = factory };
+    }
+
+    private void AddGrips(Grid shell)
+    {
+        // (yatay, dikey, imleç, kenarlar, kalınlık/kenar). Kenarlar önce, köşeler üstte (köşe öncelikli).
+        (HorizontalAlignment H, VerticalAlignment V, Cursor Cursor, WidgetGrid.Edges Edges)[] grips =
+        [
+            (HorizontalAlignment.Left, VerticalAlignment.Stretch, Cursors.SizeWE, WidgetGrid.Edges.Left),
+            (HorizontalAlignment.Right, VerticalAlignment.Stretch, Cursors.SizeWE, WidgetGrid.Edges.Right),
+            (HorizontalAlignment.Stretch, VerticalAlignment.Top, Cursors.SizeNS, WidgetGrid.Edges.Top),
+            (HorizontalAlignment.Stretch, VerticalAlignment.Bottom, Cursors.SizeNS, WidgetGrid.Edges.Bottom),
+            (HorizontalAlignment.Left, VerticalAlignment.Top, Cursors.SizeNWSE, WidgetGrid.Edges.Left | WidgetGrid.Edges.Top),
+            (HorizontalAlignment.Right, VerticalAlignment.Bottom, Cursors.SizeNWSE, WidgetGrid.Edges.Right | WidgetGrid.Edges.Bottom),
+            (HorizontalAlignment.Right, VerticalAlignment.Top, Cursors.SizeNESW, WidgetGrid.Edges.Right | WidgetGrid.Edges.Top),
+            (HorizontalAlignment.Left, VerticalAlignment.Bottom, Cursors.SizeNESW, WidgetGrid.Edges.Left | WidgetGrid.Edges.Bottom)
+        ];
+
+        const double thick = 10;   // kartın dış kenarından ~4 DIP içeri, ~6 DIP dışarı (gölge payı)
+        const double corner = 18;
+        foreach (var (h, v, cursor, edges) in grips)
+        {
+            var isCorner = h != HorizontalAlignment.Stretch && v != VerticalAlignment.Stretch;
+            var grip = new Thumb
+            {
+                Template = InvisibleGrip(),
+                Cursor = cursor,
+                HorizontalAlignment = h,
+                VerticalAlignment = v,
+                Width = isCorner ? corner : h == HorizontalAlignment.Stretch ? double.NaN : thick,
+                Height = isCorner ? corner : v == VerticalAlignment.Stretch ? double.NaN : thick,
+                ToolTip = Loc.T("W.ResizeHint")
+            };
+
+            // Kenar tutamacı köşelerle çakışmasın: uçlarda köşe payı bırak; kartın dış kenarından biraz içeri girer.
+            if (!isCorner)
+            {
+                grip.Margin = h == HorizontalAlignment.Stretch
+                    ? new Thickness(corner, v == VerticalAlignment.Top ? 4 : 0, corner, v == VerticalAlignment.Bottom ? 4 : 0)
+                    : new Thickness(h == HorizontalAlignment.Left ? 4 : 0, corner, h == HorizontalAlignment.Right ? 4 : 0, corner);
+            }
+
+            var captured = edges;
+            grip.DragStarted += (_, e) => BeginResize(captured, grip, e);
+            grip.DragDelta += (_, _) => ResizeStep();
+            grip.DragCompleted += (_, _) => EndResize();
+            grip.MouseLeftButtonDown += (_, e) =>
+            {
+                if (e.ClickCount == 2)
+                {
+                    ResetSize();   // çift tık: otomatik boyuta dön
+                    e.Handled = true;
+                }
+            };
+            shell.Children.Add(grip);
+        }
+    }
+
+    private Point ScreenDip()
+    {
+        var device = PointToScreen(Mouse.GetPosition(this));
+        return PresentationSource.FromVisual(this)?.CompositionTarget is { } target ? target.TransformFromDevice.Transform(device) : device;
+    }
+
+    private (int W, int H) MinSpan(WidgetGrid.Spec g)
+    {
+        var minWidth = ZoomByWidth ? Math.Max(MinCardWidth, _natural.Width * 0.55) : MinCardWidth;
+        return (WidgetGrid.SpanOf(new Size(minWidth, MinCardHeight), g).W, WidgetGrid.SpanOf(new Size(minWidth, MinCardHeight), g).H);
+    }
+
+    private void BeginResize(WidgetGrid.Edges edges, Thumb grip, DragStartedEventArgs e)
+    {
+        if (Options.LockPosition || CurrentWorkArea() is not Rect work)
+        {
+            grip.CancelDrag();
+            return;
+        }
+
+        EnterCustomSize();
+        _resizing = true;
+        var spec = WidgetGrid.Make(work);
+        var others = App.Current.WidgetManager?.OtherCards(this) ?? [];
+        _session = new ResizeSession(CardRect, ScreenDip(), spec, others, edges, MinSpan(spec));
+    }
+
+    private void ResizeStep()
+    {
+        if (_session is not { } s)
+        {
+            return;
+        }
+
+        var d = ScreenDip() - s.Mouse;
+        var (c, r, w, h) = WidgetGrid.Resize(s.Card, s.Edges, d, s.Min, s.Spec);
+        if (s.Last == (c, r, w, h))
+        {
+            return;
+        }
+
+        var rect = WidgetGrid.CellsRect(c, r, (w, h), s.Spec);
+        if (s.Others.Any(o => WidgetManager.Overlaps(o, rect)))
+        {
+            return; // başka kartın üstüne binemez; son geçerli boyutta kalır
+        }
+
+        s.Last = (c, r, w, h);
+        Left = rect.Left - CardPad;
+        Top = rect.Top - CardPad;
+        Width = rect.Width + 2 * CardPad;
+        Height = rect.Height + 2 * CardPad;
+    }
+
+    private void EndResize()
+    {
+        var session = _session;
+        _session = null;
+        _resizing = false;
+        if (session?.Last is { } last)
+        {
+            Options.SpanW = last.W;
+            Options.SpanH = last.H;
+            App.Current.Settings.Save();
+            Moved?.Invoke(new Point(Left, Top));
+        }
+
+        App.Current.WidgetManager?.Resolve(this);
+    }
+
+    /// <summary>Kullanıcı boyutunu siler: kart yeniden içeriğin kendi boyutuna döner.</summary>
+    private void ResetSize()
+    {
+        Options.SpanW = Options.SpanH = 0;
+        App.Current.Settings.Save();
+        ApplySize();
+        App.Current.WidgetManager?.Resolve(this);
+    }
+
+    /// <summary>Ayardaki hücre boyutunu pencereye uygular (açılışta, profil/ayar değişince).</summary>
+    private void ApplySize()
+    {
+        if (!Resizable || _resizing || (Card.Child is null && _content is null))
+        {
+            return;
+        }
+
+        if (Options.SpanW <= 0 || Options.SpanH <= 0)
+        {
+            LeaveCustomSize();
+            return;
+        }
+
+        EnterCustomSize();
+        var spec = WidgetGrid.Make(CurrentWorkArea() ?? SystemParameters.WorkArea);
+        var span = (W: Math.Min(Options.SpanW, spec.Cols), H: Math.Min(Options.SpanH, spec.Rows));
+        var size = WidgetGrid.SizeOf(span, spec);
+        Width = size.Width + 2 * CardPad;
+        Height = size.Height + 2 * CardPad;
+    }
+
+    /// <summary>İçeriği sarmalar (bir kez): doğal genişlikte bir taşıyıcıya koyar, kart ölçüleri pencereden gelir.</summary>
+    private void EnterCustomSize()
+    {
+        if (_custom)
+        {
+            return;
+        }
+
+        _content = Card.Child;
+        if (_content is null)
+        {
+            return;
+        }
+
+        // Doğal genişlik: widget'ın verdiği sabit kart genişliği; yoksa içeriğin istediği genişlik.
+        var natural = Card.Width;
+        if (double.IsNaN(natural))
+        {
+            Card.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            natural = Card.DesiredSize.Width;
+        }
+
+        _natural = new Size(Math.Max(natural, MinCardWidth), Card.ActualHeight);
+        Card.Child = null;
+        _holder = new Border { Child = _content, Width = _natural.Width };
+        if (ZoomByWidth)
+        {
+            _holder.LayoutTransform = _zoom;
+            Card.Child = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = _holder
+            };
+        }
+        else
+        {
+            Card.Child = new Viewbox { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.Both, Child = _holder };
+        }
+
+        Card.Width = double.NaN;
+        Card.Height = double.NaN;
+        SizeToContent = SizeToContent.Manual;
+        _custom = true;
+        UpdateZoom();
+    }
+
+    private void LeaveCustomSize()
+    {
+        if (!_custom)
+        {
+            return;
+        }
+
+        _custom = false;
+        Card.Child = null;
+        if (_holder is not null)
+        {
+            _holder.Child = null;
+            _holder.LayoutTransform = Transform.Identity;
+        }
+
+        Card.Child = _content;
+        Card.Width = _natural.Width;
+        _content = null;
+        _holder = null;
+        ClearValue(WidthProperty);
+        ClearValue(HeightProperty);
+        SizeToContent = SizeToContent.WidthAndHeight;
+    }
+
+    private void UpdateZoom()
+    {
+        if (!_custom || !ZoomByWidth || _natural.Width <= 0)
+        {
+            return;
+        }
+
+        var s = Math.Clamp((Card.ActualWidth - 2 * Card.BorderThickness.Left) / _natural.Width, MinZoom, MaxZoom);
+        _zoom.ScaleX = _zoom.ScaleY = s;
     }
 
     // ---- Konum ----

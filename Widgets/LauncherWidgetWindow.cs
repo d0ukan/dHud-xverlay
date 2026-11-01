@@ -23,6 +23,8 @@ public sealed class LauncherWidgetWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Launcher);
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     public LauncherWidgetWindow()
     {
         var add = IconButton("＋", Loc.T("W.LauncherAdd"), (_, _) => AddItem());

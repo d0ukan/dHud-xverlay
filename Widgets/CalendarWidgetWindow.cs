@@ -27,6 +27,8 @@ public sealed class CalendarWidgetWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Calendar);
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     public CalendarWidgetWindow()
     {
         Card.Width = 300;

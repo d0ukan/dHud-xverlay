@@ -391,6 +391,9 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
     }
     private SnapPreviewWindow? _preview;
 
+    /// <summary>Verilen pencere dışındaki kartların (ve bar'ın) dikdörtgenleri; boyutlandırırken üstüne binilmesin diye.</summary>
+    public List<Rect> OtherCards(WidgetWindowBase window) => OtherRects(window);
+
     private List<Rect> OtherRects(WidgetWindowBase window)
     {
         var others = AllWindows().Where(w => !ReferenceEquals(w, window) && w.IsLoaded && w.IsVisible).Select(w => w.CardRect).ToList();

@@ -29,6 +29,8 @@ public sealed class ClipboardWidgetWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Clipboard);
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     public ClipboardWidgetWindow()
     {
         Card.Width = 280;

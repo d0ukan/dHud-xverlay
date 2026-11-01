@@ -20,6 +20,8 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Todo);
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     public TodoWidgetWindow()
     {
         Card.Width = 280;

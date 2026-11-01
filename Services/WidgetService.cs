@@ -25,9 +25,19 @@ public sealed class WidgetOptions
     /// <summary>Bırakılınca ekran kenarına/köşesine yapışsın (ekran dışına çıkmama her zaman geçerlidir).</summary>
     public bool SnapToEdges { get; set; } = true;
 
+    /// <summary>
+    /// Kullanıcının çekerek verdiği boyut, ızgara hücresi cinsinden (genişlik × yükseklik). 0 = otomatik (içeriğin kendi boyutu).
+    /// Hücre cinsinden saklanır: farklı çözünürlükte de kartlar aynı hücre düzenine oturur.
+    /// </summary>
+    public int SpanW { get; set; }
+
+    public int SpanH { get; set; }
+
     public WidgetOptions Normalized()
     {
         Opacity = double.IsNaN(Opacity) ? 1.0 : Math.Clamp(Opacity, 0.2, 1.0);
+        SpanW = SpanW is >= 1 and <= 1000 && SpanH is >= 1 and <= 1000 ? SpanW : 0;
+        SpanH = SpanW == 0 ? 0 : SpanH;
         return this;
     }
 }

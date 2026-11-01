@@ -267,7 +267,11 @@ public partial class App : Application
 
         // Widget'lar açılışta başka pencerelerin arkasında kalmasın (bar kapalıyken bunu "bar aç/kapa" yapıyordu).
         // Masaüstü/görev çubuğu geç hazır olabildiği için kısa bir süre sonra bir kez daha.
-        Dispatcher.BeginInvoke(() => WidgetManager.RaiseAll(), DispatcherPriority.ApplicationIdle);
+        Dispatcher.BeginInvoke(() =>
+        {
+            WidgetManager.ResolveAll();   // açılışta üst üste açılan kartlar (ör. kayıtlı büyük boyut) birbirinden ayrılsın
+            WidgetManager.RaiseAll();
+        }, DispatcherPriority.ApplicationIdle);
         var raiseAgain = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
         raiseAgain.Tick += (_, _) =>
         {

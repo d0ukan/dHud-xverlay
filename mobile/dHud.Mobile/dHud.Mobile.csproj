@@ -18,8 +18,8 @@
 
 		<!-- Sürüm PC uygulamasıyla aynı numarayı taşır. ApplicationVersion (versionCode) her sürümde artmalıdır:
 		     1.0.46 → 10046. Release iş akışı bunları etiketten verir. -->
-		<ApplicationDisplayVersion>1.0.49</ApplicationDisplayVersion>
-		<ApplicationVersion>10049</ApplicationVersion>
+		<ApplicationDisplayVersion>1.0.50</ApplicationDisplayVersion>
+		<ApplicationVersion>10050</ApplicationVersion>
 
 		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
 	</PropertyGroup>

@@ -19,6 +19,8 @@ public sealed class CountdownWidgetWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Countdown);
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     public CountdownWidgetWindow()
     {
         Card.Width = 290;

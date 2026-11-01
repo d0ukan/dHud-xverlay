@@ -106,6 +106,77 @@ public static class WidgetGrid
         new(g.Work.Left + g.OffsetX + c * g.Cell + Inset, g.Work.Top + g.OffsetY + r * g.Cell + Inset,
             span.W * g.Cell - 2 * Inset, span.H * g.Cell - 2 * Inset);
 
+    [Flags]
+    public enum Edges
+    {
+        None = 0,
+        Left = 1,
+        Top = 2,
+        Right = 4,
+        Bottom = 8
+    }
+
+    /// <summary>Kartın piksel boyutunu verilen hücre kapsamına çevirir (kenarlar ızgara çizgilerine oturur, komşu kartla 2×Inset boşluk kalır).</summary>
+    public static Size SizeOf((int W, int H) span, Spec g) => new(span.W * g.Cell - 2 * Inset, span.H * g.Cell - 2 * Inset);
+
+    /// <summary>
+    /// Kartın seçili kenarları <paramref name="delta"/> kadar çekilince oluşan hücre kapsamı: hareket eden kenarlar en yakın ızgara çizgisine
+    /// oturur, diğer kenarlar sabit kalır. En küçük boyut ve ızgara sınırları korunur. Saf hesap; pencerelere dokunmaz.
+    /// </summary>
+    public static (int C, int R, int W, int H) Resize(Rect card, Edges edges, Vector delta, (int W, int H) min, Spec g)
+    {
+        int Col(double x, double shift) => (int)Math.Round((x + shift - g.Work.Left - g.OffsetX) / g.Cell);
+        int Row(double y, double shift) => (int)Math.Round((y + shift - g.Work.Top - g.OffsetY) / g.Cell);
+
+        var left = edges.HasFlag(Edges.Left);
+        var right = edges.HasFlag(Edges.Right);
+        var top = edges.HasFlag(Edges.Top);
+        var bottom = edges.HasFlag(Edges.Bottom);
+
+        var c0 = Col(card.Left + (left ? delta.X : 0), -Inset);
+        var c1 = Col(card.Right + (right ? delta.X : 0), Inset);
+        var r0 = Row(card.Top + (top ? delta.Y : 0), -Inset);
+        var r1 = Row(card.Bottom + (bottom ? delta.Y : 0), Inset);
+
+        (c0, c1) = FitAxis(c0, c1, left, right, Math.Min(min.W, g.Cols), g.Cols);
+        (r0, r1) = FitAxis(r0, r1, top, bottom, Math.Min(min.H, g.Rows), g.Rows);
+        return (c0, r0, c1 - c0, r1 - r0);
+    }
+
+    private static (int Start, int End) FitAxis(int start, int end, bool movesStart, bool movesEnd, int min, int limit)
+    {
+        if (movesStart && !movesEnd)
+        {
+            start = Math.Min(start, end - min);
+        }
+
+        if (movesEnd && !movesStart)
+        {
+            end = Math.Max(end, start + min);
+        }
+
+        start = Math.Max(0, start);
+        end = Math.Min(limit, end);
+        if (end - start < min)
+        {
+            if (movesStart)
+            {
+                start = Math.Max(0, end - min);
+            }
+            else
+            {
+                end = Math.Min(limit, start + min);
+            }
+
+            if (end - start < min)
+            {
+                (start, end) = (0, Math.Min(limit, min)); // ızgaraya sığmıyorsa tüm eksen
+            }
+        }
+
+        return (start, end);
+    }
+
     /// <summary>Verilen dikdörtgenlerin dokunduğu tüm hücrelerin haritası.</summary>
     public static Occupancy Occupied(IEnumerable<Rect> rects, Spec g)
     {

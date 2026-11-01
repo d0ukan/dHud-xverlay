@@ -41,6 +41,8 @@ public sealed class StickyNoteWindow : WidgetWindowBase
 
     protected override WidgetOptions Options => App.Current.Settings.Current.NotesOptions;
 
+    protected override bool Resizable => false;   // notların kendi köşe tutamacı var
+
     private static bool Stacked => App.Current.Settings.Current.NotesStacked;
 
     // Yığında z sırası sekme sırasını belirler; bu yüzden hepsi aynı katmanda (grup ayarı) durur. Serbest modda her notun kendi iğnesi vardır.

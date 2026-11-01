@@ -11,6 +11,8 @@ public sealed class ToolsWidgetWindow : WidgetWindowBase
 {
     protected override WidgetOptions Options => App.Current.Settings.Current.ToolsOptions;
 
+    protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
+
     private static readonly int[] QuickMinutes = [5, 10, 15, 25, 45];
 
     private readonly WidgetService _widgets = App.Current.Widgets;

@@ -69,7 +69,7 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 
 <br />
 
-*Settings → Widgets.* Every widget is a small card with an on/off switch; **Options** opens its visibility, always-on-top, lock and "move to corner" buttons. Widgets snap to a fine grid like macOS desktop widgets: while you drag, the spot it will take is highlighted. They never overlap each other or the bar and can't be dragged off-screen. All are off by default and use almost no CPU.
+*Settings → Widgets.* Every widget is a small card with an on/off switch; **Options** opens its visibility, always-on-top, lock and "move to corner" buttons. Widgets snap to a fine grid like macOS desktop widgets: while you drag, the spot it will take is highlighted. Drag any **edge or corner** to resize a widget: it snaps to whole grid cells, so cards line up like puzzle pieces, and the content grows and shrinks with the card (lists get wider text and show more rows, clocks and gauges scale proportionally). Double-click an edge to go back to the automatic size. They never overlap each other or the bar and can't be dragged off-screen. All are off by default and use almost no CPU.
 
 <p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
 
