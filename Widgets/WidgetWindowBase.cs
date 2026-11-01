@@ -81,7 +81,9 @@ public abstract class WidgetWindowBase : Window
         }
 
         SourceInitialized += OnSourceInitialized;
-        MouseLeftButtonDown += OnMouseDown;
+        // Önizleme (tünel) olayı: kaydırma alanı (ScrollViewer) gibi alt öğeler tıklamayı yutsa da kart yine sürüklenir.
+        // Düğme, metin kutusu, tutamaç ve kaydırma çubukları IsInteractive ile zaten ayrılır.
+        PreviewMouseLeftButtonDown += OnMouseDown;
 
         // İçerik büyüyünce (yeni hatırlatıcı, tur listesi, not boyutu) komşunun üstüne taşmasın.
         SizeChanged += (_, _) =>
@@ -130,10 +132,11 @@ public abstract class WidgetWindowBase : Window
     /// </summary>
     protected virtual bool ZoomByWidth => false;
 
-    private const double MinZoom = 0.5;
+    // Yazı ve grafikler normal boyutun altına küçülmez (okunmaz hale gelir): alt sınır içeriğin kendi boyutudur, yalnızca büyütülür.
+    private const double MinZoom = 1.0;
     private const double MaxZoom = 3.0;
     private const double MinCardWidth = 96;
-    private const double MinCardHeight = 64;
+    private const double ListMinHeight = 120;   // listelerde başlık + birkaç satır; fazlası kaydırılır
 
     private bool _resizing;
     private bool _custom;                       // kullanıcı boyutu veriyor (içerik sarmalanmış)
@@ -217,10 +220,47 @@ public abstract class WidgetWindowBase : Window
         return PresentationSource.FromVisual(this)?.CompositionTarget is { } target ? target.TransformFromDevice.Transform(device) : device;
     }
 
+    /// <summary>
+    /// En küçük hücre boyutu. Görsel widget'larda içeriğin ölçeksiz boyutu (yazı/grafik küçülmesin); listelerde normal genişlik
+    /// ve kısa bir yükseklik (fazlası kaydırılır).
+    /// </summary>
     private (int W, int H) MinSpan(WidgetGrid.Spec g)
     {
-        var minWidth = ZoomByWidth ? Math.Max(MinCardWidth, _natural.Width * 0.55) : MinCardWidth;
-        return (WidgetGrid.SpanOf(new Size(minWidth, MinCardHeight), g).W, WidgetGrid.SpanOf(new Size(minWidth, MinCardHeight), g).H);
+        var width = Math.Max(MinCardWidth, _natural.Width);
+        var height = ZoomByWidth ? ListMinHeight : Math.Max(ListMinHeight / 2, NaturalContentHeight() + 2 * Card.BorderThickness.Top);
+        return WidgetGrid.SpanOf(new Size(width, height), g);
+    }
+
+    /// <summary>İçeriğin ölçeksiz yüksekliği (taşıyıcı doğal genişlikte ölçülür).</summary>
+    private double NaturalContentHeight()
+    {
+        if (_holder is null)
+        {
+            return 0;
+        }
+
+        _holder.Measure(new Size(_natural.Width, double.PositiveInfinity));
+        return _holder.DesiredSize.Height;
+    }
+
+    /// <summary>İçerik sonradan uzadıysa (hava durumu yüklendi, satır eklendi) kart yazıyı küçültmek yerine büyür.</summary>
+    private void EnsureFits()
+    {
+        if (!_custom || _resizing || ZoomByWidth || Options.SpanW <= 0)
+        {
+            return;
+        }
+
+        var spec = WidgetGrid.Make(CurrentWorkArea() ?? SystemParameters.WorkArea);
+        var min = MinSpan(spec);
+        if (Options.SpanW < min.W || Options.SpanH < min.H)
+        {
+            Options.SpanW = Math.Max(Options.SpanW, min.W);
+            Options.SpanH = Math.Max(Options.SpanH, min.H);
+            App.Current.Settings.Save();
+            ApplySize();
+            App.Current.WidgetManager?.Resolve(this);
+        }
     }
 
     private void BeginResize(WidgetGrid.Edges edges, Thumb grip, DragStartedEventArgs e)
@@ -306,6 +346,16 @@ public abstract class WidgetWindowBase : Window
 
         EnterCustomSize();
         var spec = WidgetGrid.Make(CurrentWorkArea() ?? SystemParameters.WorkArea);
+
+        // Eskiden kaydedilmiş çok küçük boyutlar yeni alt sınıra yükselir.
+        var min = MinSpan(spec);
+        if (Options.SpanW < min.W || Options.SpanH < min.H)
+        {
+            Options.SpanW = Math.Max(Options.SpanW, min.W);
+            Options.SpanH = Math.Max(Options.SpanH, min.H);
+            App.Current.Settings.Save();
+        }
+
         var span = (W: Math.Min(Options.SpanW, spec.Cols), H: Math.Min(Options.SpanH, spec.Rows));
         var size = WidgetGrid.SizeOf(span, spec);
         Width = size.Width + 2 * CardPad;
@@ -356,6 +406,11 @@ public abstract class WidgetWindowBase : Window
         Card.Height = double.NaN;
         SizeToContent = SizeToContent.Manual;
         _custom = true;
+        if (!ZoomByWidth)
+        {
+            _holder.SizeChanged += (_, _) => Dispatcher.BeginInvoke(EnsureFits, System.Windows.Threading.DispatcherPriority.Background);
+        }
+
         UpdateZoom();
     }
 

@@ -69,7 +69,7 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 
 <br />
 
-*Ayarlar → Widget'lar.* Her widget, aç/kapat anahtarı olan küçük bir karttır; **Ayarlar** düğmesi görünürlük, hep üstte, kilit ve "köşeye taşı" düğmelerini açar. Widget'lar macOS masaüstü widget'ları gibi ince bir ızgaraya oturur: sürüklerken oturacağı yer vurgulanır. Bir widget'ı **kenarından veya köşesinden** çekerek boyutlandırabilirsin: boyut ızgara hücrelerine oturur, kartlar puzzle parçaları gibi yan yana dizilir; içerik de karta göre büyür ve küçülür (listelerde yazı büyür ve daha çok satır görünür, saat ve göstergeler orantılı ölçeklenir). Kenara çift tıklayınca otomatik boyuta dönersin. Birbirinin ve barın üstüne binmez, ekranın dışına çıkarılamaz. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz.
+*Ayarlar → Widget'lar.* Her widget, aç/kapat anahtarı olan küçük bir karttır; **Ayarlar** düğmesi görünürlük, hep üstte, kilit ve "köşeye taşı" düğmelerini açar. Widget'lar macOS masaüstü widget'ları gibi ince bir ızgaraya oturur: sürüklerken oturacağı yer vurgulanır. Bir widget'ı **kenarından veya köşesinden** çekerek boyutlandırabilirsin: boyut ızgara hücrelerine oturur, kartlar puzzle parçaları gibi yan yana dizilir; içerik de karta göre büyür ve küçülür (listelerde yazı büyür ve daha çok satır görünür, saat ve göstergeler orantılı ölçeklenir). Bir widget normal boyutundan küçültülemez, böylece yazılar ve göstergeler okunur kalır; yalnızca büyütebilirsin. Kenara çift tıklayınca otomatik boyuta dönersin. Birbirinin ve barın üstüne binmez, ekranın dışına çıkarılamaz. Hepsi varsayılan kapalıdır ve neredeyse hiç CPU kullanmaz.
 
 <p align="center"><img src="docs/images/widgets-tr.png" alt="Diğer widget'lar" /></p>
 
