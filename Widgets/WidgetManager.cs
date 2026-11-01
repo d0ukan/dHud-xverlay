@@ -24,7 +24,12 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         [WidgetIds.Audio] = () => new AudioWidgetWindow(),
         [WidgetIds.Calendar] = () => new CalendarWidgetWindow(),
         [WidgetIds.Countdown] = () => new CountdownWidgetWindow(),
-        [WidgetIds.Launcher] = () => new LauncherWidgetWindow()
+        [WidgetIds.Launcher] = () => new LauncherWidgetWindow(),
+        [WidgetIds.Media] = () => new MediaWidgetWindow(),
+        [WidgetIds.TaskMan] = () => new TaskManWidgetWindow(),
+        [WidgetIds.Market] = () => new MarketWidgetWindow(),
+        [WidgetIds.Battery] = () => new BatteryWidgetWindow(),
+        [WidgetIds.Notepad] = () => new NotepadWidgetWindow()
     };
 
     private bool _suspended;

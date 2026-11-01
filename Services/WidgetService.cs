@@ -52,8 +52,13 @@ public static class WidgetIds
     public const string Calendar = "calendar";
     public const string Countdown = "countdown";
     public const string Launcher = "launcher";
+    public const string Media = "media";
+    public const string TaskMan = "taskman";
+    public const string Market = "market";
+    public const string Battery = "battery";
+    public const string Notepad = "notepad";
 
-    public static readonly string[] Extra = [Clipboard, Todo, SysInfo, Audio, Calendar, Countdown, Launcher];
+    public static readonly string[] Extra = [Clipboard, Todo, SysInfo, Audio, Calendar, Countdown, Launcher, Media, TaskMan, Market, Battery, Notepad];
 }
 
 /// <summary>Widget'ı ekranın neresine yerleştirileceği.</summary>
@@ -131,9 +136,24 @@ public sealed class LauncherItem
     public string Path { get; set; } = string.Empty;
 }
 
+/// <summary>Hızlı not defterinin bir sekmesi.</summary>
+public sealed class NotepadTab
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Title { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+}
+
 /// <summary>widgets.json içeriği: notlar, hatırlatıcılar, listeler ve widget konumları.</summary>
 public sealed class WidgetData
 {
+    /// <summary>Borsa widget'ının izlediği semboller (Yahoo Finance biçimi: BTC-USD, AAPL, USDTRY=X). null: henüz hiç seçilmedi (varsayılanlar konur).</summary>
+    public List<string>? Markets { get; set; }
+
+    /// <summary>Hızlı not defteri sekmeleri ve açık olan sekme.</summary>
+    public List<NotepadTab> NotepadTabs { get; set; } = [];
+    public string NotepadActive { get; set; } = string.Empty;
+
     /// <summary>Genel widget konumları (kimlik → konum): pano, yapılacaklar, sistem, ses, takvim, gün sayacı, başlatıcı.</summary>
     public Dictionary<string, WidgetPos> Positions { get; set; } = [];
     public List<TodoItem> Todos { get; set; } = [];
@@ -178,6 +198,9 @@ public sealed class WidgetService
     public const int MaxSubtasks = 20;
     public const int MaxCountdowns = 20;
     public const int MaxLaunchers = 12;
+    public const int MaxMarkets = 12;
+    public const int MaxNotepadTabs = 12;
+    public const int MaxNotepadLength = 100_000;
 
     // Henüz taşınmamış bir notun konumu NaN'dir; bu sayı JSON'a yazılamazsa tüm dosya kaydedilemezdi.
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -270,6 +293,23 @@ public sealed class WidgetService
 
         Data.Countdowns = (Data.Countdowns ?? []).Take(MaxCountdowns).ToList();
         Data.Launchers = (Data.Launchers ?? []).Where(l => !string.IsNullOrWhiteSpace(l.Path)).Take(MaxLaunchers).ToList();
+        if (Data.Markets is not null)
+        {
+            Data.Markets = Data.Markets.Select(MarketService.CleanSymbol).Where(s => s.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxMarkets).ToList();
+        }
+
+        Data.NotepadTabs = (Data.NotepadTabs ?? []).Where(t => t is not null).Take(MaxNotepadTabs).ToList();
+        foreach (var tab in Data.NotepadTabs)
+        {
+            tab.Title = (tab.Title ?? string.Empty).Trim();
+            tab.Text = tab.Text is { Length: > MaxNotepadLength } ? tab.Text[..MaxNotepadLength] : tab.Text ?? string.Empty;
+            if (string.IsNullOrEmpty(tab.Id))
+            {
+                tab.Id = Guid.NewGuid().ToString("N");
+            }
+        }
+
+        Data.NotepadActive ??= string.Empty;
         Data.Notes = Data.Notes.Take(MaxNotes).ToList();
         foreach (var note in Data.Notes)
         {

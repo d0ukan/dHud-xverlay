@@ -4,7 +4,7 @@
        WPF tipleri (Rect, Point, Window...) kullanıldığı için hedef net10.0-windows. Testler Debug yapılandırmasında çalışır:
        ana projenin Release ayarı (tek dosyalık, self-contained) test için gereksizdir. -->
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>

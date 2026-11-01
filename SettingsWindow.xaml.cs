@@ -227,7 +227,7 @@ public partial class SettingsWindow : Window
             var panel = (string)card.Tag switch
             {
                 "clock" or "stopwatch" or "tools" or "weather" or WidgetIds.Countdown or WidgetIds.Calendar => timePanel,
-                "notes" or WidgetIds.Todo or WidgetIds.Clipboard or WidgetIds.Launcher => notesPanel,
+                "notes" or WidgetIds.Todo or WidgetIds.Clipboard or WidgetIds.Launcher or WidgetIds.Notepad or WidgetIds.Market => notesPanel,
                 _ => systemPanel
             };
             panel.Children.Add(card);
@@ -295,6 +295,30 @@ public partial class SettingsWindow : Window
             panel.Children.Add(note);
         }));
         Add(Generic(WidgetIds.Audio, "S.WidgetAudio"));
+        Add(Generic(WidgetIds.Media, "S.WidgetMedia"));
+        Add(Generic(WidgetIds.TaskMan, "S.WidgetTaskMan", panel =>
+        {
+            var note = new TextBlock { Text = Loc.T("S.TaskManNote"), TextWrapping = TextWrapping.Wrap };
+            note.SetResourceReference(StyleProperty, "HintText");
+            panel.Children.Add(note);
+        }));
+        Add(Generic(WidgetIds.Battery, "S.WidgetBattery"));
+        Add(Generic(WidgetIds.Notepad, "S.WidgetNotepad"));
+        Add(Generic(WidgetIds.Market, "S.WidgetMarket", panel =>
+        {
+            var reset = new Button { Content = Loc.T("S.MarketReset"), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+            reset.SetResourceReference(StyleProperty, "DarkButton");
+            reset.Click += (_, _) =>
+            {
+                App.Current.Widgets.Data.Markets = [.. MarketService.DefaultSymbols];
+                App.Current.Widgets.ScheduleSave();
+                s.NotifyChanged();
+            };
+            panel.Children.Add(reset);
+            var privacy = new TextBlock { Text = Loc.T("S.MarketPrivacy"), TextWrapping = TextWrapping.Wrap };
+            privacy.SetResourceReference(StyleProperty, "HintText");
+            panel.Children.Add(privacy);
+        }));
         Add(Generic(WidgetIds.Calendar, "S.WidgetCalendar", panel =>
         {
             var label = new TextBlock { Text = Loc.T("S.CalendarSource"), Margin = new Thickness(0, 6, 0, 2) };

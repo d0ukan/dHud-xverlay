@@ -77,6 +77,8 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 
 <p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
 
+<p align="center"><img src="docs/images/widgets-more.png" alt="Media player, task manager, markets, notepad and battery widgets" /></p>
+
 | Widget | What it does |
 | --- | --- |
 | **Clock** | Time and date, optional seconds and a second time zone. |
@@ -86,11 +88,16 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 | **Stopwatch** | Start, pause, laps. |
 | **Day counter** | "12 days left" for any date. |
 | **Calendar** | The next 7 days from an `.ics` file or link (repeating events work). No account sign-in. |
-| **Weather** | Current weather and a 3-day forecast for your city. The only widget that uses the internet; off until you pick a city. |
+| **Weather** | Current weather and a 3-day forecast for your city. Uses the internet (as do Markets and a calendar link); off until you pick a city. |
 | **System summary** | CPU, GPU, VRAM, RAM, disk and network on bars. |
 | **Quick launcher** | Your favourite apps and files as icons (opened without administrator rights). |
 | **Clipboard history** | The last 10 copied texts. Kept in memory only; password managers' private copies are skipped. |
 | **Sound and microphone** | Volume, mute and microphone mute. |
+| **Media player** | The track that is playing (any app: Spotify, browser, VLC...) with cover, progress and previous / play-pause / next buttons. Uses Windows' own media controls. |
+| **Task manager** | A simple version: which app uses how much **CPU, RAM, disk and internet**. Processes of the same app (a browser's many tabs) are summed in one row; click a column to sort. The internet column needs dHud to run as administrator. |
+| **Markets** | Crypto, stocks and currencies (`BTC-USD`, `AAPL`, `THYAO.IS`, `USDTRY=X`, `GC=F`) with the daily change and a tiny day chart. You choose the symbols. Uses the internet (Yahoo Finance) only while visible; prices can be delayed. |
+| **Battery and devices** | Laptop battery with charging state and time left, plus the battery of Bluetooth headsets, mice, keyboards and controllers that report it to Windows. |
+| **Notepad** | A notepad with tabs for longer texts (up to 12 tabs). Click a tab to open it, double-click to rename. Saved as you type. |
 
 Notes and lists are stored only on your PC in `%AppData%\dHud\widgets.json` (saved safely, with a `.bak` copy).
 
@@ -187,7 +194,7 @@ dHud checks GitHub for new versions and updates with one click. **Requirements:*
 
 ## Privacy
 
-No telemetry. The only internet requests are the update check to GitHub and, only if you turn on those widgets, the weather lookup at open-meteo.com (the city you search for and its coordinates; no account, no key) or a calendar link you entered. The phone connection stays on your local network and needs the pairing key.
+No telemetry. The only internet requests are the update check to GitHub and, only if you turn on those widgets, the weather lookup at open-meteo.com (the city you search for and its coordinates; no account, no key), a calendar link you entered, or the prices of the symbols you add to the Markets widget (Yahoo Finance; only the symbols are sent). The phone connection stays on your local network and needs the pairing key.
 
 ## Credits and license
 

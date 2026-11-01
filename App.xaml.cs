@@ -538,7 +538,7 @@ public partial class App : Application
         var s = Settings.Current;
         // Bar kapalıyken yalnızca bar için gereken okumalar durur; sistem özeti, telefon ve fan kontrolü kendi verisini yine ister.
         var bar = s.ShowOverlay;
-        var others = s.Extra(WidgetIds.SysInfo).Enabled || s.MobileEnabled;
+        var others = s.Extra(WidgetIds.SysInfo).Enabled || s.Extra(WidgetIds.TaskMan).Enabled || s.MobileEnabled;
         Monitor.CpuEnabled = (bar && (s.ShowCpu || s.ShowCores)) || s.FanControlEnabled || others;
         Monitor.GpuEnabled = (bar && s.ShowGpu) || s.FanControlEnabled || others;
         Monitor.FanEnabled = (bar && s.ShowFan) || s.FanControlEnabled || FanWindowOpen;
@@ -689,7 +689,7 @@ public partial class App : Application
         Monitor.Interval = TimeSpan.FromMilliseconds(s.UpdateIntervalMs);
         Monitor.Network.PingHost = s.PingHost;
         ApplyMonitorFlags();
-        var needOthers = s.Extra(WidgetIds.SysInfo).Enabled || s.MobileEnabled;
+        var needOthers = s.Extra(WidgetIds.SysInfo).Enabled || s.Extra(WidgetIds.TaskMan).Enabled || s.MobileEnabled;
         Monitor.Network.Enabled = (s.ShowOverlay && s.ShowNetwork) || needOthers;
         Monitor.Network.PingEnabled = (s.ShowOverlay && s.ShowPing) || s.MobileEnabled;
         ApplyFullscreenVisibility();   // (içinde ApplyOverlayVisibility de çağrılır)

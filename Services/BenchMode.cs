@@ -108,7 +108,12 @@ internal sealed class BenchMode
         ("Ses", (s, on) => s.Extra(WidgetIds.Audio).Enabled = on),
         ("Takvim", (s, on) => s.Extra(WidgetIds.Calendar).Enabled = on),
         ("Gün sayacı", (s, on) => s.Extra(WidgetIds.Countdown).Enabled = on),
-        ("Başlatıcı", (s, on) => s.Extra(WidgetIds.Launcher).Enabled = on)
+        ("Başlatıcı", (s, on) => s.Extra(WidgetIds.Launcher).Enabled = on),
+        ("Medya", (s, on) => s.Extra(WidgetIds.Media).Enabled = on),
+        ("Görev yöneticisi", (s, on) => s.Extra(WidgetIds.TaskMan).Enabled = on),
+        ("Borsa", (s, on) => s.Extra(WidgetIds.Market).Enabled = on),
+        ("Pil", (s, on) => s.Extra(WidgetIds.Battery).Enabled = on),
+        ("Not defteri", (s, on) => s.Extra(WidgetIds.Notepad).Enabled = on)
     ];
 
     private TimeSpan Seconds(double seconds) => TimeSpan.FromSeconds(Math.Max(2, seconds * _scale));

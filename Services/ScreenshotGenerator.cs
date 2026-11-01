@@ -40,6 +40,7 @@ internal static class ScreenshotGenerator
 
             Save(outDir, "overview" + suffix, await Overview());
             Save(outDir, "widgets" + suffix, await MoreWidgets());
+            Save(outDir, "widgets-more" + suffix, await NewWidgets());
             Save(outDir, "settings-appearance" + suffix, Settings("AppearanceTab"));
             Save(outDir, "settings-widgets" + suffix, Settings("WidgetsTab"));
             Save(outDir, "settings-profiles" + suffix, Settings("ProfilesTab"));
@@ -116,6 +117,13 @@ internal static class ScreenshotGenerator
         }
 
         w.Todos.AddRange([new TodoItem { Text = L("Back up photos", "Fotoğrafları yedekle") }, new TodoItem { Text = L("Reply to Ayşe", "Ayşe'ye cevap yaz") }, new TodoItem { Text = L("Pay the electricity bill", "Elektrik faturasını öde"), Done = true }]);
+        w.NotepadTabs.AddRange(
+        [
+            new NotepadTab { Title = L("Ideas", "Fikirler"), Text = L("- Dark theme for the phone app\n- Weekly summary of play time\n- Widget presets per game\n\nTalk to Ayşe about the logo on Friday.", "- Telefon uygulaması için koyu tema\n- Haftalık oyun süresi özeti\n- Oyun başına widget ön ayarları\n\nCuma günü logo için Ayşe ile konuş.") },
+            new NotepadTab { Title = L("Meeting", "Toplantı"), Text = "…" },
+            new NotepadTab { Title = L("Recipes", "Tarifler"), Text = "…" }
+        ]);
+        w.NotepadActive = w.NotepadTabs[0].Id;
         w.Countdowns.AddRange([
             new Countdown { Name = L("Holiday", "Tatil"), Date = DateTime.Today.AddDays(23) },
             new Countdown { Name = L("Exam", "Sınav"), Date = DateTime.Today.AddDays(6) },
@@ -203,6 +211,58 @@ internal static class ScreenshotGenerator
         };
         var result = Compose(new Size(1330, 500), items);
         CloseAll(todo, countdown, launcher, clipboard, audio, tools, stopwatch);
+        return Task.FromResult(result);
+    }
+
+    private static Task<BitmapSource> NewWidgets()
+    {
+        static string L(string en, string tr) => Loc.Current == AppLanguage.Turkish ? tr : en;
+        const long Mb = 1024 * 1024;
+
+        var taskman = new TaskManWidgetWindow();
+        taskman.ShowDemo(
+        [
+            new ProcRow("chrome", 14, 12.4, 1400 * Mb, 2_300_000, 1_800_000),
+            new ProcRow("Cyberpunk2077", 1, 31.8, 5400 * Mb, 11_000_000, 120_000),
+            new ProcRow("Discord", 6, 2.1, 640 * Mb, 4_000, 95_000),
+            new ProcRow("Code", 9, 3.7, 1100 * Mb, 380_000, 4_000),
+            new ProcRow("Spotify", 5, 0.8, 380 * Mb, 12_000, 210_000),
+            new ProcRow("explorer", 1, 0.4, 210 * Mb, 56_000, 0),
+            new ProcRow("OneDrive", 1, 0.2, 120 * Mb, 810_000, 640_000),
+            new ProcRow("dHud", 1, 0.3, 190 * Mb, 2_000, 0),
+            new ProcRow("steam", 3, 0.5, 260 * Mb, 30_000, 8_000)
+        ]);
+
+        var market = new MarketWidgetWindow();
+        static IReadOnlyList<double> Wave(double start, double end, double wiggle) =>
+            Enumerable.Range(0, 40).Select(i => start + (end - start) * i / 39 + Math.Sin(i / 2.5) * wiggle).ToList();
+        market.ShowDemo(
+        [
+            new MarketQuote("BTC-USD", "Bitcoin USD", 77986.69, 77440.93, "USD", Wave(77100, 77990, 250)),
+            new MarketQuote("ETH-USD", "Ethereum USD", 3412.55, 3490.2, "USD", Wave(3495, 3410, 14)),
+            new MarketQuote("USDTRY=X", "USD/TRY", 49.9366, 49.9095, "TRY", Wave(49.90, 49.94, 0.01)),
+            new MarketQuote("EURTRY=X", "EUR/TRY", 54.2108, 54.3012, "TRY", Wave(54.30, 54.21, 0.02)),
+            new MarketQuote("GC=F", "Gold", 2412.8, 2398.1, "USD", Wave(2398, 2413, 3))
+        ]);
+
+        var media = new MediaWidgetWindow();
+        media.ShowDemo(L("Midnight City", "Gece Yarısı Şehri"), "M83", "Spotify", TimeSpan.FromSeconds(112), TimeSpan.FromSeconds(244));
+
+        var battery = new BatteryWidgetWindow();
+        battery.ShowDemo([new DeviceBattery("WH-1000XM5", 82), new DeviceBattery("MX Master 3S", 54), new DeviceBattery("Xbox Wireless Controller", 17)]);
+
+        var notepad = new NotepadWidgetWindow();
+
+        var items = new List<(BitmapSource Image, Point At)>
+        {
+            (Snap(Root(taskman)), new Point(20, 20)),
+            (Snap(Root(market)), new Point(430, 20)),
+            (Snap(Root(notepad)), new Point(760, 20)),
+            (Snap(Root(media)), new Point(20, 350)),
+            (Snap(Root(battery)), new Point(350, 350))
+        };
+        var result = Compose(new Size(1130, 580), items);
+        CloseAll(taskman, market, media, battery, notepad);
         return Task.FromResult(result);
     }
 

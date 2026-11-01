@@ -77,6 +77,8 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 
 <p align="center"><img src="docs/images/widgets-tr.png" alt="Diğer widget'lar" /></p>
 
+<p align="center"><img src="docs/images/widgets-more-tr.png" alt="Medya oynatıcı, görev yöneticisi, borsa, not defteri ve pil widget'ları" /></p>
+
 | Widget | Ne yapar |
 | --- | --- |
 | **Saat** | Saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi. |
@@ -86,11 +88,16 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 | **Kronometre** | Başlat, duraklat, tur. |
 | **Gün sayacı** | Herhangi bir tarih için "12 gün kaldı". |
 | **Takvim** | Bir `.ics` dosyasından veya bağlantısından önümüzdeki 7 gün (tekrarlayan etkinlikler çalışır). Hesap girişi yok. |
-| **Hava durumu** | Şehrin için güncel hava ve 3 günlük tahmin. İnternet kullanan tek widget; şehir seçene kadar kapalı. |
+| **Hava durumu** | Şehrin için güncel hava ve 3 günlük tahmin. İnternet kullanır (Borsa ve takvim bağlantısı gibi); şehir seçene kadar kapalı. |
 | **Sistem özeti** | CPU, GPU, VRAM, RAM, disk ve ağ çubuklarla. |
 | **Hızlı başlatıcı** | Sık kullandığın uygulama ve dosyalar simge olarak (yönetici yetkisi olmadan açılır). |
 | **Pano geçmişi** | Son 10 kopyalanan metin. Yalnızca bellekte tutulur; parola yöneticilerinin gizli kopyaları atlanır. |
 | **Ses ve mikrofon** | Ses düzeyi, sessize alma ve mikrofon kapatma. |
+| **Medya oynatıcı** | Çalan parça (Spotify, tarayıcı, VLC... hangi uygulama olursa) kapağı, ilerlemesi ve önceki / oynat-duraklat / sonraki düğmeleriyle. Windows'un kendi medya denetimini kullanır. |
+| **Görev yöneticisi** | Basit bir sürüm: hangi uygulama ne kadar **CPU, RAM, disk ve internet** kullanıyor. Aynı uygulamanın işlemleri (tarayıcının onlarca sekmesi) tek satırda toplanır; sütuna tıklayınca ona göre sıralanır. İnternet sütunu için dHud'un yönetici olarak çalışması gerekir. |
+| **Borsa** | Kripto, hisse ve döviz (`BTC-USD`, `AAPL`, `THYAO.IS`, `USDTRY=X`, `GC=F`) günlük değişim ve küçük gün grafiğiyle. Sembolleri sen seçersin. Yalnızca görünürken internet kullanır (Yahoo Finance); fiyatlar gecikmeli olabilir. |
+| **Pil ve cihazlar** | Dizüstü pili (şarj durumu ve kalan süre) ile Windows'a pil düzeyini bildiren Bluetooth kulaklık, mouse, klavye ve kolların pili. |
+| **Not defteri** | Uzun yazılar için sekmeli not defteri (en fazla 12 sekme). Sekmeye tıkla aç, çift tıkla adını değiştir. Yazdıkça kaydedilir. |
 
 Notlar ve listeler yalnızca bilgisayarında `%AppData%\dHud\widgets.json` içinde durur (güvenli yazılır, `.bak` yedeği tutulur).
 
@@ -187,7 +194,7 @@ dHud, yeni sürümleri GitHub'dan denetler ve tek tıkla günceller. **Gereksini
 
 ## Gizlilik
 
-Telemetri yoktur. Tek internet istekleri GitHub'a güncelleme denetimi ve yalnızca bu widget'ları açarsan open-meteo.com'a hava durumu sorgusu (aradığın şehir ve koordinatları; hesap ve anahtar yok) ya da girdiğin bir takvim bağlantısıdır. Telefon bağlantısı yerel ağında kalır ve eşleştirme anahtarı ister.
+Telemetri yoktur. Tek internet istekleri GitHub'a güncelleme denetimi ve yalnızca bu widget'ları açarsan open-meteo.com'a hava durumu sorgusu (aradığın şehir ve koordinatları; hesap ve anahtar yok), girdiğin bir takvim bağlantısı ya da Borsa widget'ına eklediğin sembollerin fiyat sorgusudur (Yahoo Finance; yalnızca semboller gönderilir). Telefon bağlantısı yerel ağında kalır ve eşleştirme anahtarı ister.
 
 ## Katkılar ve lisans
 
