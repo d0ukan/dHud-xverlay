@@ -16,10 +16,10 @@ namespace DHud.Services;
 /// </summary>
 public sealed class MobileLinkService : IDisposable
 {
-    public const int Port = 47821;
+    public const int DefaultPort = 47821;
 
     /// <summary>Mobil uygulamanın PC'yi ağda bulması için UDP portu (IP değiştiğinde yeniden eşleşme gerekmesin).</summary>
-    public const int DiscoveryPort = 47822;
+    public const int DefaultDiscoveryPort = 47822;
 
     private const int ProtocolVersion = 1;
     private const int MaxClients = 8;
@@ -42,12 +42,21 @@ public sealed class MobileLinkService : IDisposable
     private UdpClient? _discovery;
     private CancellationTokenSource? _cts;
 
-    public MobileLinkService(HardwareMonitorService monitor, SettingsService settings)
+    /// <param name="port">TCP portu; 0 = boş bir port seç (testler). Dinleme başlayınca gerçek port <see cref="Port"/>'ta olur.</param>
+    /// <param name="discoveryPort">UDP keşif portu; negatifse keşif kapalı (testler).</param>
+    public MobileLinkService(HardwareMonitorService monitor, SettingsService settings, int port = DefaultPort, int discoveryPort = DefaultDiscoveryPort)
     {
         _monitor = monitor;
         _settings = settings;
+        Port = port;
+        DiscoveryPort = discoveryPort;
         _monitor.SnapshotUpdated += OnSnapshot;
     }
+
+    /// <summary>Dinlenen TCP portu (0 verildiyse dinleme başlayınca gerçek port yazılır).</summary>
+    public int Port { get; private set; }
+
+    public int DiscoveryPort { get; }
 
     /// <summary>Ölçülen oyun FPS'i (yoksa null). Anlık görüntüyle birlikte cihazlara gönderilir.</summary>
     public Func<float?>? FpsProvider { get; set; }
@@ -180,6 +189,7 @@ public sealed class MobileLinkService : IDisposable
         {
             var listener = new TcpListener(IPAddress.Any, Port);
             listener.Start();
+            Port = ((IPEndPoint)listener.LocalEndpoint).Port;
             _listener = listener;
             _cts = new CancellationTokenSource();
             LastError = null;
@@ -229,6 +239,11 @@ public sealed class MobileLinkService : IDisposable
     /// </summary>
     private void StartDiscovery(CancellationToken ct)
     {
+        if (DiscoveryPort < 0)
+        {
+            return;
+        }
+
         try
         {
             var udp = new UdpClient { ExclusiveAddressUse = false };

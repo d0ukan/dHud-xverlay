@@ -1,0 +1,4 @@
+{
+  "Layout": "Vertical", "Compact": false, "Scale": 1.0, "BackgroundOpacity": 0.7, "AlwaysOnTop": true,
+  "WarnTemperature": 65, "HotTemperature": 85, "ShowCpu": true, "ShowGpu": true, "ShowRam": true, "Language": "English"
+}

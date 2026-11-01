@@ -1,3 +1,4 @@
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -5,13 +6,17 @@ using DHud.Services;
 
 namespace DHud.Widgets;
 
-/// <summary>Yapılacaklar listesi: madde ekle (Enter), tik at, sil, tamamlananları temizle. widgets.json'da saklanır.</summary>
+/// <summary>
+/// Yapılacaklar listesi: madde ekle (Enter), alt görev ekle (＋), tik at, sil, tamamlananları temizle.
+/// Sağ tık: alt görevleriyle çoğalt / metin olarak panoya kopyala. widgets.json'da saklanır.
+/// </summary>
 public sealed class TodoWidgetWindow : WidgetWindowBase
 {
     private readonly WidgetService _widgets = App.Current.Widgets;
     private readonly StackPanel _list = new();
     private readonly TextBox _input;
     private readonly TextBlock _footer;
+    private string? _addingSubTo;   // alt görev kutusu açık olan görevin kimliği
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.Todo);
 
@@ -75,13 +80,114 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
         Rebuild();
     }
 
+    private void AddSubtask(TodoItem parent, string text)
+    {
+        text = text.Trim();
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        if (parent.Subtasks.Count >= WidgetService.MaxSubtasks)
+        {
+            _footer.Text = Loc.T("W.TodoSubFull", WidgetService.MaxSubtasks);
+            return;
+        }
+
+        parent.Subtasks.Add(new TodoItem { Text = text });
+        parent.Done = false;            // yeni yapılmamış iş eklendi: ana görev tamam sayılmaz
+        _widgets.ScheduleSave();
+        Rebuild();
+    }
+
+    private void Duplicate(TodoItem item)
+    {
+        if (_widgets.Data.Todos.Count >= WidgetService.MaxTodos)
+        {
+            _footer.Text = Loc.T("W.TodoFull", WidgetService.MaxTodos);
+            return;
+        }
+
+        var index = _widgets.Data.Todos.IndexOf(item);
+        _widgets.Data.Todos.Insert(index < 0 ? _widgets.Data.Todos.Count : index + 1, item.Duplicate());
+        _widgets.ScheduleSave();
+        Rebuild();
+    }
+
+    private void CopyAsText(TodoItem item)
+    {
+        try
+        {
+            Clipboard.SetText(ToText(item));
+            _footer.Text = Loc.T("W.TodoCopied");
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            _footer.Text = Loc.T("W.ClipBusy"); // pano başka uygulamada meşgul
+        }
+    }
+
+    /// <summary>"- [ ] Görev" + girintili "- [x] alt görev" satırları.</summary>
+    public static string ToText(TodoItem item)
+    {
+        var sb = new StringBuilder();
+        sb.Append("- [").Append(item.Done ? 'x' : ' ').Append("] ").AppendLine(item.Text);
+        foreach (var sub in item.Subtasks)
+        {
+            sb.Append("  - [").Append(sub.Done ? 'x' : ' ').Append("] ").AppendLine(sub.Text);
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
     private void ClearDone()
     {
-        if (_widgets.Data.Todos.RemoveAll(t => t.Done) > 0)
+        var removed = _widgets.Data.Todos.RemoveAll(t => t.Done);
+        foreach (var todo in _widgets.Data.Todos)
+        {
+            removed += todo.Subtasks.RemoveAll(s => s.Done);   // ana görev açıkken biten alt görevler de temizlenir
+        }
+
+        if (removed > 0)
         {
             _widgets.ScheduleSave();
             Rebuild();
         }
+    }
+
+    private CheckBox CheckRow(TodoItem item, Action<bool> onToggle)
+    {
+        var label = new TextBlock
+        {
+            Text = item.Text,
+            TextWrapping = TextWrapping.Wrap,
+            TextDecorations = item.Done ? TextDecorations.Strikethrough : null,
+            Opacity = item.Done ? 0.5 : 1
+        };
+        var check = new CheckBox { Content = label, IsChecked = item.Done };
+        check.SetResourceReference(StyleProperty, "DarkCheckBox");
+        check.Click += (_, _) =>
+        {
+            onToggle(check.IsChecked == true);
+            _widgets.ScheduleSave();
+            Rebuild();
+        };
+        return check;
+    }
+
+    private Grid Row(UIElement check, params Button[] buttons)
+    {
+        var row = new Grid();
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.Children.Add(check);
+        foreach (var button in buttons)
+        {
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(button, row.ColumnDefinitions.Count - 1);
+            row.Children.Add(button);
+        }
+
+        return row;
     }
 
     private void Rebuild()
@@ -90,37 +196,78 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
         var todos = _widgets.Data.Todos;
         foreach (var item in todos.OrderBy(t => t.Done).ToList())
         {
-            var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var label = new TextBlock
-            {
-                Text = item.Text,
-                TextWrapping = TextWrapping.Wrap,
-                TextDecorations = item.Done ? TextDecorations.Strikethrough : null,
-                Opacity = item.Done ? 0.5 : 1
-            };
-            var check = new CheckBox { Content = label, IsChecked = item.Done };
-            check.SetResourceReference(StyleProperty, "DarkCheckBox");
             var current = item;
-            check.Click += (_, _) =>
+            var check = CheckRow(current, done =>
             {
-                current.Done = check.IsChecked == true;
-                _widgets.ScheduleSave();
-                Rebuild();
-            };
+                current.Done = done;
+                foreach (var sub in current.Subtasks)
+                {
+                    sub.Done = done;            // ana görevi işaretlemek alt görevleri de işaretler
+                }
+            });
 
+            var add = IconButton("＋", Loc.T("W.TodoSubAdd"), (_, _) =>
+            {
+                _addingSubTo = _addingSubTo == current.Id ? null : current.Id;
+                Rebuild();
+            });
             var remove = IconButton("✕", Loc.T("W.Cancel"), (_, _) =>
             {
-                _widgets.Data.Todos.Remove(current);
+                todos.Remove(current);
                 _widgets.ScheduleSave();
                 Rebuild();
             });
-            Grid.SetColumn(remove, 1);
-            row.Children.Add(check);
-            row.Children.Add(remove);
-            _list.Children.Add(row);
+
+            var main = Row(check, add, remove);
+            main.Margin = new Thickness(0, 2, 0, 2);
+            main.ContextMenu = BuildMenu(current);
+            _list.Children.Add(main);
+
+            if (current.Subtasks.Count > 0)
+            {
+                var progress = Subtle($"{current.Subtasks.Count(s => s.Done)}/{current.Subtasks.Count}", 11);
+                progress.Margin = new Thickness(26, -2, 0, 2);
+                _list.Children.Add(progress);
+            }
+
+            foreach (var sub in current.Subtasks)
+            {
+                var subItem = sub;
+                var subCheck = CheckRow(subItem, done => subItem.Done = done);
+                var subRemove = IconButton("✕", Loc.T("W.Cancel"), (_, _) =>
+                {
+                    current.Subtasks.Remove(subItem);
+                    _widgets.ScheduleSave();
+                    Rebuild();
+                });
+                var subRow = Row(subCheck, subRemove);
+                subRow.Margin = new Thickness(22, 0, 0, 0);
+                subRow.ContextMenu = BuildMenu(current);
+                _list.Children.Add(subRow);
+            }
+
+            if (_addingSubTo == current.Id)
+            {
+                var box = Field(200);
+                box.Margin = new Thickness(22, 2, 0, 4);
+                box.ToolTip = Loc.T("W.TodoSubHint");
+                box.KeyDown += (_, e) =>
+                {
+                    if (e.Key == Key.Enter)
+                    {
+                        AddSubtask(current, box.Text);   // kutu açık kalır: arka arkaya eklenebilir
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.Escape)
+                    {
+                        _addingSubTo = null;
+                        Rebuild();
+                        e.Handled = true;
+                    }
+                };
+                _list.Children.Add(box);
+                box.Dispatcher.BeginInvoke(() => box.Focus(), System.Windows.Threading.DispatcherPriority.Input);
+            }
         }
 
         if (todos.Count == 0)
@@ -129,5 +276,24 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
         }
 
         _footer.Text = todos.Count == 0 ? string.Empty : Loc.T("W.TodoLeft", todos.Count(t => !t.Done));
+    }
+
+    private ContextMenu BuildMenu(TodoItem item)
+    {
+        var menu = new ContextMenu();
+        var sub = new MenuItem { Header = Loc.T("W.TodoSubAdd") };
+        sub.Click += (_, _) =>
+        {
+            _addingSubTo = item.Id;
+            Rebuild();
+        };
+        var duplicate = new MenuItem { Header = Loc.T("W.TodoDuplicate") };
+        duplicate.Click += (_, _) => Duplicate(item);
+        var copy = new MenuItem { Header = Loc.T("W.TodoCopy") };
+        copy.Click += (_, _) => CopyAsText(item);
+        menu.Items.Add(sub);
+        menu.Items.Add(duplicate);
+        menu.Items.Add(copy);
+        return menu;
     }
 }

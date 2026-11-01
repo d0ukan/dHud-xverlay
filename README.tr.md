@@ -77,7 +77,7 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 | --- | --- |
 | **Saat** | Saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi. |
 | **Yapışkan notlar** | En fazla 30 not, **klasör sekmeleri** gibi üst üste: sekmeye tıklayınca öne gelir, sekmeyi sürükleyince yığın taşınır. Yazdıkça kaydedilir. |
-| **Yapılacaklar** | Enter ile iş ekle, tik at, bitenleri temizle. |
+| **Yapılacaklar** | Enter ile iş ekle, ＋ ile alt görev ekle, tik at, bitenleri temizle. Göreve sağ tıkla: alt görevleriyle çoğalt veya metin olarak kopyala. |
 | **Zamanlayıcı ve hatırlatıcı** | Hızlı zamanlayıcılar, saate göre hatırlatıcı ve pomodoro. Bildirim ve ses (istersen telefonda da). |
 | **Kronometre** | Başlat, duraklat, tur. |
 | **Gün sayacı** | Herhangi bir tarih için "12 gün kaldı". |

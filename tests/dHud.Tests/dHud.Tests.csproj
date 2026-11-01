@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- dHud için otomatik testler. Çalıştırmak: tests\run-tests.ps1 (veya `dotnet test tests\dHud.Tests`).
+       WPF tipleri (Rect, Point, Window...) kullanıldığı için hedef net10.0-windows. Testler Debug yapılandırmasında çalışır:
+       ana projenin Release ayarı (tek dosyalık, self-contained) test için gereksizdir. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>DHud.Tests</RootNamespace>
+    <NoWarn>$(NoWarn);WFO0003;xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\dHud.csproj" />
+  </ItemGroup>
+
+  <!-- Android uygulamasının saf veri sınıfları: PC'nin ürettiği JSON bunlara çözülür (protokol sapması yakalanır). -->
+  <ItemGroup>
+    <Compile Include="..\..\mobile\dHud.Mobile\Services\Models.cs" Link="Support\Mobile\Models.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- WinForms isim alanları global eklenmesin (WPF tipleriyle çakışır); ana projeyle aynı. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

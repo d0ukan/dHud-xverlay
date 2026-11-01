@@ -1,0 +1,8 @@
+{
+  "Layout": "Horizontal", "Scale": 1.25, "BackgroundOpacity": 0.5, "CpuWarnTemperature": 70, "CpuHotTemperature": 90,
+  "GpuWarnTemperature": 70, "GpuHotTemperature": 88, "ShowFan": true, "FanControlEnabled": true,
+  "Fans": { "/lpc/nct6687d/0/control/1": { "Mode": "Curve", "ManualPercent": 50, "Source": "Max", "MinPercent": 20,
+    "Curve": [ {"Temp":30,"Percent":60}, {"Temp":50,"Percent":30}, {"Temp":70,"Percent":100} ] } },
+  "CurvePresets": [ { "Name": "Gece", "MinPercent": 15, "Curve": [ {"Temp":30,"Percent":20}, {"Temp":80,"Percent":100} ] } ],
+  "MobileEnabled": true, "MobileToken": "abc", "Language": "Turkish"
+}

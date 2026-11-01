@@ -675,7 +675,7 @@ public partial class SettingsWindow : Window
             ? Loc.T("S.MobileNoNetwork")
             : link.LastError is { } error
                 ? Loc.T("S.MobileError", error)
-                : Loc.T("S.MobileStatus", $"{link.GetLocalAddresses().First()}:{MobileLinkService.Port}", link.ClientCount);
+                : Loc.T("S.MobileStatus", $"{link.GetLocalAddresses().First()}:{link.Port}", link.ClientCount);
     }
 
     private static BitmapImage CreateQrImage(string text)

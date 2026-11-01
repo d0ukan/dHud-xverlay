@@ -103,8 +103,9 @@ public sealed class CountdownWidgetWindow : WidgetWindowBase
     public static bool TryParseDate(string text, out DateTime date)
     {
         text = text.Trim();
-        return DateTime.TryParse(text, CultureInfo.CurrentCulture, DateTimeStyles.None, out date)
-               || DateTime.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+        // ISO önce: Farsça/Tay takviminde "2026-12-25" yanlış yıla (2648, 1483) çözülüyordu.
+        return DateTime.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date)
+               || DateTime.TryParse(text, CultureInfo.CurrentCulture, DateTimeStyles.None, out date);
     }
 
     /// <summary>Bugünden verilen güne gün farkı: pozitif = kaldı, 0 = bugün, negatif = geçti.</summary>

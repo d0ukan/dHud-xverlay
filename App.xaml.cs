@@ -82,6 +82,14 @@ public partial class App : Application
             Settings = new SettingsService(); // artık yeni klasörün settings.json'ını kullanır
         }
 
+        // Performans ölçümü (--bench): gerçek başlangıç yolu çalışır; ama geçici veri klasörü, tek örnek ve UAC atlanır, donanıma yazılmaz (bkz. BenchMode).
+        var bench = BenchMode.IsRequested(e.Args);
+        if (bench && dataIndex < 0)
+        {
+            AppPaths.DataDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dhud-bench-" + Guid.NewGuid().ToString("N"));
+            Settings = new SettingsService();
+        }
+
         // README ekran görüntüleri: pencereler ekrana çıkmadan demo verilerle görüntü dosyasına çizilir (bkz. ScreenshotGenerator).
         var shotIndex = Array.IndexOf(e.Args, "--screenshots");
         if (shotIndex >= 0 && shotIndex + 1 < e.Args.Length)
@@ -95,7 +103,7 @@ public partial class App : Application
         // Güncelleme sonrası yeniden başlatıldıysak eski örneğin kapanıp mutex'i bırakmasını bekle.
         var restarted = e.Args.Contains(UpdateService.RestartedArgument);
         // Geliştirme/ölçüm kolaylığı: --allow-multiple ile aynı anda birden fazla örnek açılabilir.
-        var acquired = e.Args.Contains("--allow-multiple") || TryAcquireSingleInstance();
+        var acquired = e.Args.Contains("--allow-multiple") || bench || TryAcquireSingleInstance();
         for (var i = 0; restarted && !acquired && i < 20; i++)
         {
             Thread.Sleep(500);
@@ -110,7 +118,7 @@ public partial class App : Application
 
         // CPU sıcaklığı için yönetici yetkisi gerekir. Yetki yoksa bir kez UAC ile yeniden başlatmayı dene;
         // kullanıcı reddederse yetkisiz devam edilir (GPU değerleri genelde yine okunur).
-        IsElevated = AdminHelper.IsElevated();
+        IsElevated = AdminHelper.IsElevated() || bench;
         if (!IsElevated && !e.Args.Contains(AdminHelper.ElevatedArgument))
         {
             // Yeni (yükseltilmiş) örnek mutex'i alabilsin diye önce bırak.
@@ -133,7 +141,14 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
 
         Settings.Load();
-        StartupManager.MigrateLegacy();
+        if (bench)
+        {
+            BenchMode.Prepare(Settings.Current);
+        }
+        else
+        {
+            StartupManager.MigrateLegacy();
+        }
 
         // Widget'lar: notlar, hatırlatıcılar, saat. Hatırlatıcı zamanı gelince bildirim + ses (+ istenirse telefon).
         Widgets = new WidgetService();
@@ -176,7 +191,8 @@ public partial class App : Application
             _tray?.ShowBalloon(Loc.T("F.Title"), Loc.T("F.RemoteChanged", summary), Forms.ToolTipIcon.Info);
             _fanWindow?.Reload();
         };
-        MobileLink = new MobileLinkService(Monitor, Settings)
+        // Ölçümde kullanıcının çalışan dHud'uyla çakışmasın diye rastgele port, keşif kapalı.
+        MobileLink = new MobileLinkService(Monitor, Settings, bench ? 0 : MobileLinkService.DefaultPort, bench ? -1 : MobileLinkService.DefaultDiscoveryPort)
         {
             FpsProvider = () => Fps.Fps,
             FanProvider = () => RemoteFan.BuildState(),
@@ -250,8 +266,18 @@ public partial class App : Application
         OnSettingsChanged();
 
         Monitor.SnapshotUpdated += snapshot => Dispatcher.BeginInvoke(() => OnSnapshot(snapshot));
-        Monitor.Start(TimeSpan.FromMilliseconds(Settings.Current.UpdateIntervalMs));
+        if (!bench || BenchMode.UseRealHardware(e.Args))
+        {
+            Monitor.Start(TimeSpan.FromMilliseconds(Settings.Current.UpdateIntervalMs));
+        }
+
         StartMemoryTrimTimer();
+
+        if (bench)
+        {
+            _ = BenchMode.RunAsync(this, e.Args);
+            return;
+        }
 
         if (!IsElevated)
         {

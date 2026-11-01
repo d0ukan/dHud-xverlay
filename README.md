@@ -77,7 +77,7 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 | --- | --- |
 | **Clock** | Time and date, optional seconds and a second time zone. |
 | **Sticky notes** | Up to 30 notes stacked like **folder tabs**: click a tab to bring it forward, drag a tab to move the stack. Saved as you type. |
-| **To-do list** | Add a task with Enter, tick it off, clear the finished ones. |
+| **To-do list** | Add a task with Enter, add sub-tasks with ＋, tick it off, clear the finished ones. Right-click a task to duplicate it with its sub-tasks or copy it as text. |
 | **Timer and reminders** | Quick timers, reminders at a clock time and a pomodoro. Notification and sound (optionally on your phone). |
 | **Stopwatch** | Start, pause, laps. |
 | **Day counter** | "12 days left" for any date. |

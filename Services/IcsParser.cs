@@ -52,6 +52,19 @@ public static class IcsParser
 
     // ---- Tekrar kuralı ----
 
+    /// <summary>Tarih hesabı yıl aralığını aşarsa (kötü niyetli/bozuk kural) null döner; çağıran döngüyü bitirir.</summary>
+    private static DateTime? Safe(Func<DateTime> compute)
+    {
+        try
+        {
+            return compute();
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
     private static IEnumerable<DateTime> Starts(RawEvent e, DateTime windowStart, DateTime windowEnd)
     {
         if (!e.Rule.TryGetValue("FREQ", out var freq))
@@ -60,7 +73,7 @@ public static class IcsParser
             yield break;
         }
 
-        var interval = e.Rule.TryGetValue("INTERVAL", out var iv) && int.TryParse(iv, out var n) && n > 0 ? n : 1;
+        var interval = e.Rule.TryGetValue("INTERVAL", out var iv) && int.TryParse(iv, out var n) && n > 0 ? Math.Min(n, 1000) : 1; // dev aralık DateTime taşmasına yol açıyordu
         var count = e.Rule.TryGetValue("COUNT", out var c) && int.TryParse(c, out var cn) ? cn : int.MaxValue;
         DateTime? until = e.Rule.TryGetValue("UNTIL", out var u) ? ParseValue(u, null, out _) : null;
         var emitted = 0;
@@ -73,7 +86,12 @@ public static class IcsParser
                 case "DAILY":
                     for (var i = 0; i < 5000; i++)
                     {
-                        yield return e.Start.AddDays((double)i * interval);
+                        if (Safe(() => e.Start.AddDays((double)i * interval)) is not { } day)
+                        {
+                            break;
+                        }
+
+                        yield return day;
                     }
 
                     break;
@@ -86,8 +104,11 @@ public static class IcsParser
                     {
                         foreach (var d in days.OrderBy(d => ((int)d + 6) % 7))
                         {
-                            var date = weekStart.AddDays((double)w * 7 * interval + ((int)d + 6) % 7);
-                            var candidate = date + time;
+                            if (Safe(() => weekStart.AddDays((double)w * 7 * interval + ((int)d + 6) % 7) + time) is not { } candidate)
+                            {
+                                yield break;
+                            }
+
                             if (candidate >= e.Start)
                             {
                                 yield return candidate;
@@ -101,7 +122,11 @@ public static class IcsParser
                 case "MONTHLY":
                     for (var i = 0; i < 600; i++)
                     {
-                        var month = e.Start.AddMonths(i * interval);
+                        if (Safe(() => e.Start.AddMonths(i * interval)) is not { } month)
+                        {
+                            break;
+                        }
+
                         if (month.Day == e.Start.Day)
                         {
                             yield return month;
@@ -113,7 +138,11 @@ public static class IcsParser
                 case "YEARLY":
                     for (var i = 0; i < 200; i++)
                     {
-                        var year = e.Start.AddYears(i * interval);
+                        if (Safe(() => e.Start.AddYears(i * interval)) is not { } year)
+                        {
+                            break;
+                        }
+
                         if (year.Month == e.Start.Month && year.Day == e.Start.Day)
                         {
                             yield return year;
@@ -221,9 +250,14 @@ public static class IcsParser
                     current.HasEnd = current.End != default;
                     break;
                 case "RRULE":
-                    current.Rule = value.Split(';', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Split('=', 2)).Where(p => p.Length == 2)
-                        .ToDictionary(p => p[0].ToUpperInvariant(), p => p[1], StringComparer.OrdinalIgnoreCase);
+                    // Aynı anahtar iki kez gelirse (bozuk/kötü niyetli akış) sonuncusu geçerli; ToDictionary burada çöküyordu.
+                    var rule = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var pair in value.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Split('=', 2)).Where(p => p.Length == 2))
+                    {
+                        rule[pair[0].ToUpperInvariant()] = pair[1];
+                    }
+
+                    current.Rule = rule;
                     break;
                 case "EXDATE":
                     foreach (var item in value.Split(',', StringSplitOptions.RemoveEmptyEntries))

@@ -202,6 +202,13 @@ public sealed class HardwareMonitorService : IDisposable
         SnapshotUpdated?.Invoke(snapshot);
     }
 
+    /// <summary>Testler ve ölçüm modu için: gerçek donanım okumadan bir anlık görüntü yayınlar (olay aboneleri gerçek ölçümdeymiş gibi çalışır).</summary>
+    internal void PublishForTest(SensorSnapshot snapshot)
+    {
+        Latest = snapshot;
+        SnapshotUpdated?.Invoke(snapshot);
+    }
+
     private DiskReading? _disk;
     private DateTime _diskAt = DateTime.MinValue;
 

@@ -14,7 +14,7 @@
     <AssemblyName>dHud</AssemblyName>
     <RootNamespace>DHud</RootNamespace>
     <Product>dHud</Product>
-    <Version>1.0.46</Version>
+    <Version>1.0.47</Version>
     <!-- DPI farkındalığı WPF için app.manifest'te tanımlı; WinForms'un bu konudaki uyarısı geçerli değil. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
 
@@ -66,6 +66,19 @@
     <EmbeddedResource Remove="mobile\**" />
     <Page Remove="mobile\**" />
     <None Remove="mobile\**" />
+  </ItemGroup>
+
+  <!-- Test projesi de aynı depoda ayrı bir projedir (tests\); uygulamaya dahil edilmesin. -->
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <Page Remove="tests\**" />
+    <None Remove="tests\**" />
+  </ItemGroup>
+
+  <!-- Test projesi iç (internal) üyelere erişebilsin. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="dHud.Tests" />
   </ItemGroup>
 
   <!-- WPF ve WinForms tipleri (Application, Point, Color...) çakışmasın diye

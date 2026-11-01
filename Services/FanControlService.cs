@@ -56,7 +56,7 @@ public sealed class FanControlService : IDisposable
     private DateTime _pendingSince;
     private DateTime _lastStallBroadcast = DateTime.MinValue;
 
-    private sealed class State
+    internal sealed class State
     {
         public double? Last;
         public int Missing;
@@ -230,7 +230,7 @@ public sealed class FanControlService : IDisposable
                 Write(control, state, target);
             }
 
-            DetectStall(channel, state, rpm, testing, gpuTemp, now);
+            DetectStall(channel.Name, channel.IsGpu, state, rpm, testing, gpuTemp, now);
 
             statuses.Add(new FanStatus(channel.Id, channel.Name, channel.IsGpu, channel.Rpm is not null, rpm,
                 channel.Control.Value, state.Taken, testing, state.TestDone, state.TestOk,
@@ -245,7 +245,7 @@ public sealed class FanControlService : IDisposable
     }
 
     /// <summary>Bekleyen "fan durdu" bildirimlerini tek mesajda gönderir (toplama penceresi ve ortak bekleme süresi dolunca).</summary>
-    private void FlushStalls(DateTime now)
+    internal void FlushStalls(DateTime now)
     {
         if (_pendingStalls.Count == 0)
         {
@@ -283,7 +283,7 @@ public sealed class FanControlService : IDisposable
     /// dHud'un yüzde yazdığı bir fan daha önce döndüğü halde 0 RPM okunuyorsa uyarır. Hiç dönmemiş fanlar
     /// (devir sensörü bazı fanlarda hep 0 okur) uyarı üretmez.
     /// </summary>
-    private void DetectStall(FanChannel channel, State state, float? rpm, bool testing, double? gpuTemp, DateTime now)
+    internal void DetectStall(string name, bool isGpu, State state, float? rpm, bool testing, double? gpuTemp, DateTime now)
     {
         if (rpm is not float value || testing || !state.Taken)
         {
@@ -292,8 +292,8 @@ public sealed class FanControlService : IDisposable
         }
 
         // GPU fanı: kart soğukken fanı bilerek durdurması normaldir, sadece sıcakken beklenen hızda dönmemesi arızadır.
-        var minPercent = channel.IsGpu ? GpuStallMinPercent : StallMinPercent;
-        if (channel.IsGpu && gpuTemp is not >= GpuStallMinTemp)
+        var minPercent = isGpu ? GpuStallMinPercent : StallMinPercent;
+        if (isGpu && gpuTemp is not >= GpuStallMinTemp)
         {
             state.ZeroTicks = 0;
             state.Stalled = false;
@@ -322,7 +322,7 @@ public sealed class FanControlService : IDisposable
                         _pendingSince = now;
                     }
 
-                    _pendingStalls.Add((channel.Name, (int)Math.Round(state.Last.Value)));
+                    _pendingStalls.Add((name, (int)Math.Round(state.Last.Value)));
                 }
             }
         }

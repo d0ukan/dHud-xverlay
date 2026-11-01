@@ -93,6 +93,16 @@ public sealed class TodoItem
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Text { get; set; } = string.Empty;
     public bool Done { get; set; }
+
+    /// <summary>Alt görevler (tek seviye; alt görevin kendi alt görevi olmaz).</summary>
+    public List<TodoItem> Subtasks { get; set; } = [];
+
+    /// <summary>Kendisi ve alt görevleriyle kopya; yeni kimlikler alır, hepsi yapılmamış başlar.</summary>
+    public TodoItem Duplicate() => new()
+    {
+        Text = Text,
+        Subtasks = Subtasks.Select(s => new TodoItem { Text = s.Text }).ToList()
+    };
 }
 
 /// <summary>Gün sayacı: bir tarihe kaç gün kaldı / kaç gün geçti.</summary>
@@ -155,6 +165,7 @@ public sealed class WidgetService
     public const int MaxReminders = 50;
     public const int MaxNoteLength = 20000;
     public const int MaxTodos = 60;
+    public const int MaxSubtasks = 20;
     public const int MaxCountdowns = 20;
     public const int MaxLaunchers = 12;
 
@@ -235,7 +246,18 @@ public sealed class WidgetService
         Data.Positions ??= [];
         Data.StackWidth = Math.Clamp(double.IsNaN(Data.StackWidth) ? 260 : Data.StackWidth, 176, 900);
         Data.StackHeight = Math.Clamp(double.IsNaN(Data.StackHeight) ? 210 : Data.StackHeight, 116, 900);
-        Data.Todos = (Data.Todos ?? []).Take(MaxTodos).ToList();
+        Data.Todos = (Data.Todos ?? []).Where(t => t is not null).Take(MaxTodos).ToList();
+        foreach (var todo in Data.Todos)
+        {
+            todo.Text ??= string.Empty;
+            todo.Subtasks = (todo.Subtasks ?? []).Where(s => s is not null).Take(MaxSubtasks).ToList();
+            foreach (var sub in todo.Subtasks)
+            {
+                sub.Text ??= string.Empty;
+                sub.Subtasks = [];
+            }
+        }
+
         Data.Countdowns = (Data.Countdowns ?? []).Take(MaxCountdowns).ToList();
         Data.Launchers = (Data.Launchers ?? []).Where(l => !string.IsNullOrWhiteSpace(l.Path)).Take(MaxLaunchers).ToList();
         Data.Notes = Data.Notes.Take(MaxNotes).ToList();
