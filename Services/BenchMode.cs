@@ -178,6 +178,9 @@ internal sealed class BenchMode
         // S8 — oyun oturumu
         await GameSessionAsync();
 
+        // S10 — boşluk kapatma doğruluğu (gerçek pencereler)
+        await GapCloseAsync();
+
         // S9 — uzun soak (isteğe bağlı)
         if (_soakMinutes > 0)
         {
@@ -185,6 +188,80 @@ internal sealed class BenchMode
         }
 
         await WriteReportAsync(startupSeconds);
+    }
+
+
+    /// <summary>
+    /// S10 — gerçek pencerelerle boşluk kapatma doğruluğu: bir sütun kur, ortadakini kapat (altındakiler yukarı kaymalı,
+    /// hiçbir şey üst üste binmemeli), geri aç (hepsi eski yerine dönmeli). Sorun sayısı raporda "gapCloseProblems" olarak görünür (0 = tamam).
+    /// </summary>
+    private async Task GapCloseAsync()
+    {
+        await AllWidgetsAsync(false);
+        _app.Settings.Current.CloseWidgetGaps = true;
+        (string Id, Type Type)[] column =
+        [
+            (WidgetIds.SysInfo, typeof(SysInfoWidgetWindow)), (WidgetIds.Todo, typeof(TodoWidgetWindow)),
+            (WidgetIds.Launcher, typeof(LauncherWidgetWindow)), (WidgetIds.Clipboard, typeof(ClipboardWidgetWindow))
+        ];
+
+        await Measure("S10 Boşluk kapatma (doğruluk)", "Sütun: sistem, yapılacaklar, başlatıcı, pano. Yapılacaklar kapanır, altındakiler yukarı kayar; geri açılınca hepsi yerine döner.", async _ =>
+        {
+            var work = SystemParameters.WorkArea;
+            var top = work.Top + 90;
+            foreach (var (id, _) in column)
+            {
+                _app.Widgets.Data.Positions[id] = new WidgetPos { Left = work.Left + 80, Top = top };
+                await Configure(s => s.Extra(id).Enabled = true, 500);
+                var placed = Application.Current.Windows.OfType<WidgetWindowBase>().First(w => w.GetType() == column.First(c => c.Id == id).Type);
+                top = placed.CardRect.Bottom + 10;   // bir sonraki, bunun hemen altına (üst üste binmesin)
+            }
+
+            Dictionary<string, Rect> Rects() => column.ToDictionary(c => c.Id,
+                c => Application.Current.Windows.OfType<WidgetWindowBase>().First(w => w.GetType() == c.Type).CardRect);
+            static bool Overlap(Rect a, Rect b) => a.Left < b.Right - 0.5 && a.Right > b.Left + 0.5 && a.Top < b.Bottom - 0.5 && a.Bottom > b.Top + 0.5;
+
+            var problems = 0;
+            var before = Rects();
+            await Configure(s => s.Extra(WidgetIds.Todo).Enabled = false, 700);
+            var closed = column.Where(c => c.Id != WidgetIds.Todo).ToDictionary(c => c.Id, c => Application.Current.Windows.OfType<WidgetWindowBase>().First(w => w.GetType() == c.Type).CardRect);
+            var todo = before[WidgetIds.Todo];
+            var movedCount = 0;
+            foreach (var (id, rect) in closed)
+            {
+                var below = before[id].Top >= todo.Bottom - 1 && before[id].Left < todo.Right && before[id].Right > todo.Left;
+                var delta = before[id].Top - rect.Top;
+                _extra[$"gap {id} kapanınca Δtop"] = delta;
+                if (below && delta > 1)
+                {
+                    movedCount++;
+                }
+                else if (below || Math.Abs(delta) > 1)
+                {
+                    problems++;   // altındaki kaymadı ya da altında olmayan oynadı
+                }
+            }
+
+            _extra["gapOverlapsBefore"] = before.Values.SelectMany((a, i) => before.Values.Skip(i + 1).Where(b => Overlap(a, b))).Count();
+            _extra["gapOverlapsClosed"] = closed.Values.SelectMany((a, i) => closed.Values.Skip(i + 1).Where(b => Overlap(a, b))).Count();
+            problems += (int)_extra["gapOverlapsClosed"];
+
+            await Configure(s => s.Extra(WidgetIds.Todo).Enabled = true, 800);
+            var reopened = Rects();
+            foreach (var (id, rect) in reopened)
+            {
+                _extra[$"gap {id} geri açılınca Δtop"] = rect.Top - before[id].Top;
+                if (Math.Abs(rect.Top - before[id].Top) > 1 || Math.Abs(rect.Left - before[id].Left) > 1)
+                {
+                    problems++;
+                }
+            }
+
+            _extra["gapOverlapsReopened"] = reopened.Values.SelectMany((a, i) => reopened.Values.Skip(i + 1).Where(b => Overlap(a, b))).Count();
+            problems += (int)_extra["gapOverlapsReopened"];
+            _extra["gapCloseMoved"] = movedCount;
+            _extra["gapCloseProblems"] = problems;
+        });
     }
 
     private async Task ChurnWidgetsAsync()

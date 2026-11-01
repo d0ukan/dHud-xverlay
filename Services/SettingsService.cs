@@ -216,6 +216,9 @@ public sealed class AppSettings
     /// <summary>Tam ekran uygulama (film, sunum, oyun) açıkken widget'lar kendini gizler; çıkınca geri gelir.</summary>
     public bool HideWidgetsOnFullscreen { get; set; } = true;
 
+    /// <summary>Bir widget kapanınca altındakiler yukarı kayıp boşluğu kapatır; widget geri açılınca hepsi eski yerine döner.</summary>
+    public bool CloseWidgetGaps { get; set; } = true;
+
     /// <summary>Aynı durumda üstteki bar da gizlensin (oyunda bar genelde istenir, o yüzden varsayılan kapalı).</summary>
     public bool HideBarOnFullscreen { get; set; }
 

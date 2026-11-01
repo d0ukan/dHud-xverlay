@@ -136,6 +136,19 @@ public sealed class LauncherItem
     public string Path { get; set; } = string.Empty;
 }
 
+/// <summary>Bir widget kapanınca (<see cref="Closed"/>) altındaki kartın (<see cref="Moved"/>) yukarı kaydırıldığının kaydı; geri açılınca eski yerine dönmek için.</summary>
+public sealed class ShiftRecord
+{
+    public string Closed { get; set; } = string.Empty;
+    public string Moved { get; set; } = string.Empty;
+
+    /// <summary>Kaydırılan miktar (DIP, pozitif = yukarı).</summary>
+    public double Dy { get; set; }
+
+    /// <summary>Kaydırmadan sonra kartın üst konumu; kullanıcı sonradan taşıdıysa uyuşmaz.</summary>
+    public double NewTop { get; set; }
+}
+
 /// <summary>Hızlı not defterinin bir sekmesi.</summary>
 public sealed class NotepadTab
 {
@@ -149,6 +162,9 @@ public sealed class WidgetData
 {
     /// <summary>Borsa widget'ının izlediği semboller (Yahoo Finance biçimi: BTC-USD, AAPL, USDTRY=X). null: henüz hiç seçilmedi (varsayılanlar konur).</summary>
     public List<string>? Markets { get; set; }
+
+    /// <summary>Kapanan widget'lar yüzünden yukarı kaydırılmış kartlar (geri açılınca eski yerine dönerler).</summary>
+    public List<ShiftRecord> Shifts { get; set; } = [];
 
     /// <summary>Hızlı not defteri sekmeleri ve açık olan sekme.</summary>
     public List<NotepadTab> NotepadTabs { get; set; } = [];
@@ -310,6 +326,11 @@ public sealed class WidgetService
         }
 
         Data.NotepadActive ??= string.Empty;
+
+        Data.Shifts = (Data.Shifts ?? [])
+            .Where(r => r is not null && !string.IsNullOrEmpty(r.Closed) && !string.IsNullOrEmpty(r.Moved)
+                        && double.IsFinite(r.Dy) && r.Dy > 0 && double.IsFinite(r.NewTop))
+            .Take(300).ToList();
         Data.Notes = Data.Notes.Take(MaxNotes).ToList();
         foreach (var note in Data.Notes)
         {

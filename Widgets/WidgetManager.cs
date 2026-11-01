@@ -94,6 +94,24 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
     {
         var s = settings.Current;
 
+        // Kapanan widget'ların altındakiler yukarı kayar; açılanların altındakiler eski yerine döner (pencereler değişmeden önce).
+        var wantedIds = WantedIds(s);
+        var present = PresentIds();
+        var closing = present.Where(id => !wantedIds.Contains(id)).ToList();
+        var opening = wantedIds.Where(id => !present.Contains(id)).ToList();
+        if (!_applied)
+        {
+            // Açılışta kayıtlar zaten tutarlıdır; açık olan bir widget'a ait bayat kayıt varsa (ayar elle değişmiş) silinir.
+            widgets.Data.Shifts.RemoveAll(r => wantedIds.Contains(r.Closed));
+        }
+        else if (s.CloseWidgetGaps)
+        {
+            RestoreGaps(opening);
+            CloseGaps(closing);
+        }
+
+        _applied = true;
+
         Sync(s.WidgetClock, ref _clock, () => new ClockWidgetWindow());
         Sync(s.WidgetTools, ref _tools, () => new ToolsWidgetWindow());
         Sync(s.WidgetStopwatch, ref _stopwatch, () => new StopwatchWidgetWindow());
@@ -181,6 +199,153 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         {
             window.ApplyOptions();
         }
+    }
+
+    // ---- Boşluk kapatma: kapanan widget'ın altındakiler yukarı kayar, geri açılınca eski yerine döner ----
+
+    private bool _applied;
+
+    /// <summary>Kayabilen bir kart: kimliği, dikdörtgeni, monitör çalışma alanı ve dikey kaydırma işlemi.</summary>
+    private sealed record Slot(string Id, Func<Rect> Rect, Func<Rect?> Work, Action<double> MoveBy, Action Settle);
+
+    private HashSet<string> WantedIds(AppSettings s)
+    {
+        var ids = new HashSet<string>();
+        if (s.WidgetClock) ids.Add("clock");
+        if (s.WidgetTools) ids.Add("tools");
+        if (s.WidgetStopwatch) ids.Add("stopwatch");
+        if (s.WidgetWeather) ids.Add("weather");
+        foreach (var id in ExtraFactories.Keys.Where(id => s.Extra(id).Enabled))
+        {
+            ids.Add(id);
+        }
+
+        return ids;
+    }
+
+    private HashSet<string> PresentIds()
+    {
+        var ids = new HashSet<string>(_extras.Keys);
+        if (_clock is not null) ids.Add("clock");
+        if (_tools is not null) ids.Add("tools");
+        if (_stopwatch is not null) ids.Add("stopwatch");
+        if (_weather is not null) ids.Add("weather");
+        return ids;
+    }
+
+    private IEnumerable<(string Id, WidgetWindowBase Window)> FixedWindows()
+    {
+        if (_clock is not null) yield return ("clock", _clock);
+        if (_tools is not null) yield return ("tools", _tools);
+        if (_stopwatch is not null) yield return ("stopwatch", _stopwatch);
+        if (_weather is not null) yield return ("weather", _weather);
+        foreach (var (id, window) in _extras)
+        {
+            yield return (id, window);
+        }
+    }
+
+    private Slot WindowSlot(string id, WidgetWindowBase window) => new(
+        id,
+        () => window.CardRect,
+        window.WorkAreaRect,
+        dy => window.Top += dy,
+        () => Resolve(window));
+
+    /// <summary>Şu an kayabilen kartlar: widget pencereleri, serbest notlar veya (yığın modunda) tüm not yığını tek blok olarak.</summary>
+    private List<Slot> Slots()
+    {
+        var slots = FixedWindows().Where(w => w.Window.IsLoaded).Select(w => WindowSlot(w.Id, w.Window)).ToList();
+        if (Stacked)
+        {
+            var first = NoteWindowsInOrder().FirstOrDefault(w => w.IsLoaded);
+            if (first is not null)
+            {
+                slots.Add(new Slot("notes:stack",
+                    () => StackRect(StackAnchor()),
+                    first.WorkAreaRect,
+                    dy =>
+                    {
+                        var anchor = StackAnchor();
+                        widgets.Data.NotesStackPos = new WidgetPos { Left = anchor.X, Top = anchor.Y + dy };
+                        widgets.ScheduleSave();
+                        LayoutNotes();
+                    },
+                    ResolveStack));
+            }
+        }
+        else
+        {
+            slots.AddRange(_notes.Where(n => n.Value.IsLoaded).Select(n => WindowSlot("note:" + n.Key, n.Value)));
+        }
+
+        return slots;
+    }
+
+    private void CloseGaps(List<string> closing)
+    {
+        if (closing.Count == 0)
+        {
+            return;
+        }
+
+        var slots = Slots();
+        var gone = closing.ToHashSet();
+        var rects = slots.Where(s => gone.Contains(s.Id)).ToDictionary(s => s.Id, s => s.Rect());
+        var others = slots.Where(s => !gone.Contains(s.Id)).ToList();
+        var obstacles = App.Current.OverlayRect is Rect overlay ? [overlay] : new List<Rect>();
+
+        // Üstteki önce kapanmış gibi işlenir: böylece alttaki kapanan kendi sütununu zaten yukarı çekmiş olur.
+        foreach (var (id, rect) in rects.OrderBy(r => r.Value.Top))
+        {
+            var items = others.Select(s => new WidgetGaps.Item(s.Id, s.Rect(), s.Work())).ToList();
+            if (WidgetGaps.Compute(rect, items, obstacles, Gap) is not { } shift)
+            {
+                continue;
+            }
+
+            foreach (var moved in shift.Moved)
+            {
+                others.First(s => s.Id == moved.Id).MoveBy(-shift.Dy);
+                widgets.Data.Shifts.Add(new ShiftRecord { Closed = id, Moved = moved.Id, Dy = shift.Dy, NewTop = moved.Rect.Top - shift.Dy });
+            }
+        }
+
+        widgets.ScheduleSave();
+    }
+
+    private void RestoreGaps(List<string> opening)
+    {
+        if (opening.Count == 0 || widgets.Data.Shifts.Count == 0)
+        {
+            return;
+        }
+
+        var slots = Slots();
+        var restored = new HashSet<string>();
+        foreach (var id in opening)
+        {
+            foreach (var movedId in WidgetGaps.Restore(
+                         widgets.Data.Shifts, id,
+                         slotId => slots.FirstOrDefault(s => s.Id == slotId)?.Rect().Top,
+                         (slotId, dy) => slots.First(s => s.Id == slotId).MoveBy(dy)))
+            {
+                restored.Add(movedId);
+            }
+        }
+
+        // Geri dönen kartlar tam eski yerinde durur; yalnızca o arada oraya başka bir şey gelmişse en yakın boş yere otururlar.
+        foreach (var slotId in restored)
+        {
+            var slot = slots.First(s => s.Id == slotId);
+            var rect = slot.Rect();
+            if (slots.Any(o => o.Id != slotId && WidgetManager.Overlaps(o.Rect(), rect)))
+            {
+                slot.Settle();
+            }
+        }
+
+        widgets.ScheduleSave();
     }
 
     /// <summary>Yeni boş not oluşturur ve gösterir (notlar gizliyse önce gösterilir).</summary>

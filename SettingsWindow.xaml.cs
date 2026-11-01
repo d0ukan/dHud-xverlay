@@ -360,6 +360,10 @@ public partial class SettingsWindow : Window
         }));
         var root = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
         root.Children.Add(BuildThemePicker());
+        var gaps = WidgetCheck("S.CloseGaps", () => s.Current.CloseWidgetGaps, v => s.Current.CloseWidgetGaps = v);
+        gaps.Margin = new Thickness(0, 4, 0, 4);
+        gaps.ToolTip = Loc.T("S.CloseGapsTip");
+        root.Children.Add(gaps);
         foreach (var (titleKey, panel) in new[] { ("S.GroupTime", timePanel), ("S.GroupNotes", notesPanel), ("S.GroupSystem", systemPanel) })
         {
             var title = new TextBlock { Text = Loc.T(titleKey) };
