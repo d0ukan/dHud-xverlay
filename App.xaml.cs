@@ -265,6 +265,17 @@ public partial class App : Application
         Settings.Changed += (_, _) => OnSettingsChanged();
         OnSettingsChanged();
 
+        // Widget'lar açılışta başka pencerelerin arkasında kalmasın (bar kapalıyken bunu "bar aç/kapa" yapıyordu).
+        // Masaüstü/görev çubuğu geç hazır olabildiği için kısa bir süre sonra bir kez daha.
+        Dispatcher.BeginInvoke(() => WidgetManager.RaiseAll(), DispatcherPriority.ApplicationIdle);
+        var raiseAgain = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        raiseAgain.Tick += (_, _) =>
+        {
+            raiseAgain.Stop();
+            WidgetManager.RaiseAll();
+        };
+        raiseAgain.Start();
+
         Monitor.SnapshotUpdated += snapshot => Dispatcher.BeginInvoke(() => OnSnapshot(snapshot));
         if (!bench || BenchMode.UseRealHardware(e.Args))
         {

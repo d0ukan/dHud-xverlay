@@ -218,8 +218,14 @@ public abstract class WidgetWindowBase : Window
     {
         if (_hwnd != IntPtr.Zero)
         {
-            NativeMethods.SetWindowPos(_hwnd, WantsTopmost ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_TOP, 0, 0, 0, 0,
-                NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+            const uint flags = NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE;
+            NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, flags);
+            if (!WantsTopmost)
+            {
+                // Arka plandaki bir uygulama HWND_TOP ile başka bir uygulamanın önüne geçemez (Windows engeller); geçici "üstte" sonra
+                // "normal" yapmak ise çalışır ve pencereyi normal pencerelerin en üstüne bırakır.
+                NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, flags);
+            }
         }
     }
 
@@ -251,6 +257,7 @@ public abstract class WidgetWindowBase : Window
             (style | NativeMethods.WS_EX_TOOLWINDOW) & ~NativeMethods.WS_EX_APPWINDOW);
 
         HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
+        ShowDesktopGuard.Attach(this, _hwnd);   // Win+D widget'ları gizlemesin
     }
 
     /// <summary>Sürüklerken (WM_MOVING) konumu en yakın monitörün çalışma alanında tutar: widget ekran dışına çıkarılamaz.</summary>

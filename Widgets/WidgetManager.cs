@@ -348,6 +348,30 @@ public sealed class WidgetManager(SettingsService settings, WidgetService widget
         ResolveStack();
     }
 
+    /// <summary>
+    /// Açılışta "hep üstte" kapalı widget'lar tam ekran/maksimize bir uygulamanın arkasında kalıyordu (bar kapalıyken görünmüyorlardı).
+    /// Hepsini, diğer pencerelerin önüne (odak almadan) bir kez getirir; not yığınında sekme sırası korunur.
+    /// </summary>
+    public void RaiseAll()
+    {
+        foreach (var window in AllWindows().Where(w => w is not StickyNoteWindow).ToList())
+        {
+            window.BringToTop();
+        }
+
+        if (Stacked)
+        {
+            LayoutNotes();
+        }
+        else
+        {
+            foreach (var note in _notes.Values)
+            {
+                note.BringToTop();
+            }
+        }
+    }
+
     /// <summary>Tüm widget'ları (ve yığını) yeniden yerleştirir; ör. üstteki bar geri gelince onun yerinden kaymaları için.</summary>
     public void ResolveAll()
     {

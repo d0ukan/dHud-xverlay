@@ -500,6 +500,7 @@ public partial class MainWindow : Window
         NativeMethods.SetWindowLong(_hwnd, NativeMethods.GWL_EXSTYLE, exStyle);
 
         HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
+        ShowDesktopGuard.Attach(this, _hwnd);   // Win+D bar'ı gizlemesin
 
         ApplyClickThrough(_settings.Current.ClickThrough);
     }
