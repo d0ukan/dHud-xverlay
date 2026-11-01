@@ -28,6 +28,7 @@
   <!-- Android uygulamasının saf veri sınıfları: PC'nin ürettiği JSON bunlara çözülür (protokol sapması yakalanır). -->
   <ItemGroup>
     <Compile Include="..\..\mobile\dHud.Mobile\Services\Models.cs" Link="Support\Mobile\Models.cs" />
+    <Compile Include="..\..\mobile\dHud.Mobile\Controls\FitMath.cs" Link="Support\Mobile\FitMath.cs" />
   </ItemGroup>
 
   <ItemGroup>

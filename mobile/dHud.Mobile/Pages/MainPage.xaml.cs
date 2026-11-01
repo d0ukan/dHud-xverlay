@@ -7,6 +7,8 @@ public partial class MainPage : ContentPage
 {
 	private const double WideLayoutWidth = 700;
 	private const double CompactHeight = 600;
+	private const double MinFitScale = 0.6;   // bundan fazla küçültme; yine sığmazsa kaydırma açılır
+	private bool _fitting;
 
 	private enum LayoutMode
 	{
@@ -93,8 +95,38 @@ public partial class MainPage : ContentPage
 	/// Geniş düzenlerde kartlar görünür alanı tam doldurur (grafik kalan yüksekliği alır) ve kaydırma gerekmez.
 	/// Dar düzende içerik kendi boyunda kalır ve kaydırılır.
 	/// </summary>
-	private void FitToViewport() =>
-		Cards.MinimumHeightRequest = _mode == LayoutMode.Narrow ? 0 : Dashboard.Height;
+	private void FitToViewport()
+	{
+		var width = Dashboard.Width;
+		var height = Dashboard.Height;
+		if (_fitting || _mode is null || width <= 0 || height <= 0)
+		{
+			return;
+		}
+
+		_fitting = true;
+		try
+		{
+			// Önce ölçeksiz doğal boyutu ölç; sığmıyorsa tüm paneli küçültüp görünür alana tam oturt (her şey tek ekranda görünsün).
+			Cards.Scale = 1;
+			Cards.WidthRequest = -1;
+			Cards.HeightRequest = -1;
+			Cards.MinimumHeightRequest = 0;
+			var natural = Cards.Measure(width, double.PositiveInfinity).Height;
+			var scale = FitMath.Scale(height, natural, MinFitScale);
+
+			Cards.AnchorX = 0;
+			Cards.AnchorY = 0;
+			Cards.Scale = scale;
+			Cards.WidthRequest = width / scale;                    // küçülünce genişlik de ekranı doldurur
+			Cards.HeightRequest = Math.Max(height / scale, natural); // artan boşluğu grafik alır
+			Dashboard.Orientation = FitMath.Fits(height, natural, scale) ? ScrollOrientation.Neither : ScrollOrientation.Vertical;
+		}
+		finally
+		{
+			_fitting = false;
+		}
+	}
 
 	/// <summary>Şarj olurken veya tam ekran modunda ekran açık kalır.</summary>
 	private void UpdateKeepAwake()
@@ -118,6 +150,10 @@ public partial class MainPage : ContentPage
 		foreach (var card in new[] { CpuCard, GpuCard, GraphCard, RamCard, NetCard, FanCard })
 		{
 			card.Padding = padding;
+			if (card.Content is VerticalStackLayout stack)
+			{
+				stack.Spacing = compact ? 4 : 8;   // kart içi aralık: alçak ekranda her şey sığsın
+			}
 		}
 
 		_tempFontSize = compact ? 30 : 40;
@@ -155,7 +191,7 @@ public partial class MainPage : ContentPage
 	{
 		Cards.ColumnDefinitions.Clear();
 		Cards.RowDefinitions.Clear();
-		ApplyDensity(mode == LayoutMode.CompactWide);
+		ApplyDensity(mode != LayoutMode.Wide);   // telefon (dikey/yatay) sıkı; tablet ferah
 
 		switch (mode)
 		{
@@ -192,12 +228,12 @@ public partial class MainPage : ContentPage
 
 			default:
 				Cards.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				// CPU / GPU / grafik (kalan yükseklik) / RAM / NET: hepsi tek ekranda; sığmazsa FitToViewport küçültür.
 				for (var i = 0; i < 5; i++)
 				{
-					Cards.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+					Cards.RowDefinitions.Add(new RowDefinition(i == 2 ? GridLength.Star : GridLength.Auto));
 				}
 
-				Graph.MinimumHeightRequest = 220;
 				Place(CpuCard, 0, 0);
 				Place(GpuCard, 1, 0);
 				Place(GraphCard, 2, 0);
@@ -226,10 +262,13 @@ public partial class MainPage : ContentPage
 			Place(FanCard, 0, 1);
 		}
 
-		if (mode != LayoutMode.Narrow)
+		// Grafiğin en küçük yüksekliği: doğal boyut buna göre ölçülür, artan yükseklik grafiğe verilir.
+		Graph.MinimumHeightRequest = mode switch
 		{
-			Graph.MinimumHeightRequest = mode == LayoutMode.Wide ? 200 : 90;
-		}
+			LayoutMode.Wide => 120,
+			LayoutMode.CompactWide => 70,
+			_ => 90
+		};
 
 		FitToViewport();
 	}
