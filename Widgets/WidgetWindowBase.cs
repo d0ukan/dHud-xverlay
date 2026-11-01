@@ -136,7 +136,20 @@ public abstract class WidgetWindowBase : Window
     private const double MinZoom = 1.0;
     private const double MaxZoom = 3.0;
     private const double MinCardWidth = 96;
-    private const double ListMinHeight = 120;   // listelerde başlık + birkaç satır; fazlası kaydırılır
+
+    /// <summary>Listelerde en küçük kart yüksekliği (başlık + birkaç satır; fazlası kaydırılır).</summary>
+    protected virtual double MinListHeight => 120;
+
+    /// <summary>
+    /// true: içerik kendi kaydırmasını yönetir (ör. başlık sabit, yalnızca liste kayar); taban sınıf dıştan ikinci bir kaydırma
+    /// alanı koymaz, içeriğe kartın yüksekliğini verir. Yalnızca <see cref="ZoomByWidth"/> ile birlikte anlamlıdır.
+    /// </summary>
+    protected virtual bool ContentScrolls => false;
+
+    /// <summary>Kart kullanıcı boyutuna geçti / otomatik boyuta döndü.</summary>
+    protected virtual void OnCustomSizeChanged(bool custom)
+    {
+    }
 
     private bool _resizing;
     private bool _custom;                       // kullanıcı boyutu veriyor (içerik sarmalanmış)
@@ -227,7 +240,7 @@ public abstract class WidgetWindowBase : Window
     private (int W, int H) MinSpan(WidgetGrid.Spec g)
     {
         var width = Math.Max(MinCardWidth, _natural.Width);
-        var height = ZoomByWidth ? ListMinHeight : Math.Max(ListMinHeight / 2, NaturalContentHeight() + 2 * Card.BorderThickness.Top);
+        var height = ZoomByWidth ? MinListHeight : Math.Max(MinListHeight / 2, NaturalContentHeight() + 2 * Card.BorderThickness.Top);
         return WidgetGrid.SpanOf(new Size(width, height), g);
     }
 
@@ -381,7 +394,7 @@ public abstract class WidgetWindowBase : Window
         if (double.IsNaN(natural))
         {
             Card.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            natural = Card.DesiredSize.Width;
+            natural = Card.DesiredSize.Width - Card.Margin.Left - Card.Margin.Right;   // DesiredSize kenar boşluğunu da içerir
         }
 
         _natural = new Size(Math.Max(natural, MinCardWidth), Card.ActualHeight);
@@ -390,12 +403,20 @@ public abstract class WidgetWindowBase : Window
         if (ZoomByWidth)
         {
             _holder.LayoutTransform = _zoom;
-            Card.Child = new ScrollViewer
+            if (ContentScrolls)
             {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                Content = _holder
-            };
+                _holder.VerticalAlignment = VerticalAlignment.Top;
+                Card.Child = _holder;   // içerik kendi kaydırmasını yönetir; yüksekliği UpdateZoom verir
+            }
+            else
+            {
+                Card.Child = new ScrollViewer
+                {
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    Content = _holder
+                };
+            }
         }
         else
         {
@@ -412,6 +433,7 @@ public abstract class WidgetWindowBase : Window
         }
 
         UpdateZoom();
+        OnCustomSizeChanged(true);
     }
 
     private void LeaveCustomSize()
@@ -436,6 +458,7 @@ public abstract class WidgetWindowBase : Window
         ClearValue(WidthProperty);
         ClearValue(HeightProperty);
         SizeToContent = SizeToContent.WidthAndHeight;
+        OnCustomSizeChanged(false);
     }
 
     private void UpdateZoom()
@@ -447,6 +470,10 @@ public abstract class WidgetWindowBase : Window
 
         var s = Math.Clamp((Card.ActualWidth - 2 * Card.BorderThickness.Left) / _natural.Width, MinZoom, MaxZoom);
         _zoom.ScaleX = _zoom.ScaleY = s;
+        if (ContentScrolls && _holder is not null)
+        {
+            _holder.Height = Math.Max(0, (Card.ActualHeight - 2 * Card.BorderThickness.Top) / s);   // içerik kartı doldurur
+        }
     }
 
     // ---- Konum ----

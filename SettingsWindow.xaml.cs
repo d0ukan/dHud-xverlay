@@ -32,7 +32,11 @@ public partial class SettingsWindow : Window
 
         // Küçük ekranda pencere ekrandan taşmasın: sekme içeriği kalan yüksekliğe sığar, gerekirse kaydırılır.
         // (başlık, sekmeler, durum kutusu ve düğmeler için yaklaşık 330 px ayrılır)
-        TabScroll.MaxHeight = Math.Max(260, SystemParameters.WorkArea.Height - 330);
+        // Pencere ekranın üstüne yakın açılır (uzun sekmelerde alt kısım ekrandan taşmasın); tepede ~32 px boşluk için 40 px ayrılır.
+        var work = SystemParameters.WorkArea;
+        TabScroll.MaxHeight = Math.Max(260, work.Height - 330 - 40);
+        Left = work.Left + Math.Max(0, (work.Width - Width) / 2);
+        Top = work.Top + 8;
 
         LoadValues();
         RefreshStartupState();

@@ -10,7 +10,7 @@
         Background="Transparent"
         Topmost="True"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         UseLayoutRounding="True"
         FontFamily="Segoe UI"
         FontSize="13"

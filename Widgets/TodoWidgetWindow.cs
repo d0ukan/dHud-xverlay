@@ -22,11 +22,24 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
 
     protected override bool ZoomByWidth => true;   // liste: genişlikle büyür, fazla yükseklik daha çok satır gösterir
 
+    // Başlık, giriş kutusu ve alt çubuk sabit kalır; yalnızca liste kayar (kart boyutlanınca liste kalan yüksekliği doldurur).
+    protected override bool ContentScrolls => true;
+
+    protected override double MinListHeight => 190;   // başlık + giriş + en az bir buçuk satır + alt çubuk
+
+    private readonly ScrollViewer _scroll;
+
     public TodoWidgetWindow()
     {
         Card.Width = 280;
-        var root = new StackPanel { Margin = new Thickness(16, 10, 16, 12) };
-        root.Children.Add(TitleBar(Loc.T("W.Todo"), WidgetIds.Todo));
+        var root = new Grid { Margin = new Thickness(16, 10, 16, 12) };
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        var title = TitleBar(Loc.T("W.Todo"), WidgetIds.Todo);
+        root.Children.Add(title);
 
         _input = Field(200);
         _input.Margin = new Thickness(0, 8, 0, 6);
@@ -39,12 +52,17 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
                 e.Handled = true;
             }
         };
+        Grid.SetRow(_input, 1);
         root.Children.Add(_input);
 
-        var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, MaxHeight = 300, Content = _list };
-        root.Children.Add(scroll);
+        // Otomatik boyutta liste, çalışma alanının ~%60'ına kadar aşağı doğru uzar; ondan sonra kayar.
+        _scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = _list };
+        _scroll.MaxHeight = AutoListMaxHeight;
+        Grid.SetRow(_scroll, 2);
+        root.Children.Add(_scroll);
 
         var bottom = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetRow(bottom, 3);
         bottom.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         bottom.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _footer = Subtle("");
@@ -61,6 +79,11 @@ public sealed class TodoWidgetWindow : WidgetWindowBase
         Rebuild();
         ApplyOptions();
     }
+
+    private static double AutoListMaxHeight => Math.Max(300, SystemParameters.WorkArea.Height * 0.6);
+
+    protected override void OnCustomSizeChanged(bool custom) =>
+        _scroll.MaxHeight = custom ? double.PositiveInfinity : AutoListMaxHeight;   // boyut kullanıcıdaysa kart sınırlar, liste kalanı doldurur
 
     private void Add()
     {
