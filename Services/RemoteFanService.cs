@@ -209,7 +209,10 @@ public sealed class RemoteFanService(HardwareMonitorService monitor, SettingsSer
                 return false;
             }
 
-            (curve, min) = FanCurve.Preset(p);
+            var source = channel.IsGpu ? FanSource.Gpu
+                : channel.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase) ? FanSource.Cpu
+                : FanSource.Max;
+            (curve, min) = FanCurve.Preset(p, FanCurve.GroupOf(source));   // CPU, GPU ve sistem fanları ayrı eğri alır
             label = FanCurve.PresetName(p);
         }
         else if (saved.Length > 0)

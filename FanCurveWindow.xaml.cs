@@ -97,7 +97,7 @@ public partial class FanCurveWindow : Window
     /// <summary>Hazır eğriyi ve o eğriye uygun minimum hızı uygular; sonra elle ince ayar yapılabilir.</summary>
     private void ApplyPreset(FanPreset preset)
     {
-        var (curve, min) = FanCurve.Preset(preset);
+        var (curve, min) = FanCurve.Preset(preset, FanCurve.GroupOf(_config.Source));   // fanın sıcaklık kaynağına göre CPU / GPU / sistem eğrisi
         _config.Curve = curve;
         _config.MinPercent = min;
         Editor.Points = curve;

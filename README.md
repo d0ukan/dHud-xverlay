@@ -129,7 +129,7 @@ Notes and lists are stored only on your PC in `%AppData%\dHud\widgets.json` (sav
 
 *Settings → Behavior → Fan control* (needs administrator rights). dHud lists every fan it can control. For each one choose **Auto** (dHud does not touch it), **Manual** (fixed speed) or **Curve** (speed follows temperature: drag points, click to add, right-click to remove).
 
-- **Presets:** *Quiet*, *Optimal*, *Max Cold*. Apply one to all fans at once (pumps are skipped unless you ask).
+- **Presets:** *Quiet*, *Optimal*, *Max Cold*. Apply one to all fans at once (pumps are skipped unless you ask). CPU, GPU and case fans get their own curve: in *Quiet* and *Optimal* the graphics card and case fans start from a warmer point and reach 100% a little later (at 87 °C instead of 85 °C), because they tolerate more heat. *Max Cold* is the same for all. The emergency 100% rule still applies.
 - **Your own curves and profiles:** save a curve under a name, or the setup of all fans as a profile.
 - **Test:** runs a fan at 100% for a few seconds to see if it really responds.
 - **Alerts:** if a controlled fan stops, you get one calm notification (also on your phone). It can be turned off.

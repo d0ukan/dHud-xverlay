@@ -129,7 +129,7 @@ Notlar ve listeler yalnızca bilgisayarında `%AppData%\dHud\widgets.json` için
 
 *Ayarlar → Behavior → Fan control* (yönetici yetkisi gerekir). dHud kontrol edebildiği her fanı listeler. Her biri için **Otomatik** (dHud dokunmaz), **Manuel** (sabit hız) veya **Eğri** (hız sıcaklığı izler: noktaları sürükle, tıklayarak ekle, sağ tıkla sil) seç.
 
-- **Hazır ayarlar:** *Sessiz*, *Optimal*, *Max Cold*. Hepsini tek seferde tüm fanlara uygulayabilirsin (pompalar, istemezsen atlanır).
+- **Hazır ayarlar:** *Sessiz*, *Optimal*, *Max Cold*. Hepsini tek seferde tüm fanlara uygulayabilirsin (pompalar, istemezsen atlanır). CPU, ekran kartı ve kasa fanlarının her birinin kendi eğrisi vardır: *Sessiz* ve *Optimal*'de ekran kartı ve kasa fanları daha sıcak bir noktadan başlar ve %100'e biraz geç ulaşır (85 °C yerine 87 °C), çünkü daha çok ısıya dayanırlar. *Max Cold* hepsinde aynıdır. Acil %100 kuralı yine geçerlidir.
 - **Kendi eğrilerin ve profillerin:** bir eğriyi adla kaydet; tüm fanların kurulumunu da profil olarak kaydedebilirsin.
 - **Test:** bir fanı birkaç saniye %100'de çalıştırıp gerçekten tepki verip vermediğine bakar.
 - **Uyarı:** kontrol edilen bir fan durursa sakin tek bir bildirim gelir (telefonuna da). Kapatılabilir.

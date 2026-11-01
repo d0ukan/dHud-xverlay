@@ -437,16 +437,16 @@ public partial class FanControlWindow : Window
             return;
         }
 
-        var (curve, min) = FanCurve.Preset(preset);
         foreach (var channel in targets)
         {
             var cfg = GetOrCreate(channel.Id);
-            cfg.Mode = FanMode.Curve;
-            cfg.Curve = curve.Select(p => new CurvePoint { Temp = p.Temp, Percent = p.Percent }).ToList();
-            cfg.MinPercent = min;
             cfg.Source = channel.IsGpu ? FanSource.Gpu
                 : channel.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase) ? FanSource.Cpu
                 : FanSource.Max;
+            var (curve, min) = FanCurve.Preset(preset, FanCurve.GroupOf(cfg.Source));   // CPU, GPU ve sistem fanları ayrı eğri alır
+            cfg.Mode = FanMode.Curve;
+            cfg.Curve = curve.Select(p => new CurvePoint { Temp = p.Temp, Percent = p.Percent }).ToList();
+            cfg.MinPercent = min;
         }
 
         _settings.NotifyChanged();

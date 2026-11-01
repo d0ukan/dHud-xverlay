@@ -19,6 +19,14 @@ public enum FanPreset
     MaxCold
 }
 
+/// <summary>Hazır eğrilerin grubu: CPU fanları, GPU fanları, sistem (kasa) fanları.</summary>
+public enum FanGroup
+{
+    Cpu,
+    Gpu,
+    System
+}
+
 public enum FanSource
 {
     Cpu,
@@ -82,23 +90,54 @@ public static class FanCurve
     public static List<CurvePoint> Default() => Preset(FanPreset.Optimal).Curve;
 
     /// <summary>
-    /// Hazır eğriler. Hepsi en geç 85 °C'de %100'e ulaşır; hiçbiri sıcak bir sistemi düşük hızda bırakmaz.
+    /// Hazır eğriler (CPU grubu için; <see cref="Preset(FanPreset, FanGroup)"/> gruba göre değişir). Hepsi en geç 85 °C'de %100'e ulaşır.
     /// </summary>
-    public static (List<CurvePoint> Curve, int MinPercent) Preset(FanPreset preset) => preset switch
+    public static (List<CurvePoint> Curve, int MinPercent) Preset(FanPreset preset) => Preset(preset, FanGroup.Cpu);
+
+    /// <summary>Fanın hangi gruba girdiği: sıcaklık kaynağı CPU ise CPU, GPU ise GPU, ikisinin yükseği (kasa fanları) ise sistem.</summary>
+    public static FanGroup GroupOf(FanSource source) => source switch
     {
-        // Sessiz: 60 °C'ye kadar çok yavaş, sonra hızlı yükselir.
-        FanPreset.Quiet =>
+        FanSource.Gpu => FanGroup.Gpu,
+        FanSource.Max => FanGroup.System,
+        _ => FanGroup.Cpu
+    };
+
+    /// <summary>
+    /// Hazır eğriler, fan grubuna göre. Ekran kartları ve kasa ortamı işlemciden daha sıcak çalışmayı rahat kaldırır; bu yüzden
+    /// Sessiz ve Optimal'de GPU ve sistem fanları daha sıcak bir noktadan başlar ve %100'e daha geç (en çok 87 °C) ulaşır.
+    /// Max Cold her grupta aynıdır (amaç en soğuk çalışma). Acil %100 kuralı eğriden bağımsız çalışmaya devam eder.
+    /// </summary>
+    public static (List<CurvePoint> Curve, int MinPercent) Preset(FanPreset preset, FanGroup group) => (preset, group) switch
+    {
+        // Sessiz — CPU: 60 °C'ye kadar çok yavaş, sonra hızlı yükselir.
+        (FanPreset.Quiet, FanGroup.Gpu) =>
+        (
+            [P(40, 20), P(55, 25), P(65, 30), P(73, 45), P(80, 70), P(87, 100)], 15
+        ),
+        (FanPreset.Quiet, FanGroup.System) =>
+        (
+            [P(35, 20), P(55, 25), P(65, 30), P(72, 45), P(80, 70), P(87, 100)], 15
+        ),
+        (FanPreset.Quiet, _) =>
         (
             [P(30, 20), P(50, 25), P(60, 30), P(70, 45), P(78, 70), P(85, 100)], 15
         ),
 
-        // Max Cold: düşük sıcaklıkta bile yüksek hız; en soğuk, en gürültülü.
-        FanPreset.MaxCold =>
+        // Max Cold: düşük sıcaklıkta bile yüksek hız; en soğuk, en gürültülü (tüm gruplar aynı).
+        (FanPreset.MaxCold, _) =>
         (
             [P(30, 50), P(40, 60), P(50, 75), P(60, 90), P(70, 100)], 50
         ),
 
         // Optimal: dengeli.
+        (_, FanGroup.Gpu) =>
+        (
+            [P(35, 25), P(55, 35), P(68, 50), P(78, 75), P(87, 100)], 20
+        ),
+        (_, FanGroup.System) =>
+        (
+            [P(35, 25), P(55, 35), P(68, 55), P(78, 80), P(87, 100)], 20
+        ),
         _ =>
         (
             [P(30, 25), P(50, 35), P(65, 55), P(75, 80), P(85, 100)], 20
@@ -135,7 +174,7 @@ public static class FanCurve
     {
         foreach (var preset in Enum.GetValues<FanPreset>())
         {
-            if (SameCurve(curve, Preset(preset).Curve))
+            if (Enum.GetValues<FanGroup>().Any(group => SameCurve(curve, Preset(preset, group).Curve)))
             {
                 return PresetName(preset);
             }

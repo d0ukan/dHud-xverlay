@@ -69,13 +69,69 @@ public class FanLogicTests
     [InlineData(FanPreset.Quiet)]
     [InlineData(FanPreset.Optimal)]
     [InlineData(FanPreset.MaxCold)]
-    public void Presets_are_valid_and_reach_100_percent_by_85_degrees(FanPreset preset)
+    public void Presets_are_valid_and_reach_100_percent_in_time_for_every_group(FanPreset preset)
     {
-        var (curve, min) = FanCurve.Preset(preset);
-        Assert.InRange(curve.Count, 2, FanCurve.MaxPoints);
-        Assert.InRange(min, 0, 100);
-        Assert.True(curve.Zip(curve.Skip(1)).All(p => p.Second.Temp > p.First.Temp && p.Second.Percent >= p.First.Percent), "artan ve sıralı");
-        Assert.Equal(100, FanCurve.Interpolate(curve, 85));
+        foreach (var group in Enum.GetValues<FanGroup>())
+        {
+            var (curve, min) = FanCurve.Preset(preset, group);
+            Assert.InRange(curve.Count, 2, FanCurve.MaxPoints);
+            Assert.InRange(min, 0, 100);
+            Assert.True(curve.Zip(curve.Skip(1)).All(p => p.Second.Temp > p.First.Temp && p.Second.Percent >= p.First.Percent), $"artan ve sıralı ({preset}/{group})");
+            Assert.Equal(100, FanCurve.Interpolate(curve, group == FanGroup.Cpu ? 85 : 87));   // GPU ve sistem biraz geç; CPU 85'te
+            Assert.Equal(100, FanCurve.Interpolate(curve, 90));
+        }
+    }
+
+    [Fact]
+    public void Quiet_and_Optimal_let_gpu_and_system_fans_start_later_than_cpu_fans()
+    {
+        foreach (var preset in new[] { FanPreset.Quiet, FanPreset.Optimal })
+        {
+            var cpu = FanCurve.Preset(preset, FanGroup.Cpu).Curve;
+            foreach (var group in new[] { FanGroup.Gpu, FanGroup.System })
+            {
+                var other = FanCurve.Preset(preset, group).Curve;
+                foreach (var temp in new[] { 50, 60, 70, 78, 82 })
+                {
+                    Assert.True(FanCurve.Interpolate(other, temp) <= FanCurve.Interpolate(cpu, temp) + 0.001, $"{preset}/{group} @ {temp}");
+                }
+
+                Assert.True(FanCurve.Interpolate(other, 70) < FanCurve.Interpolate(cpu, 70), $"{preset}/{group} daha yavaş olmalı");
+            }
+        }
+    }
+
+    [Fact]
+    public void Quiet_gpu_is_never_louder_than_optimal_gpu_and_max_cold_is_the_same_everywhere()
+    {
+        foreach (var group in Enum.GetValues<FanGroup>())
+        {
+            var quiet = FanCurve.Preset(FanPreset.Quiet, group).Curve;
+            var optimal = FanCurve.Preset(FanPreset.Optimal, group).Curve;
+            for (var t = 20; t <= 100; t += 5)
+            {
+                Assert.True(FanCurve.Interpolate(quiet, t) <= FanCurve.Interpolate(optimal, t) + 0.001, $"{group} @ {t}");
+            }
+        }
+
+        Assert.True(FanCurve.SameCurve(FanCurve.Preset(FanPreset.MaxCold, FanGroup.Cpu).Curve, FanCurve.Preset(FanPreset.MaxCold, FanGroup.Gpu).Curve));
+        Assert.True(FanCurve.SameCurve(FanCurve.Preset(FanPreset.MaxCold, FanGroup.Cpu).Curve, FanCurve.Preset(FanPreset.MaxCold, FanGroup.System).Curve));
+    }
+
+    [Fact]
+    public void Fan_groups_follow_the_temperature_source_and_every_group_curve_is_still_named_after_its_preset()
+    {
+        Assert.Equal(FanGroup.Cpu, FanCurve.GroupOf(FanSource.Cpu));
+        Assert.Equal(FanGroup.Gpu, FanCurve.GroupOf(FanSource.Gpu));
+        Assert.Equal(FanGroup.System, FanCurve.GroupOf(FanSource.Max));
+
+        foreach (var preset in Enum.GetValues<FanPreset>())
+        {
+            foreach (var group in Enum.GetValues<FanGroup>())
+            {
+                Assert.Equal(FanCurve.PresetName(preset), FanCurve.Describe(FanCurve.Preset(preset, group).Curve, []));
+            }
+        }
     }
 
     [Fact]
