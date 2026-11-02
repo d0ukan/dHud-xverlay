@@ -184,6 +184,12 @@ internal sealed class BenchMode
         // S11 — pano görüntü yakalama doğruluğu (gerçek pano)
         await ClipboardImageAsync();
 
+        // S12 — saat stili değiştirme (gerçek pencere)
+        await ClockStylesAsync();
+
+        // S13 — tema, saydamlık ve ölçek geçişleri (tüm widget'lar açık)
+        await ThemeScaleAsync();
+
         // S9 — uzun soak (isteğe bağlı)
         if (_soakMinutes > 0)
         {
@@ -267,6 +273,107 @@ internal sealed class BenchMode
         });
     }
 
+
+    /// <summary>
+    /// S12 — saat widget'ında stiller arasında çok sayıda (ileri, geri, rastgele, saniye açık/kapalı) geçiş: istisna fırlamamalı ve görsel ağaç
+    /// her adımda tutarlı kalmalı ("zaten başka bir öğenin alt öğesi" hatası geçmişte stil değişiminde çıktı). Sorun sayısı "clockStyleProblems" (0 = tamam).
+    /// </summary>
+    private async Task ClockStylesAsync()
+    {
+        await AllWidgetsAsync(false);
+        await Measure("S12 Saat stilleri (doğruluk)", "Saat widget'ında tüm stiller arasında 300+ geçiş; hata ve tutarsız görsel ağaç sayılır.", async _ =>
+        {
+            await Configure(s => s.WidgetClock = true, 600);
+            var window = Application.Current.Windows.OfType<ClockWidgetWindow>().First();
+            var problems = 0;
+            var random = new Random(42);
+            var ids = ClockStyles.All;
+            var sequence = new List<string>();
+            for (var round = 0; round < 6; round++)
+            {
+                sequence.AddRange(ids);
+                sequence.AddRange(ids.Reverse());
+            }
+
+            for (var i = 0; i < 150; i++)
+            {
+                sequence.Add(ids[random.Next(ids.Count)]);
+            }
+
+            var count = 0;
+            foreach (var id in sequence)
+            {
+                try
+                {
+                    if (++count % 40 == 0)
+                    {
+                        _app.Settings.Current.ClockSeconds = !_app.Settings.Current.ClockSeconds;
+                    }
+
+                    window.ChangeStyle(id);
+                    window.UpdateLayout();
+                    if (!window.FaceIsConsistent() || _app.Settings.Current.ClockStyle != id)
+                    {
+                        problems++;
+                    }
+                }
+                catch (Exception)
+                {
+                    problems++;
+                }
+
+                await Task.Delay(5);
+            }
+
+            _app.Settings.Current.ClockSeconds = false;
+            _app.Settings.Current.ClockStyle = ClockStyles.Default;
+            _extra["clockStyleProblems"] = problems;
+        });
+    }
+
+    /// <summary>
+    /// S13 — tüm widget'lar açıkken tema, saydamlık ve ölçek değişimleri: hata olmamalı, ölçek küçülünce kartlar gerçekten küçülmeli, eski ölçeğe
+    /// dönünce eski boyuta gelmeli. Sorun sayısı "themeScaleProblems" (0 = tamam).
+    /// </summary>
+    private async Task ThemeScaleAsync()
+    {
+        await AllWidgetsAsync(false);
+        await Measure("S13 Tema, saydamlık ve ölçek (doğruluk)", "Tüm temalar, saydam açık/kapalı ve %60–100 ölçek arasında geçiş; kartlar küçülür ve geri döner.", async _ =>
+        {
+            var problems = 0;
+            await Configure(s => { s.WidgetScale = 1; s.WidgetTransparent = false; s.WidgetClock = s.WidgetStopwatch = s.WidgetTools = true; s.Extra(WidgetIds.Todo).Enabled = true; s.Extra(WidgetIds.Market).Enabled = true; }, 800);
+            double Width() => Application.Current.Windows.OfType<WidgetWindowBase>().Sum(w => w.ActualWidth);
+            var full = Width();
+
+            try
+            {
+                foreach (var theme in WidgetThemes.All)
+                {
+                    foreach (var transparent in new[] { false, true })
+                    {
+                        await Configure(s => { s.WidgetTheme = theme.Id; s.WidgetTransparent = transparent; }, 120);
+                    }
+                }
+
+                foreach (var scale in new[] { 0.8, 0.6, 0.5, 0.7, 1.0 })
+                {
+                    await Configure(s => s.WidgetScale = scale, 400);
+                    var width = Width();
+                    if ((scale < 1 && width >= full - 1) || (scale == 1.0 && Math.Abs(width - full) > 2))
+                    {
+                        problems++;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                problems++;
+            }
+
+            await Configure(s => { s.WidgetTheme = WidgetThemes.Default; s.WidgetTransparent = false; s.WidgetScale = 1; }, 200);
+            _extra["themeScaleProblems"] = problems;
+        });
+    }
 
     /// <summary>
     /// S11 — gerçek pano: görüntü kopyalanınca widget yakalar (1920×1080), metin varsa yalnızca metin alınır, tıklayınca görüntü panoya geri gelir,

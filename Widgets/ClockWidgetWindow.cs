@@ -121,6 +121,13 @@ public sealed class ClockWidgetWindow : WidgetWindowBase
         ApplyOptions();
     }
 
+    /// <summary>Okların ve menünün kullandığı stil değişimi (benchmark da bunu çağırır).</summary>
+    internal void ChangeStyle(string id) => SetStyle(id);
+
+    /// <summary>Yüzü oluşturan görsel ağacın tutarlılığı: tek çocuk ve hiçbir yazı kutusu iki yerde değil (bench kontrolü).</summary>
+    internal bool FaceIsConsistent() => _faceHost.Child is not null
+        && new[] { _time, _hours, _minutes }.All(b => b.Parent is null || ReferenceEquals(b.Parent, _faceHost) || (_faceHost.Child is Panel p && ReferenceEquals(b.Parent, p)));
+
     private void SetStyle(string id)
     {
         id = ClockStyles.Normalize(id);
@@ -159,6 +166,20 @@ public sealed class ClockWidgetWindow : WidgetWindowBase
             _prev.ToolTip = Loc.T("W.ClockPrev");
             _next.ToolTip = $"{Loc.T("W.ClockNext")} ({name})";
         }
+        // Önceki yüzdeki yazı kutuları yeni yüze konmadan önce eski ebeveynlerinden ayrılmalı (WPF: "zaten başka bir öğenin mantıksal alt öğesidir").
+        _faceHost.Child = null;
+        foreach (var block in new[] { _time, _hours, _minutes })
+        {
+            if (block.Parent is Panel owner)
+            {
+                owner.Children.Remove(block);
+            }
+            else if (block.Parent is Decorator decorator)
+            {
+                decorator.Child = null;
+            }
+        }
+
         _hourHand = _minuteHand = _secondHand = null;
         _time.Effect = null;
         _time.ClearValue(TextBlock.ForegroundProperty);
