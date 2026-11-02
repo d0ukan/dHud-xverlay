@@ -73,7 +73,7 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 
 **Closing a widget closes its gap:** when you hide a widget, the widgets below it slide up into its place; when you show it again from Settings, they all go back where they were. A widget you moved yourself in between stays where you put it. You can turn this off at the top of *Settings → Widgets*.
 
-**Colour themes:** pick one of nine (Graphite, Midnight, Forest, Wine, Violet, Amber, Teal, a see-through Glass theme and a Light theme) at the top of *Settings → Widgets*. It changes the card and accent colour of all widgets at once; sticky notes keep their own colours.
+**Colour themes:** pick one of eight (Graphite, Midnight, Forest, Wine, Violet, Amber, Teal and a Light theme) at the top of *Settings → Widgets*. It changes the card and accent colour of all widgets at once. The **Transparent widgets** checkbox below the colours makes every card see-through, in any theme; sticky notes keep their own colours.
 
 **Widget size:** the *Widget size* slider (50–100 %) under the themes shrinks every widget together, handy on large or high-resolution screens where the widgets cover too much of the desktop. It scales automatic and resized cards alike.
 
@@ -82,7 +82,7 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 <p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
 
 <p align="center"><img src="docs/images/widgets-more.png" alt="Media player, task manager, markets, notepad and battery widgets" /></p>
-<p align="center"><img src="docs/images/clock-styles.png" width="560" alt="The six clock styles, in the default theme (top) and in the Glass theme at 70 % size (bottom)" /></p>
+<p align="center"><img src="docs/images/clock-styles.png" width="560" alt="The six clock styles, in the default theme (top) and with transparent widgets at 70 % size (bottom)" /></p>
 
 | Widget | What it does |
 | --- | --- |

@@ -274,14 +274,14 @@ internal static class ScreenshotGenerator
         var s = app.Settings.Current;
         var items = new List<(BitmapSource Image, Point At)>();
         var windows = new List<Window>();
-        var (theme, scale, zone) = (s.WidgetTheme, s.WidgetScale, s.ClockZone);
+        var (scale, zone, transparent) = (s.WidgetScale, s.ClockZone, s.WidgetTransparent);
         s.ClockZone = string.Empty;
         s.ClockSeconds = true;
         try
         {
             for (var row = 0; row < 2; row++)
             {
-                s.WidgetTheme = row == 0 ? theme : "glass";
+                s.WidgetTransparent = row == 1;
                 s.WidgetScale = row == 0 ? 1.0 : 0.7;
                 WidgetGrid.SetScale(s.WidgetScale);
                 for (var i = 0; i < ClockStyles.All.Count; i++)
@@ -295,7 +295,7 @@ internal static class ScreenshotGenerator
         }
         finally
         {
-            s.WidgetTheme = theme;
+            s.WidgetTransparent = transparent;
             s.WidgetScale = scale;
             s.ClockZone = zone;
             s.ClockStyle = ClockStyles.Default;

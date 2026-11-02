@@ -15,7 +15,7 @@ namespace DHud.Widgets;
 public sealed class WeatherWidgetWindow : WidgetWindowBase
 {
     private static readonly TimeSpan RefreshEvery = TimeSpan.FromMinutes(30);
-    private static readonly TimeSpan RetryAfterError = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan RetryAfterError = TimeSpan.FromMinutes(2);
 
     // Aynı şehir için son veri uygulama boyunca bellekte kalır: pencere kapanıp açılınca hemen görünür, sunucuya gereksiz istek gitmez.
     private static WeatherData? _cache;

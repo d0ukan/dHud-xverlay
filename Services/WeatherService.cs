@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -38,7 +39,35 @@ public static class WeatherService
         return ParseGeocoding(await Http.GetStringAsync(url, ct).ConfigureAwait(false));
     }
 
+    /// <summary>Önce Open-Meteo; servis çökmüşse/yanıt vermiyorsa MET Norway (yedek) denenir. İkisi de başarısızsa ilk hata fırlatılır.</summary>
     public static async Task<WeatherData> FetchAsync(double latitude, double longitude, CancellationToken ct = default)
+    {
+        try
+        {
+            return await FetchOpenMeteoAsync(latitude, longitude, ct).ConfigureAwait(false);
+        }
+        catch (Exception first) when (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                return await FetchMetNoAsync(latitude, longitude, ct).ConfigureAwait(false);
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(first).Throw();
+                throw;
+            }
+        }
+    }
+
+    private static async Task<WeatherData> FetchMetNoAsync(double latitude, double longitude, CancellationToken ct)
+    {
+        var inv = CultureInfo.InvariantCulture;
+        var url = $"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude.ToString("0.####", inv)}&lon={longitude.ToString("0.####", inv)}";
+        return ParseMetNo(await Http.GetStringAsync(url, ct).ConfigureAwait(false), TimeZoneInfo.Local);
+    }
+
+    private static async Task<WeatherData> FetchOpenMeteoAsync(double latitude, double longitude, CancellationToken ct)
     {
         var inv = CultureInfo.InvariantCulture;
         var url = "https://api.open-meteo.com/v1/forecast"
@@ -46,6 +75,96 @@ public static class WeatherService
                   + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day"
                   + "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto";
         return ParseForecast(await Http.GetStringAsync(url, ct).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// MET Norway "locationforecast compact" yanıtını ayrıştırır (yedek kaynak). Günler <paramref name="zone"/> saatine göre bölünür
+    /// (şehrin saat dilimi bilinmediği için bilgisayarınki kullanılır); gün kodu öğleye en yakın simgeden gelir.
+    /// </summary>
+    public static WeatherData ParseMetNo(string json, TimeZoneInfo zone)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var series = doc.RootElement.GetProperty("properties").GetProperty("timeseries").EnumerateArray().ToList();
+        if (series.Count == 0)
+        {
+            throw new InvalidDataException("empty forecast");
+        }
+
+        var points = new List<(DateTime Local, double Temp, double Wind, string? Symbol)>();
+        foreach (var item in series)
+        {
+            if (!DateTime.TryParse(item.GetProperty("time").GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var utc))
+            {
+                continue;
+            }
+
+            var data = item.GetProperty("data");
+            var details = data.GetProperty("instant").GetProperty("details");
+            if (!details.TryGetProperty("air_temperature", out var temp))
+            {
+                continue;
+            }
+
+            string? symbol = null;
+            foreach (var next in new[] { "next_1_hours", "next_6_hours", "next_12_hours" })
+            {
+                if (data.TryGetProperty(next, out var n) && n.TryGetProperty("summary", out var sum) && sum.TryGetProperty("symbol_code", out var code))
+                {
+                    symbol = code.GetString();
+                    break;
+                }
+            }
+
+            var wind = details.TryGetProperty("wind_speed", out var w) ? w.GetDouble() * 3.6 : 0;   // m/s -> km/h
+            points.Add((TimeZoneInfo.ConvertTimeFromUtc(utc, zone), temp.GetDouble(), wind, symbol));
+        }
+
+        if (points.Count == 0)
+        {
+            throw new InvalidDataException("no usable forecast points");
+        }
+
+        var first = points[0];
+        var (code0, isDay) = SymbolToWmo(first.Symbol);
+        var now = new WeatherNow(first.Temp, first.Temp, code0, first.Wind, isDay);
+
+        var days = new List<WeatherDay>();
+        foreach (var group in points.GroupBy(p => p.Local.Date).OrderBy(g => g.Key).Take(3))
+        {
+            var noon = group.OrderBy(p => Math.Abs(p.Local.Hour - 12)).First();
+            days.Add(new WeatherDay(group.Key, group.Min(p => p.Temp), group.Max(p => p.Temp), SymbolToWmo(noon.Symbol).Code));
+        }
+
+        return new WeatherData(now, days, DateTime.UtcNow);
+    }
+
+    /// <summary>MET Norway simge adını (ör. "partlycloudy_day", "heavyrainshowers") en yakın WMO koduna ve gündüz/gece bilgisine çevirir.</summary>
+    public static (int Code, bool IsDay) SymbolToWmo(string? symbol)
+    {
+        if (string.IsNullOrEmpty(symbol))
+        {
+            return (3, true);
+        }
+
+        var isDay = !symbol.EndsWith("_night", StringComparison.Ordinal);
+        var name = symbol.Split('_')[0];
+        var heavy = name.StartsWith("heavy", StringComparison.Ordinal);
+        var code = name switch
+        {
+            "clearsky" => 0,
+            "fair" => 1,
+            "partlycloudy" => 2,
+            "cloudy" => 3,
+            "fog" => 45,
+            _ when name.Contains("thunder") => 95,
+            _ when name.Contains("sleet") => 67,
+            _ when name.Contains("snow") && name.Contains("showers") => 85,
+            _ when name.Contains("snow") => heavy ? 75 : name.StartsWith("light", StringComparison.Ordinal) ? 71 : 73,
+            _ when name.Contains("rain") && name.Contains("showers") => heavy ? 82 : 80,
+            _ when name.Contains("rain") => heavy ? 65 : name.StartsWith("light", StringComparison.Ordinal) ? 61 : 63,
+            _ => 3
+        };
+        return (code, isDay);
     }
 
     public static IReadOnlyList<GeoPlace> ParseGeocoding(string json)

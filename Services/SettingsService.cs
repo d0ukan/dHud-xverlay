@@ -180,6 +180,9 @@ public sealed class AppSettings
     /// <summary>Tüm widget'ların ortak ölçeği (0.5–1.0); büyük ekranlarda widget'lar daha az yer kaplasın.</summary>
     public double WidgetScale { get; set; } = 1.0;
 
+    /// <summary>Tüm widget kartları saydam olsun (tema renkleri korunur, yalnızca kart zemini saydamlaşır).</summary>
+    public bool WidgetTransparent { get; set; }
+
     /// <summary>Saat widget'ında ikinci saat dilimi (Windows saat dilimi kimliği; boş = yok).</summary>
     public string ClockZone { get; set; } = string.Empty;
 

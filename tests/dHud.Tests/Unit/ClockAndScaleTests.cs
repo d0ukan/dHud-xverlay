@@ -62,7 +62,7 @@ public class ClockAndScaleTests
             foreach (var language in new[] { AppLanguage.English, AppLanguage.Turkish })
             {
                 Loc.Current = language;
-                foreach (var key in ClockStyles.All.Select(id => "Clock." + id).Concat(["W.ClockStyle", "W.ClockPrev", "W.ClockNext", "S.WidgetScale", "S.WidgetScaleHint", "Theme.glass"]))
+                foreach (var key in ClockStyles.All.Select(id => "Clock." + id).Concat(["W.ClockStyle", "W.ClockPrev", "W.ClockNext", "S.WidgetScale", "S.WidgetScaleHint", "S.WidgetTransparent", "S.WidgetTransparentHint"]))
                 {
                     var text = Loc.T(key);
                     Assert.False(string.IsNullOrWhiteSpace(text) || text == key, $"{key} çevirisi eksik ({language})");
@@ -76,12 +76,11 @@ public class ClockAndScaleTests
     }
 
     [Fact]
-    public void The_glass_theme_is_translucent_and_the_others_stay_nearly_opaque()
+    public void Transparency_is_a_separate_off_by_default_switch_and_every_theme_stays_nearly_opaque()
     {
-        var glass = WidgetThemes.Get("glass");
-        Assert.Equal("glass", glass.Id);
-        Assert.InRange(glass.Card.A, 0x40, 0xA0);
-        Assert.All(WidgetThemes.All.Where(t => t.Id != "glass"), t => Assert.True(t.Card.A >= 0xE0, t.Id));
+        Assert.False(new AppSettings().WidgetTransparent);
+        Assert.Null(WidgetThemes.All.FirstOrDefault(t => t.Id == "glass"));
+        Assert.All(WidgetThemes.All, t => Assert.True(t.Card.A >= 0xE0, t.Id));
     }
 
     [Fact]

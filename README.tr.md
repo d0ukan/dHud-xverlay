@@ -73,7 +73,7 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 
 **Widget kapanınca boşluk kapanır:** bir widget'ı kapattığında altındakiler yukarı kayıp yerini doldurur; *Ayarlar*'dan geri açınca hepsi eski yerine döner. Bu arada kendin taşıdığın bir widget bıraktığın yerde kalır. *Ayarlar → Widget'lar* sayfasının üstünden kapatabilirsin.
 
-**Renk temaları:** *Ayarlar → Widget'lar* sayfasının üstünden dokuz temadan birini seç (Grafit, Gece mavisi, Orman, Şarap, Mor, Kehribar, Turkuaz, saydam Cam teması ve Açık tema). Tüm widget'ların kart ve vurgu rengini birlikte değiştirir; yapışkan notlar kendi renklerini korur.
+**Renk temaları:** *Ayarlar → Widget'lar* sayfasının üstünden sekiz temadan birini seç (Grafit, Gece mavisi, Orman, Şarap, Mor, Kehribar, Turkuaz ve Açık tema). Tüm widget'ların kart ve vurgu rengini birlikte değiştirir. Renklerin altındaki **Widget'lar saydam olsun** kutusu, hangi tema seçili olursa olsun tüm kartları saydam yapar; yapışkan notlar kendi renklerini korur.
 
 **Widget boyutu:** temaların altındaki *Widget boyutu* kaydırıcısı (%50–100) tüm widget'ları birlikte küçültür; widget'ların masaüstünün çoğunu kapladığı büyük veya yüksek çözünürlüklü ekranlarda işe yarar. Otomatik ve elle boyutlandırılmış kartların ikisini de ölçekler.
 
@@ -82,7 +82,7 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 <p align="center"><img src="docs/images/widgets-tr.png" alt="Diğer widget'lar" /></p>
 
 <p align="center"><img src="docs/images/widgets-more-tr.png" alt="Medya oynatıcı, görev yöneticisi, borsa, not defteri ve pil widget'ları" /></p>
-<p align="center"><img src="docs/images/clock-styles-tr.png" width="560" alt="Altı saat stili: varsayılan temada (üst) ve %70 boyutlu Cam temasında (alt)" /></p>
+<p align="center"><img src="docs/images/clock-styles-tr.png" width="560" alt="Altı saat stili: varsayılan temada (üst) ve saydam widget'larla ve %70 boyutta (alt)" /></p>
 
 | Widget | Ne yapar |
 | --- | --- |

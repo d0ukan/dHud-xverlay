@@ -448,6 +448,10 @@ public partial class SettingsWindow : Window
         hint.SetResourceReference(StyleProperty, "HintText");
         hint.Margin = new Thickness(0, 4, 0, 0);
         panel.Children.Add(hint);
+        var transparent = WidgetCheck("S.WidgetTransparent", () => _settings.Current.WidgetTransparent, v => _settings.Current.WidgetTransparent = v);
+        transparent.Margin = new Thickness(0, 8, 0, 2);
+        transparent.ToolTip = Loc.T("S.WidgetTransparentHint");
+        panel.Children.Add(transparent);
         return panel;
     }
 

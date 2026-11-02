@@ -21,6 +21,7 @@ public abstract class WidgetWindowBase : Window
     private const double SnapDistance = 24;
     private const double CornerMargin = 16;
     private const double CardPad = 8; // kartın etrafındaki gölge payı
+    private const byte TransparentAlpha = 0x70; // "Widget'lar saydam olsun" açıkken kart zemini opaklığı
 
     private Color _cardColor = Color.FromArgb(0xF2, 0x1A, 0x1B, 0x22);
     private IntPtr _hwnd;
@@ -150,7 +151,9 @@ public abstract class WidgetWindowBase : Window
         }
 
         var theme = WidgetThemes.Get(App.Current.Settings.Current.WidgetTheme);
-        _cardColor = theme.Card;
+        _cardColor = App.Current.Settings.Current.WidgetTransparent
+            ? Color.FromArgb(TransparentAlpha, theme.Card.R, theme.Card.G, theme.Card.B)
+            : theme.Card;
         Resources["AccentColor"] = theme.Accent;
         Resources["AccentBrush"] = new SolidColorBrush(theme.Accent);
 
