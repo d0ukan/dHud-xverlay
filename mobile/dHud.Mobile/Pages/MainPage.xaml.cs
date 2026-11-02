@@ -37,6 +37,9 @@ public partial class MainPage : ContentPage
 		App.Link.AlertReceived += OnAlert;
 		App.Link.CommandResult += OnCommandResult;
 		App.Link.TasksChanged += RefreshTasks;
+		App.Link.TasksChanged += RefreshWidgets;
+		App.Link.WidgetsChanged += RefreshWidgets;
+		App.Link.PcVersionKnown += OnPcVersion;
 
 		// Ekran koruyucu: herhangi bir dokunuş (karartılmışken karartma katmanı dahil) paneli uyandırır.
 		var wakeTap = new TapGestureRecognizer();
@@ -283,6 +286,8 @@ public partial class MainPage : ContentPage
 			Place(FanCard, 0, 1);
 		}
 
+		ArrangeWidgets(mode);
+
 		// Grafiğin en küçük yüksekliği: doğal boyut buna göre ölçülür, artan yükseklik grafiğe verilir.
 		Graph.MinimumHeightRequest = mode switch
 		{
@@ -312,6 +317,7 @@ public partial class MainPage : ContentPage
 		TabPanelButton.Text = Loc.T("TabPanel");
 		TabFansButton.Text = Loc.T("TabFans");
 		TabTasksButton.Text = Loc.T("TabTasks");
+		TabWidgetsButton.Text = Loc.T("TabWidgets");
 		RefreshTasks();
 		FullscreenButton.IsVisible = paired;
 
@@ -442,7 +448,8 @@ public partial class MainPage : ContentPage
 	{
 		Panel,
 		Fans,
-		Tasks
+		Tasks,
+		Widgets
 	}
 
 	private Tab _tab = Tab.Panel;
@@ -463,6 +470,11 @@ public partial class MainPage : ContentPage
 		{
 			RefreshTasks();
 		}
+
+		if (tab == Tab.Widgets)
+		{
+			RefreshWidgets();
+		}
 	}
 
 	/// <summary>Seçili sekmeye göre sayfaları ve sekme düğmelerini gösterir.</summary>
@@ -472,9 +484,12 @@ public partial class MainPage : ContentPage
 		Dashboard.IsVisible = paired && _tab == Tab.Panel;
 		FanPage.IsVisible = paired && _tab == Tab.Fans;
 		TasksPage.IsVisible = paired && _tab == Tab.Tasks;
+		WidgetsPage.IsVisible = paired && _tab == Tab.Widgets;
 		TabPanelButton.Style = TabStyle(_tab == Tab.Panel);
 		TabFansButton.Style = TabStyle(_tab == Tab.Fans);
 		TabTasksButton.Style = TabStyle(_tab == Tab.Tasks);
+		TabWidgetsButton.Style = TabStyle(_tab == Tab.Widgets);
+		_ = App.Link.SetWatchingAsync(paired && _tab == Tab.Widgets);   // PC yalnızca bu sekme açıkken widget verisi gönderir
 	}
 
 	private static Style TabStyle(bool active) =>
@@ -485,6 +500,8 @@ public partial class MainPage : ContentPage
 	private void TabFansButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Fans);
 
 	private void TabTasksButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Tasks);
+
+	private void TabWidgetsButton_Clicked(object? sender, EventArgs e) => ShowTab(Tab.Widgets);
 
 	private void RefreshFans(PcSnapshot s)
 	{
@@ -734,6 +751,12 @@ public partial class MainPage : ContentPage
 	{
 		if (ok)
 		{
+			return;
+		}
+
+		if (WidgetErrorText(cmd, error) is { } widgetText)
+		{
+			FlashWidgetStatus(widgetText, error: true);
 			return;
 		}
 

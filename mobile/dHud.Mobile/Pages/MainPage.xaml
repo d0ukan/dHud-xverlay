@@ -256,11 +256,20 @@
             </Grid>
         </ScrollView>
 
+        <!-- Widget'lar sekmesi: PC'deki widget'ların canlı kartları (medya, başlatıcı, pano, görev yöneticisi, borsa, pil) -->
+        <ScrollView x:Name="WidgetsPage" Grid.Row="2" IsVisible="False">
+            <VerticalStackLayout Spacing="10">
+                <Label x:Name="WidgetsStatus" FontSize="13" IsVisible="False" TextColor="{StaticResource SubtleColor}" />
+                <Grid x:Name="WidgetsLayout" ColumnSpacing="12" RowSpacing="12" />
+            </VerticalStackLayout>
+        </ScrollView>
+
         <!-- Sekmeler -->
-        <Grid x:Name="TabBar" Grid.Row="3" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+        <Grid x:Name="TabBar" Grid.Row="3" ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
             <Button x:Name="TabPanelButton" Style="{StaticResource PrimaryButton}" HeightRequest="42" Clicked="TabPanelButton_Clicked" />
             <Button x:Name="TabFansButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabFansButton_Clicked" />
             <Button x:Name="TabTasksButton" Grid.Column="2" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabTasksButton_Clicked" />
+            <Button x:Name="TabWidgetsButton" Grid.Column="3" Style="{StaticResource SecondaryButton}" HeightRequest="42" Clicked="TabWidgetsButton_Clicked" />
         </Grid>
 
         <!-- Ekran koruyucu: tam ekran panel bir süre dokunulmazsa kararır (dokununca geri gelir) -->

@@ -127,6 +127,7 @@ public partial class SettingsWindow : Window
         MobileCheckBox.IsChecked = s.MobileEnabled;
         MobileFanCheckBox.IsChecked = s.MobileFanControl;
         MobileTasksCheckBox.IsChecked = s.MobileTasks;
+        MobileWidgetsCheckBox.IsChecked = s.MobileWidgets;
         MobilePanel.Visibility = s.MobileEnabled ? Visibility.Visible : Visibility.Collapsed;
         RefreshMobile();
         VersionText.Text = UpdateService.CurrentVersionText;
@@ -191,6 +192,7 @@ public partial class SettingsWindow : Window
         s.MobileEnabled = MobileCheckBox.IsChecked == true;
         s.MobileFanControl = MobileFanCheckBox.IsChecked == true;
         s.MobileTasks = MobileTasksCheckBox.IsChecked == true;
+        s.MobileWidgets = MobileWidgetsCheckBox.IsChecked == true;
         if (UpdateHoursPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true) is { } hours)
         {
             s.UpdateCheckHours = int.Parse((string)hours.Tag);

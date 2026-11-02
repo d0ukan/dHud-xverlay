@@ -321,6 +321,9 @@
                         <CheckBox x:Name="MobileTasksCheckBox" Content="{h:Loc S.MobileTasks}" Margin="0,8,0,0"
                                   Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
                         <TextBlock Text="{h:Loc S.MobileTasksHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                        <CheckBox x:Name="MobileWidgetsCheckBox" Content="{h:Loc S.MobileWidgets}" Margin="0,8,0,0"
+                                  Style="{StaticResource DarkCheckBox}" Click="Option_Click" />
+                        <TextBlock Text="{h:Loc S.MobileWidgetsHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
                         <Button Content="{h:Loc S.MobileReset}" Style="{StaticResource DarkButton}"
                                 HorizontalAlignment="Left" Margin="0,6,0,0" Click="MobileResetButton_Click" />
                     </StackPanel>

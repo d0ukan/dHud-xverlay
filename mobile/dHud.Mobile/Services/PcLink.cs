@@ -41,6 +41,43 @@ public sealed class PcLink
 	/// <summary>Görev özeti güncellendi (ana iş parçacığında).</summary>
 	public event Action? TasksChanged;
 
+	/// <summary>PC'deki widget'ların son özeti (Widget'lar sekmesi izlenirken; bağlı değilse null).</summary>
+	public WidgetsState? Widgets { get; private set; }
+
+	/// <summary>Widget'lar özeti güncellendi (ana iş parçacığında).</summary>
+	public event Action? WidgetsChanged;
+
+	/// <summary>
+	/// Yalnızca değişince gelen resimler (kapak, pano önizlemeleri, başlatıcı simgeleri) burada tutulur; anahtarlar
+	/// <c>cover:{anahtar}</c>, <c>clip:{anahtar}</c>, <c>icon:{kimlik}</c>. Değer: base64 JPEG/PNG.
+	/// </summary>
+	public Dictionary<string, string> Images { get; } = [];
+
+	/// <summary>PC'deki dHud'un sürümü (ör. "1.0.62"); PC eski sürümse veya henüz bağlanılmadıysa null.</summary>
+	public string? PcVersion { get; private set; }
+
+	/// <summary>PC'nin sürümü öğrenildi (ana iş parçacığında): telefondaki uygulama bununla karşılaştırılır.</summary>
+	public event Action<string>? PcVersionKnown;
+
+	private bool _watch;
+
+	/// <summary>Widget'lar sekmesi açıldı/kapandı: PC bu telefona widget verisi göndermeye başlar/durur (bağlantı kopup gelirse otomatik yeniden istenir).</summary>
+	public async Task SetWatchingAsync(bool on)
+	{
+		if (_watch == on)
+		{
+			return;
+		}
+
+		_watch = on;
+		if (!on)
+		{
+			Widgets = null;
+		}
+
+		await SendCommandAsync(new { cmd = "watch", on });
+	}
+
 	public void Start(PairingInfo info)
 	{
 		Stop();
@@ -54,6 +91,9 @@ public sealed class PcLink
 		_cts = null;
 		Latest = null;
 		Tasks = null;
+		Widgets = null;
+		Images.Clear();
+		_watch = false;
 		CpuTemp.Clear();
 		GpuTemp.Clear();
 		SetState(LinkState.Idle);
@@ -243,6 +283,24 @@ public sealed class PcLink
 				continue;
 			}
 
+				// Widget'lar sekmesi: medya, pano, başlatıcı, görev yöneticisi, borsa, pil.
+				if (doc.RootElement.TryGetProperty("widgets", out var widgets))
+				{
+					var state = widgets.Deserialize<WidgetsState>(Json);
+					MainThread.BeginInvokeOnMainThread(() =>
+					{
+						if (state is null || !_watch)
+						{
+							return;   // sekme kapandıktan sonra gelen bayat veri
+						}
+
+						Cache(state);
+						Widgets = state;
+						WidgetsChanged?.Invoke();
+					});
+					continue;
+				}
+
 			if (doc.RootElement.TryGetProperty("ack", out var ack))
 			{
 				var cmd = ack.TryGetProperty("cmd", out var c) ? c.GetString() ?? string.Empty : string.Empty;
@@ -258,6 +316,20 @@ public sealed class PcLink
 				{
 					return SessionResult.Rejected;
 				}
+				if (doc.RootElement.TryGetProperty("app", out var app) && app.ValueKind == JsonValueKind.String && app.GetString() is { Length: > 0 } version)
+				{
+					MainThread.BeginInvokeOnMainThread(() =>
+					{
+						PcVersion = version;
+						PcVersionKnown?.Invoke(version);
+					});
+				}
+
+				if (_watch)
+				{
+					_ = SendCommandAsync(new { cmd = "watch", on = true });   // bağlantı yenilendi: PC'nin izleme durumu sıfırlandı
+				}
+
 
 				continue;
 			}
@@ -270,6 +342,47 @@ public sealed class PcLink
 
 			gotData = true;
 			MainThread.BeginInvokeOnMainThread(() => OnSnapshot(snapshot));
+		}
+	}
+
+	/// <summary>Yalnızca değişince gelen resimleri saklar ve eski olanları (artık listede olmayanları) atar.</summary>
+	private void Cache(WidgetsState state)
+	{
+		if (state.Media is { Cover: { Length: > 0 } cover } media && media.CoverKey.Length > 0)
+		{
+			Images["cover:" + media.CoverKey] = cover;
+		}
+
+		foreach (var (key, value) in state.Clip?.Images ?? [])
+		{
+			Images["clip:" + key] = value;
+		}
+
+		foreach (var (id, value) in state.Launch?.Icons ?? [])
+		{
+			Images["icon:" + id] = value;
+		}
+
+		// Listede artık olmayan pano/simge/kapak resimleri bellekten atılır.
+		var keep = new HashSet<string>();
+		if (state.Media is { CoverKey.Length: > 0 } m)
+		{
+			keep.Add("cover:" + m.CoverKey);
+		}
+
+		foreach (var item in state.Clip?.Items ?? [])
+		{
+			keep.Add("clip:" + item.K);
+		}
+
+		foreach (var item in state.Launch?.Items ?? [])
+		{
+			keep.Add("icon:" + item.Id);
+		}
+
+		foreach (var key in Images.Keys.Where(k => !keep.Contains(k)).ToList())
+		{
+			Images.Remove(key);
 		}
 	}
 

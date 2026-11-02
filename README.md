@@ -160,7 +160,11 @@ Mirrors dHud on your **local network** (same Wi-Fi), in the same dark theme.
 
 It shows live values and a temperature graph, vibrates and notifies on alerts, shows your reminders and the game summary, and has a **full-screen dashboard** for tablets (it slowly shifts and dims to protect the screen) and a **home-screen widget**. It finds your PC again if its IP address changes and updates itself with one tap.
 
-**Tasks from the phone:** a *Tasks* tab lists your PC's to-do list. Add tasks and sub-tasks, tick or delete them, and set a reminder in a few taps; it shows up on your PC at once and rings there (and on the phone if you enabled reminders to phone). On by default; switch it off with **Let the mobile app manage to-dos and reminders**. The phone never sees your notes or clipboard.
+**Widgets from the phone:** a *Widgets* tab shows live cards of your PC's widgets, handy on a tablet next to your desk: a **media player** (cover, progress, previous / play-pause / next), your **launcher** (tap an app and it opens on the PC), the **clipboard history** (tap a text to copy it to the phone; a button sends the phone's clipboard to the PC), your **to-dos**, a **task manager** (which app uses how much CPU, RAM, disk and, if dHud runs as administrator, internet), **markets** and **battery** (PC and Bluetooth devices). The PC only sends this data while the tab is open. On by default; switch it off with **Let the mobile app show and use widgets**. The phone can only open apps you added to the launcher and cannot run anything else. Cards for widgets that are off on the PC (Clipboard, Markets) tell you so.
+
+**Always in step:** the PC tells the phone which dHud version it runs. When the PC is newer, the app checks for an update at once and offers it with one tap (Android always asks you to confirm the install). Releases build the PC and the phone app from the same version number.
+
+**Tasks from the phone:** a *Tasks* tab lists your PC's to-do list. Add tasks and sub-tasks, tick or delete them, and set a reminder in a few taps; it shows up on your PC at once and rings there (and on the phone if you enabled reminders to phone). On by default; switch it off with **Let the mobile app manage to-dos and reminders**. The phone never sees your sticky notes; it sees the clipboard history only on the Widgets tab, and only if you leave that option on.
 
 **Home-screen widget sizes:** make it one row tall for just CPU and GPU temperatures, two rows for temperatures and FPS, three or more rows to also see load percentages and RAM and disk bars.
 

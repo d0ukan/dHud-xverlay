@@ -222,6 +222,9 @@ public sealed class AppSettings
     /// <summary>Pano geçmişi metnin yanında kopyalanan görüntüleri (ekran görüntüsü vb.) de saklasın (yalnızca bellekte).</summary>
     public bool ClipboardImages { get; set; } = true;
 
+    /// <summary>Telefondaki Widget'lar sekmesi PC widget'larını gösterebilsin ve kullanabilsin (medya denetimi, başlatıcıdan uygulama açma, panoya metin gönderme).</summary>
+    public bool MobileWidgets { get; set; } = true;
+
     /// <summary>Aynı durumda üstteki bar da gizlensin (oyunda bar genelde istenir, o yüzden varsayılan kapalı).</summary>
     public bool HideBarOnFullscreen { get; set; }
 

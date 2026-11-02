@@ -116,7 +116,7 @@ public sealed class LauncherWidgetWindow : WidgetWindowBase
         }
     }
 
-    private static ImageSource? IconOf(string path)
+    internal static ImageSource? IconOf(string path)
     {
         try
         {

@@ -51,6 +51,9 @@ public partial class App : Application
     public FanControlService FanControl { get; private set; } = null!;
     public RemoteFanService RemoteFan { get; private set; } = null!;
     public RemoteTaskService RemoteTasks { get; private set; } = null!;
+    public RemoteWidgetService RemoteWidgets { get; private set; } = null!;
+    public MobileWidgetsFeed WidgetsFeed { get; private set; } = null!;
+    public MediaBridge WidgetsMedia { get; private set; } = null!;
     public WidgetService Widgets { get; private set; } = null!;
     public WidgetManager WidgetManager { get; private set; } = null!;
     public ProfileService Profiles { get; private set; } = null!;
@@ -205,11 +208,17 @@ public partial class App : Application
         {
             FpsProvider = () => Fps.Fps,
             FanProvider = () => RemoteFan.BuildState(),
-            // Yapılacak/hatırlatıcı komutları görev servisine, geri kalanı (fan) fan servisine gider; ikisi de ana iş parçacığında çalışır.
-            CommandHandler = command => Dispatcher.InvokeAsync(() =>
-                command.TryGetProperty("cmd", out var cmd) && RemoteTaskService.IsTaskCommand(cmd.GetString())
-                    ? RemoteTasks.Apply(command)
-                    : RemoteFan.Apply(command)).Task,
+            // Yapılacak/hatırlatıcı komutları görev servisine, widget komutları (medya, başlatıcı, pano) widget servisine, geri kalanı (fan) fan servisine gider; hepsi ana iş parçacığında çalışır.
+            CommandHandler = command => Dispatcher.InvokeAsync(async () =>
+            {
+                var name = command.TryGetProperty("cmd", out var cmd) ? cmd.GetString() : null;
+                if (RemoteTaskService.IsTaskCommand(name))
+                {
+                    return RemoteTasks.Apply(command);
+                }
+
+                return RemoteWidgetService.IsWidgetCommand(name) ? await RemoteWidgets.ApplyAsync(command) : RemoteFan.Apply(command);
+            }).Task.Unwrap(),
             TasksProvider = () => Dispatcher.Invoke(() => RemoteTasks.BuildState())
         };
 
@@ -230,6 +239,58 @@ public partial class App : Application
             tasksTimer.Stop();
             tasksTimer.Start();
         };
+
+        // Telefondaki Widget'lar sekmesi: yalnızca bir telefon sekmeyi izlerken 2 sn'de bir veri (medya, pano, başlatıcı, görev yöneticisi...) gönderilir.
+        WidgetsMedia = new MediaBridge();
+        RemoteWidgets = new RemoteWidgetService(Widgets, Settings, WidgetsMedia);
+        WidgetsFeed = new MobileWidgetsFeed(Widgets, Settings, WidgetsMedia)
+        {
+            SnapshotProvider = () => Monitor.Latest,
+            ClipboardProvider = () => DHud.Widgets.ClipboardWidgetWindow.Snapshot(),
+            IconProvider = path => DHud.Widgets.LauncherWidgetWindow.IconOf(path) is System.Windows.Media.Imaging.BitmapSource icon ? ClipJpeg.EncodePng(icon, 48) : null
+        };
+        var pumpBusy = false;
+        var widgetsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        async Task PumpWidgetsAsync()
+        {
+            if (pumpBusy || MobileLink.WatcherCount == 0)
+            {
+                return;
+            }
+
+            pumpBusy = true;
+            try
+            {
+                MobileLink.SendWidgets(await WidgetsFeed.BuildAsync());
+            }
+            catch (Exception ex)
+            {
+                DiagLog.Add("mobile", ex);
+            }
+            finally
+            {
+                pumpBusy = false;
+            }
+        }
+
+        widgetsTimer.Tick += async (_, _) => await PumpWidgetsAsync();
+        MobileLink.WatchersChanged += (count, joined) => Dispatcher.BeginInvoke(async () =>
+        {
+            WidgetsFeed.SetWatching(count > 0);
+            if (count == 0)
+            {
+                widgetsTimer.Stop();
+                return;
+            }
+
+            if (joined)
+            {
+                WidgetsFeed.ForceFull();   // yeni telefon kapak/simge/önizlemeleri de alsın
+            }
+
+            widgetsTimer.Start();
+            await PumpWidgetsAsync();
+        });
         Fps.Changed += fps => Dispatcher.BeginInvoke(() => OnFps(fps));
 
         // Oyun oturumu bitince özet kartı (ayardan kapatılabilir).
@@ -906,6 +967,7 @@ public partial class App : Application
         Fps.Dispose();
         _fpsWindow?.Close();
         MobileLink?.Dispose();
+        WidgetsFeed?.Dispose();
         Monitor.Dispose();
         ReleaseSingleInstance();
         base.OnExit(e);

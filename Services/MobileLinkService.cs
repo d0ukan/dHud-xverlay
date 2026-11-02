@@ -24,7 +24,7 @@ public sealed class MobileLinkService : IDisposable
     private const int ProtocolVersion = 1;
     private const int MaxClients = 8;
     private const int MaxHelloBytes = 512;
-    private const int MaxCommandBytes = 1024;
+    private const int MaxCommandBytes = 4096;
     private static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(3);
 
@@ -101,6 +101,59 @@ public sealed class MobileLinkService : IDisposable
         }
     }
 
+
+    /// <summary>"Widget'lar" sekmesini izleyen telefon sayısı değişti (arka plan thread'inden tetiklenir): yeni sayı, yeni bir izleyici katıldı mı.</summary>
+    public event Action<int, bool>? WatchersChanged;
+
+    /// <summary>Widget'lar sekmesini izleyen telefon sayısı.</summary>
+    public int WatcherCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _clients.Count(c => c.Watching);
+            }
+        }
+    }
+
+    /// <summary>Widget'lar sekmesinin verisini yalnızca izleyen telefonlara gönderir.</summary>
+    public void SendWidgets(object payload)
+    {
+        Client[] targets;
+        lock (_gate)
+        {
+            targets = [.. _clients.Where(c => c.Watching)];
+        }
+
+        if (targets.Length == 0)
+        {
+            return;
+        }
+
+        var data = Append(JsonSerializer.SerializeToUtf8Bytes(new { widgets = payload }, Json));
+        foreach (var client in targets)
+        {
+            // Yavaş telefon: önceki gönderim bitmediyse bu tur atlanır (veri zaten 2 sn sonra yenilenir).
+            if (Interlocked.Exchange(ref client.Busy, 1) == 1)
+            {
+                continue;
+            }
+
+            _ = SendAsync(client, data);
+        }
+    }
+
+    private void SetWatching(Client client, bool on)
+    {
+        if (client.Watching == on)
+        {
+            return;
+        }
+
+        client.Watching = on;
+        WatchersChanged?.Invoke(WatcherCount, on);
+    }
     /// <summary>Dinleme başlatılamadıysa nedeni (ör. port başka uygulamada kullanımda).</summary>
     public string? LastError { get; private set; }
 
@@ -375,7 +428,7 @@ public sealed class MobileLinkService : IDisposable
             }
 
             var ok = JsonSerializer.SerializeToUtf8Bytes(
-                new { ok = true, v = ProtocolVersion, pc = Environment.MachineName }, Json);
+                new { ok = true, v = ProtocolVersion, pc = Environment.MachineName, app = UpdateService.CurrentVersionText.TrimStart('v') }, Json);
             await WriteAsync(stream, Append(ok), ct).ConfigureAwait(false);
             if (_monitor.Latest is { } latest)
             {
@@ -421,6 +474,8 @@ public sealed class MobileLinkService : IDisposable
                 {
                     _clients.Remove(client);
                 }
+
+                SetWatching(client, false);   // bağlantı koptu: izleme de bitti
             }
 
             tcp.Dispose();
@@ -437,7 +492,13 @@ public sealed class MobileLinkService : IDisposable
             using var doc = JsonDocument.Parse(text);
             var root = doc.RootElement.Clone();
             cmd = root.TryGetProperty("cmd", out var c) ? c.GetString() ?? string.Empty : string.Empty;
-            if (CommandHandler is { } handler && cmd.Length > 0)
+            if (cmd == "watch")
+            {
+                // Telefon Widget'lar sekmesini açtı/kapattı: veri akışı başlar/durur (PC'de örnekleme de ona göre).
+                SetWatching(client, root.TryGetProperty("on", out var on) && on.ValueKind == JsonValueKind.True);
+                error = null;
+            }
+            else if (CommandHandler is { } handler && cmd.Length > 0)
             {
                 error = await handler(root).ConfigureAwait(false);
             }
@@ -642,5 +703,8 @@ public sealed class MobileLinkService : IDisposable
         public TcpClient Tcp { get; } = tcp;
         public NetworkStream Stream { get; } = stream;
         public int Busy;
+
+        /// <summary>Telefon "Widget'lar" sekmesini izliyor (kapağı, pano resimlerini, görev yöneticisini ister).</summary>
+        public volatile bool Watching;
     }
 }

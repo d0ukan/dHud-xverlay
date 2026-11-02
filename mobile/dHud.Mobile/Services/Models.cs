@@ -115,6 +115,126 @@ public sealed class TasksState
 	public List<ReminderInfo>? Reminders { get; set; }
 }
 
+// ---- Widget'lar sekmesi (PC'nin {"widgets":{...}} mesajı, bkz. Services/MobileWidgetsFeed.cs) ----
+
+/// <summary>PC'deki widget'ların özeti. Ctl=false: PC telefonun widget'ları kullanmasına izin vermiyor (diğer alanlar boş).</summary>
+public sealed class WidgetsState
+{
+	public bool Ctl { get; set; }
+	public MediaInfo? Media { get; set; }
+	public ClipState? Clip { get; set; }
+	public LaunchState? Launch { get; set; }
+	public ProcState? Proc { get; set; }
+
+	/// <summary>Borsa widget'ı PC'de kapalıysa null.</summary>
+	public List<MarketInfo>? Market { get; set; }
+
+	public WidgetBattery? Battery { get; set; }
+}
+
+/// <summary>Çalan parça. Cover (base64 JPEG) yalnızca değiştiğinde gelir; telefon <see cref="CoverKey"/> ile saklar.</summary>
+public sealed class MediaInfo
+{
+	public string Title { get; set; } = string.Empty;
+	public string Artist { get; set; } = string.Empty;
+	public string App { get; set; } = string.Empty;
+	public double Pos { get; set; }
+	public double Len { get; set; }
+	public bool Playing { get; set; }
+	public bool Prev { get; set; }
+	public bool Next { get; set; }
+	public bool Play { get; set; }
+	public string CoverKey { get; set; } = string.Empty;
+	public string? Cover { get; set; }
+}
+
+/// <summary>PC'nin pano geçmişi. On=false: PC'de Pano widget'ı kapalı (geçmiş toplanmıyor). Images: yalnızca yeni görüntülerin önizlemesi (anahtar → base64 JPEG).</summary>
+public sealed class ClipState
+{
+	public bool On { get; set; }
+	public List<ClipItem>? Items { get; set; }
+	public Dictionary<string, string>? Images { get; set; }
+}
+
+public sealed class ClipItem
+{
+	public string K { get; set; } = string.Empty;
+
+	/// <summary>Metin kaydıysa metin (en çok 300 karakter); görüntü kaydında null.</summary>
+	public string? T { get; set; }
+
+	public int W { get; set; }
+	public int H { get; set; }
+}
+
+/// <summary>PC'deki başlatıcı. Icons: yalnızca yeni/değişen öğelerin simgesi (kimlik → base64 PNG).</summary>
+public sealed class LaunchState
+{
+	public List<LaunchItem>? Items { get; set; }
+	public Dictionary<string, string>? Icons { get; set; }
+}
+
+public sealed class LaunchItem
+{
+	public string Id { get; set; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>Görev yöneticisi: en çok kaynak yiyen uygulamalar (her ölçütün ilk 6'sının birleşimi) ve sistem toplamları.</summary>
+public sealed class ProcState
+{
+	public List<ProcInfo>? Rows { get; set; }
+
+	/// <summary>Uygulama başına internet ölçülebiliyor mu (PC'de yönetici yetkisi gerekir).</summary>
+	public bool Net { get; set; }
+
+	public float? CpuLoad { get; set; }
+	public float? RamUsedGb { get; set; }
+	public float? RamTotalGb { get; set; }
+	public float? GpuLoad { get; set; }
+	public float? VramUsedGb { get; set; }
+	public float? VramTotalGb { get; set; }
+}
+
+/// <summary>Bir uygulamanın (aynı adlı işlemlerin toplamı) kaynak kullanımı. Ram: bayt; Disk ve Net: bayt/sn.</summary>
+public sealed class ProcInfo
+{
+	public string N { get; set; } = string.Empty;
+	public int C { get; set; }
+	public double Cpu { get; set; }
+	public long Ram { get; set; }
+	public double Disk { get; set; }
+	public double Net { get; set; }
+}
+
+public sealed class MarketInfo
+{
+	public string S { get; set; } = string.Empty;
+	public double? Price { get; set; }
+	public double? Chg { get; set; }
+	public string? Ccy { get; set; }
+	public List<double>? Closes { get; set; }
+}
+
+public sealed class WidgetBattery
+{
+	public PcBattery? Pc { get; set; }
+	public List<DeviceBat>? Devices { get; set; }
+}
+
+public sealed class PcBattery
+{
+	public int Pct { get; set; }
+	public bool Charging { get; set; }
+	public int? Mins { get; set; }
+}
+
+public sealed class DeviceBat
+{
+	public string N { get; set; } = string.Empty;
+	public int P { get; set; }
+}
+
 public enum LinkState
 {
 	Idle,
