@@ -41,6 +41,7 @@ internal static class ScreenshotGenerator
             Save(outDir, "overview" + suffix, await Overview());
             Save(outDir, "widgets" + suffix, await MoreWidgets());
             Save(outDir, "widgets-more" + suffix, await NewWidgets());
+            Save(outDir, "clock-styles" + suffix, await ClockStyleSheet(app));
             Save(outDir, "settings-appearance" + suffix, Settings("AppearanceTab"));
             Save(outDir, "settings-widgets" + suffix, Settings("WidgetsTab"));
             Save(outDir, "settings-profiles" + suffix, Settings("ProfilesTab"));
@@ -264,6 +265,46 @@ internal static class ScreenshotGenerator
         };
         var result = Compose(new Size(1130, 580), items);
         CloseAll(taskman, market, media, battery, notepad);
+        return Task.FromResult(result);
+    }
+
+    /// <summary>Saat widget'ının altı görünümü (üst sıra) ve aynıları cam temasında, %70 ölçekte (alt sıra).</summary>
+    private static Task<BitmapSource> ClockStyleSheet(App app)
+    {
+        var s = app.Settings.Current;
+        var items = new List<(BitmapSource Image, Point At)>();
+        var windows = new List<Window>();
+        var (theme, scale, zone) = (s.WidgetTheme, s.WidgetScale, s.ClockZone);
+        s.ClockZone = string.Empty;
+        s.ClockSeconds = true;
+        try
+        {
+            for (var row = 0; row < 2; row++)
+            {
+                s.WidgetTheme = row == 0 ? theme : "glass";
+                s.WidgetScale = row == 0 ? 1.0 : 0.7;
+                WidgetGrid.SetScale(s.WidgetScale);
+                for (var i = 0; i < ClockStyles.All.Count; i++)
+                {
+                    s.ClockStyle = ClockStyles.All[i];
+                    var window = new ClockWidgetWindow();
+                    windows.Add(window);
+                    items.Add((Snap(Root(window)), new Point(20 + i % 3 * 275, 20 + (row * 2 + i / 3) * 215)));
+                }
+            }
+        }
+        finally
+        {
+            s.WidgetTheme = theme;
+            s.WidgetScale = scale;
+            s.ClockZone = zone;
+            s.ClockStyle = ClockStyles.Default;
+            s.ClockSeconds = false;
+            WidgetGrid.SetScale(scale);
+        }
+
+        var result = Compose(new Size(870, 880), items);
+        CloseAll(windows.ToArray());
         return Task.FromResult(result);
     }
 

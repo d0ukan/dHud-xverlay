@@ -73,17 +73,20 @@ The bar is optional: if you prefer the **System** widget (same values), turn the
 
 **Closing a widget closes its gap:** when you hide a widget, the widgets below it slide up into its place; when you show it again from Settings, they all go back where they were. A widget you moved yourself in between stays where you put it. You can turn this off at the top of *Settings → Widgets*.
 
-**Colour themes:** pick one of eight (Graphite, Midnight, Forest, Wine, Violet, Amber, Teal and a Light theme) at the top of *Settings → Widgets*. It changes the card and accent colour of all widgets at once; sticky notes keep their own colours.
+**Colour themes:** pick one of nine (Graphite, Midnight, Forest, Wine, Violet, Amber, Teal, a see-through Glass theme and a Light theme) at the top of *Settings → Widgets*. It changes the card and accent colour of all widgets at once; sticky notes keep their own colours.
+
+**Widget size:** the *Widget size* slider (50–100 %) under the themes shrinks every widget together, handy on large or high-resolution screens where the widgets cover too much of the desktop. It scales automatic and resized cards alike.
 
 **Full-screen apps:** while a film, presentation or game is running full screen, the widgets hide themselves and come back when you leave (*Settings → Behavior → Full-screen apps*). The top bar stays by default so you can still watch temperatures in games; tick *Hide the top bar too* if you want it hidden as well.
 
 <p align="center"><img src="docs/images/widgets.png" alt="More widgets" /></p>
 
 <p align="center"><img src="docs/images/widgets-more.png" alt="Media player, task manager, markets, notepad and battery widgets" /></p>
+<p align="center"><img src="docs/images/clock-styles.png" width="560" alt="The six clock styles, in the default theme (top) and in the Glass theme at 70 % size (bottom)" /></p>
 
 | Widget | What it does |
 | --- | --- |
-| **Clock** | Time and date, optional seconds and a second time zone. |
+| **Clock** | Time and date in six looks (digital, minimal, stacked, glow, analog, analog minimal) – hover the card and use the ‹ › arrows or right-click → Clock style. Optional seconds and a second time zone. |
 | **Sticky notes** | Up to 30 notes stacked like **folder tabs**: click a tab to bring it forward, drag a tab to move the stack. Saved as you type. |
 | **To-do list** | Add a task with Enter, add sub-tasks with ＋, tick it off, clear the finished ones. Right-click a task to duplicate it with its sub-tasks or copy it as text. |
 | **Timer and reminders** | Quick timers, reminders at a clock time and a pomodoro. Notification and sound (optionally on your phone). |
@@ -158,7 +161,7 @@ Mirrors dHud on your **local network** (same Wi-Fi), in the same dark theme.
 2. On the PC: *Settings → Behavior → Mobile app* → tick **Allow the dHud mobile app to connect**. A QR code appears (allow Windows Firewall on private networks).
 3. In the app tap **Scan QR code**. The dot at the top turns green.
 
-It shows live values and a temperature graph, vibrates and notifies on alerts, shows your reminders and the game summary, and has a **full-screen dashboard** for tablets (it slowly shifts and dims to protect the screen) and a **home-screen widget**. It finds your PC again if its IP address changes and updates itself with one tap.
+It shows live values and a temperature graph, vibrates and notifies on alerts, shows which fan preset is active next to CPU and GPU, shows your reminders and the game summary, and has a **full-screen dashboard** for tablets (it slowly shifts and dims to protect the screen) and a **home-screen widget**. It finds your PC again if its IP address changes and updates itself with one tap.
 
 **Widgets from the phone:** a *Widgets* tab shows live cards of your PC's widgets, handy on a tablet next to your desk: a **media player** (cover, progress, previous / play-pause / next), your **launcher** (tap an app and it opens on the PC), the **clipboard history** (tap a text to copy it to the phone; a button sends the phone's clipboard to the PC), your **to-dos**, a **task manager** (which app uses how much CPU, RAM, disk and, if dHud runs as administrator, internet), **markets** and **battery** (PC and Bluetooth devices). The PC only sends this data while the tab is open. On by default; switch it off with **Let the mobile app show and use widgets**. The phone can only open apps you added to the launcher and cannot run anything else. Cards for widgets that are off on the PC (Clipboard, Markets) tell you so.
 

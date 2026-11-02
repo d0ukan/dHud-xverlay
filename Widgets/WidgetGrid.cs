@@ -76,9 +76,21 @@ public static class WidgetGrid
         }
     }
 
+    /// <summary>Genel widget ölçeği (Ayarlar → Widget'lar). Hücreler de ölçeklenir, böylece hücre cinsinden kayıtlı boyutlar orantılı küçülür.</summary>
+    public const double MinScale = 0.5;
+    public static double Scale { get; private set; } = 1;
+
+    public static void SetScale(double scale) =>
+        Scale = double.IsNaN(scale) || double.IsInfinity(scale) ? 1 : Math.Clamp(scale, MinScale, 1);
+
     public static Spec Make(Rect work)
     {
         var cell = Math.Clamp(Math.Round(work.Width / Divisor), MinCell, MaxCell);
+        if (Scale < 1)
+        {
+            cell = Math.Max(3, Math.Round(cell * Scale * 2) / 2);
+        }
+
         var cols = Math.Max(1, (int)Math.Floor(work.Width / cell));
         var rows = Math.Max(1, (int)Math.Floor(work.Height / cell));
         return new Spec(work, cell, cols, rows, (work.Width - cols * cell) / 2, (work.Height - rows * cell) / 2);

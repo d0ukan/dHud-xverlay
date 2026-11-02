@@ -365,6 +365,7 @@ public partial class SettingsWindow : Window
         }));
         var root = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
         root.Children.Add(BuildThemePicker());
+        root.Children.Add(BuildScalePicker());
         var gaps = WidgetCheck("S.CloseGaps", () => s.Current.CloseWidgetGaps, v => s.Current.CloseWidgetGaps = v);
         gaps.Margin = new Thickness(0, 4, 0, 4);
         gaps.ToolTip = Loc.T("S.CloseGapsTip");
@@ -446,6 +447,52 @@ public partial class SettingsWindow : Window
         var hint = new TextBlock { Text = Loc.T("S.WidgetThemeHint"), TextWrapping = TextWrapping.Wrap };
         hint.SetResourceReference(StyleProperty, "HintText");
         hint.Margin = new Thickness(0, 4, 0, 0);
+        panel.Children.Add(hint);
+        return panel;
+    }
+
+    /// <summary>Tüm widget'ların ortak boyutu (%50–100). Kaydırırken her adımda yeniden yerleşmesin diye kısa bir bekleme sonrası uygulanır.</summary>
+    private FrameworkElement BuildScalePicker()
+    {
+        var panel = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        var header = new TextBlock { Text = Loc.T("S.WidgetScale") };
+        header.SetResourceReference(StyleProperty, "SectionHeader");
+        panel.Children.Add(header);
+
+        var label = new TextBlock { Width = 44, VerticalAlignment = VerticalAlignment.Center, TextAlignment = TextAlignment.Right };
+        var slider = new Slider { Minimum = 50, Maximum = 100, TickFrequency = 5, IsSnapToTickEnabled = true, SmallChange = 5, LargeChange = 10, Width = 220, VerticalAlignment = VerticalAlignment.Center };
+        var debounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        debounce.Tick += (_, _) =>
+        {
+            debounce.Stop();
+            var scale = Math.Round(slider.Value) / 100;
+            if (Math.Abs(_settings.Current.WidgetScale - scale) > 0.001)
+            {
+                _settings.Current.WidgetScale = scale;
+                _settings.NotifyChanged();
+            }
+        };
+        slider.ValueChanged += (_, _) =>
+        {
+            label.Text = $"{Math.Round(slider.Value):0}%";
+            if (!_loading)
+            {
+                debounce.Stop();
+                debounce.Start();
+            }
+        };
+        _widgetRefresh.Add(() =>
+        {
+            slider.Value = Math.Clamp(Math.Round(_settings.Current.WidgetScale * 100), 50, 100);
+            label.Text = $"{slider.Value:0}%";
+        });
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(slider);
+        row.Children.Add(label);
+        panel.Children.Add(row);
+        var hint = new TextBlock { Text = Loc.T("S.WidgetScaleHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
+        hint.SetResourceReference(StyleProperty, "HintText");
         panel.Children.Add(hint);
         return panel;
     }

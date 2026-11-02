@@ -73,17 +73,20 @@ Bar isteğe bağlıdır: aynı değerleri gösteren **Sistem** widget'ını terc
 
 **Widget kapanınca boşluk kapanır:** bir widget'ı kapattığında altındakiler yukarı kayıp yerini doldurur; *Ayarlar*'dan geri açınca hepsi eski yerine döner. Bu arada kendin taşıdığın bir widget bıraktığın yerde kalır. *Ayarlar → Widget'lar* sayfasının üstünden kapatabilirsin.
 
-**Renk temaları:** *Ayarlar → Widget'lar* sayfasının üstünden sekiz temadan birini seç (Grafit, Gece mavisi, Orman, Şarap, Mor, Kehribar, Turkuaz ve Açık tema). Tüm widget'ların kart ve vurgu rengini birlikte değiştirir; yapışkan notlar kendi renklerini korur.
+**Renk temaları:** *Ayarlar → Widget'lar* sayfasının üstünden dokuz temadan birini seç (Grafit, Gece mavisi, Orman, Şarap, Mor, Kehribar, Turkuaz, saydam Cam teması ve Açık tema). Tüm widget'ların kart ve vurgu rengini birlikte değiştirir; yapışkan notlar kendi renklerini korur.
+
+**Widget boyutu:** temaların altındaki *Widget boyutu* kaydırıcısı (%50–100) tüm widget'ları birlikte küçültür; widget'ların masaüstünün çoğunu kapladığı büyük veya yüksek çözünürlüklü ekranlarda işe yarar. Otomatik ve elle boyutlandırılmış kartların ikisini de ölçekler.
 
 **Tam ekran uygulamalar:** film, sunum veya oyun tam ekran çalışırken widget'lar kendini gizler, çıkınca geri gelir (*Ayarlar → Behavior → Tam ekran uygulamalar*). Üstteki bar varsayılan olarak kalır, böylece oyunda sıcaklıkları izleyebilirsin; onu da gizlemek istersen *Üstteki barı da gizle* kutusunu işaretle.
 
 <p align="center"><img src="docs/images/widgets-tr.png" alt="Diğer widget'lar" /></p>
 
 <p align="center"><img src="docs/images/widgets-more-tr.png" alt="Medya oynatıcı, görev yöneticisi, borsa, not defteri ve pil widget'ları" /></p>
+<p align="center"><img src="docs/images/clock-styles-tr.png" width="560" alt="Altı saat stili: varsayılan temada (üst) ve %70 boyutlu Cam temasında (alt)" /></p>
 
 | Widget | Ne yapar |
 | --- | --- |
-| **Saat** | Saat ve tarih; isteğe bağlı saniye ve ikinci saat dilimi. |
+| **Saat** | Saat ve tarih, altı farklı görünümle (dijital, sade, alt alta, parlak, analog, analog sade) – kartın üzerine gel ve ‹ › oklarını kullan ya da sağ tık → Saat stili. İsteğe bağlı saniye ve ikinci saat dilimi. |
 | **Yapışkan notlar** | En fazla 30 not, **klasör sekmeleri** gibi üst üste: sekmeye tıklayınca öne gelir, sekmeyi sürükleyince yığın taşınır. Yazdıkça kaydedilir. |
 | **Yapılacaklar** | Enter ile iş ekle, ＋ ile alt görev ekle, tik at, bitenleri temizle. Göreve sağ tıkla: alt görevleriyle çoğalt veya metin olarak kopyala. |
 | **Zamanlayıcı ve hatırlatıcı** | Hızlı zamanlayıcılar, saate göre hatırlatıcı ve pomodoro. Bildirim ve ses (istersen telefonda da). |
@@ -158,7 +161,7 @@ dHud'u **yerel ağında** (aynı Wi-Fi) aynı koyu temayla yansıtır.
 2. PC'de: *Ayarlar → Behavior → Mobil uygulama* → **dHud mobil uygulamasının bağlanmasına izin ver** kutusunu işaretle. Bir QR kod görünür (Windows Güvenlik Duvarı sorarsa özel ağlar için izin ver).
 3. Uygulamada **QR kodu tara**'ya dokun. Üstteki nokta yeşile döner.
 
-Canlı değerleri ve sıcaklık grafiğini gösterir, uyarılarda titreşir ve bildirim verir, hatırlatıcılarını ve oyun özetini gösterir; tabletler için **tam ekran panel** (ekranı korumak için yavaşça kayar ve kararır) ve **ana ekran widget'ı** vardır. IP adresi değişirse PC'yi kendisi yeniden bulur, tek dokunuşla güncellenir.
+Canlı değerleri ve sıcaklık grafiğini gösterir, uyarılarda titreşir ve bildirim verir, CPU ve GPU yanında hangi fan preset'inin aktif olduğunu gösterir, hatırlatıcılarını ve oyun özetini gösterir; tabletler için **tam ekran panel** (ekranı korumak için yavaşça kayar ve kararır) ve **ana ekran widget'ı** vardır. IP adresi değişirse PC'yi kendisi yeniden bulur, tek dokunuşla güncellenir.
 
 **Telefondan widget'lar:** *Widget'lar* sekmesi PC'ndeki widget'ların canlı kartlarını gösterir; masanın yanındaki tablette çok işe yarar: **medya oynatıcı** (kapak, ilerleme, önceki / oynat-duraklat / sonraki), **başlatıcın** (bir uygulamaya dokun, PC'de açılır), **pano geçmişi** (bir metne dokununca telefona kopyalanır; bir düğme telefonun panosunu PC'ye gönderir), **yapılacaklar**, **görev yöneticisi** (hangi uygulama ne kadar CPU, RAM, disk ve dHud yönetici olarak çalışıyorsa internet kullanıyor), **borsa** ve **pil** (PC ve Bluetooth cihazlar). PC bu veriyi yalnızca sekme açıkken gönderir. Varsayılan açık; **Mobil uygulama widget'ları gösterebilsin ve kullanabilsin** kutusundan kapatılır. Telefon yalnızca başlatıcıya eklediğin uygulamaları açabilir, başka bir şey çalıştıramaz. PC'de kapalı olan widget'ların (Pano, Borsa) kartı bunu söyler.
 

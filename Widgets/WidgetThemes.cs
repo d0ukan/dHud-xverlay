@@ -19,6 +19,8 @@ public static class WidgetThemes
         new("violet", "Theme.violet", Color.FromArgb(0xF2, 0x1E, 0x17, 0x30), Color.FromRgb(0xA7, 0x8B, 0xFA), false),
         new("amber", "Theme.amber", Color.FromArgb(0xF2, 0x25, 0x1E, 0x12), Color.FromRgb(0xFA, 0xCC, 0x15), false),
         new("teal", "Theme.teal", Color.FromArgb(0xF2, 0x10, 0x25, 0x2A), Color.FromRgb(0x2D, 0xD4, 0xBF), false),
+        // Cam: çok saydam, hafif mavimsi kart; arkadaki masaüstü belli olur (yazı okunsun diye zemin yine koyu tonlu).
+        new("glass", "Theme.glass", Color.FromArgb(0x78, 0x10, 0x16, 0x24), Color.FromRgb(0x67, 0xE8, 0xF9), false),
         new("light", "Theme.light", Color.FromArgb(0xF2, 0xF3, 0xF4, 0xF8), Color.FromRgb(0x25, 0x63, 0xEB), true)
     ];
 

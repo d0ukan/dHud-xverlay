@@ -67,9 +67,10 @@
                 <!-- CPU -->
                 <Border x:Name="CpuCard" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="8">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8">
                             <Label Text="CPU" Style="{StaticResource TitleLabel}" />
-                            <Label x:Name="CpuName" Grid.Column="1" FontSize="12" LineBreakMode="TailTruncation"
+                            <Label x:Name="CpuPreset" Grid.Column="1" FontSize="12" VerticalOptions="Center" LineBreakMode="TailTruncation" TextColor="#60A5FA" />
+                            <Label x:Name="CpuName" Grid.Column="2" FontSize="12" LineBreakMode="TailTruncation"
                                    HorizontalTextAlignment="End" TextColor="{StaticResource SubtleColor}" />
                         </Grid>
                         <Label x:Name="CpuTemp" Text="--°C" Style="{StaticResource BigLabel}" />
@@ -102,9 +103,10 @@
                 <!-- GPU -->
                 <Border x:Name="GpuCard" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="8">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8">
                             <Label Text="GPU" Style="{StaticResource TitleLabel}" />
-                            <Label x:Name="GpuName" Grid.Column="1" FontSize="12" LineBreakMode="TailTruncation"
+                            <Label x:Name="GpuPreset" Grid.Column="1" FontSize="12" VerticalOptions="Center" LineBreakMode="TailTruncation" TextColor="#60A5FA" />
+                            <Label x:Name="GpuName" Grid.Column="2" FontSize="12" LineBreakMode="TailTruncation"
                                    HorizontalTextAlignment="End" TextColor="{StaticResource SubtleColor}" />
                         </Grid>
                         <Label x:Name="GpuTemp" Text="--°C" Style="{StaticResource BigLabel}" />

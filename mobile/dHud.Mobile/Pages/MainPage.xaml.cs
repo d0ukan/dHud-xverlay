@@ -73,6 +73,7 @@ public partial class MainPage : ContentPage
 			App.Link.Start(pairing);
 		}
 
+		UpdateKeepAwake();   // kurucu çalışırken etkinlik penceresi hazır olmayabilir; ekranın açık kalması burada yeniden uygulanır
 		Refresh();
 		StartUpdateChecks();
 		_ = AlertNotifier.RequestPermissionAsync();
@@ -90,6 +91,7 @@ public partial class MainPage : ContentPage
 		{
 			_mode = mode;
 			ArrangeCards(mode);
+			UpdateKeepAwake();   // döndürmede etkinlik yeniden kurulur; ekranı açık tutma bayrağı yeniden verilir
 		}
 	}
 
@@ -360,6 +362,8 @@ public partial class MainPage : ContentPage
 			NetUp.Text = FormatSpeed(s.Net?.UploadBytesPerSecond);
 			NetPing.Text = s.Net?.PingMs is long ms ? $"{ms} ms" : "--";
 			RefreshFans(s);
+			CpuPreset.Text = FanSummary(s.Fans?.Where(f => !f.Gpu && !f.Pump));
+			GpuPreset.Text = FanSummary(s.Fans?.Where(f => f.Gpu));
 		}
 
 		_graph.Cpu = link.CpuTemp.ToList();
@@ -367,6 +371,24 @@ public partial class MainPage : ContentPage
 		CpuLegend.Text = "CPU " + FormatTemp(link.Latest?.Cpu?.Temperature);
 		GpuLegend.Text = "GPU " + FormatTemp(link.Latest?.Gpu?.Temperature);
 		Graph.Invalidate();
+	}
+
+	/// <summary>Panelde CPU/GPU başlığının yanındaki fan durumu: hangi eğri/preset, manuel yüzde ya da otomatik. Fanlar farklıysa "Karışık".</summary>
+	private static string FanSummary(IEnumerable<FanInfo>? fans)
+	{
+		var modes = (fans ?? []).Select(f => f.Mode switch
+		{
+			"manual" => Loc.T("FanModeManual", f.Manual),
+			"curve" => string.IsNullOrEmpty(f.Curve) ? Loc.T("FanCurveShort") : f.Curve,
+			_ => Loc.T("FanAuto")
+		}).Distinct().ToList();
+
+		return modes.Count switch
+		{
+			0 => string.Empty,
+			1 => "🌀 " + modes[0],
+			_ => "🌀 " + Loc.T("FanMixed")
+		};
 	}
 
 	private static void ShowDevice(DeviceReading? d, Label name, Label temp, Label load, BarView bar,

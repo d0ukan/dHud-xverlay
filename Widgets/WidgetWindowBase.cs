@@ -25,6 +25,7 @@ public abstract class WidgetWindowBase : Window
     private Color _cardColor = Color.FromArgb(0xF2, 0x1A, 0x1B, 0x22);
     private IntPtr _hwnd;
     private bool _dragging;
+    private readonly Grid _shell;
 
     /// <summary>Kartın kendisi; alt sınıflar içeriği buraya koyar.</summary>
     protected Border Card { get; }
@@ -72,6 +73,7 @@ public abstract class WidgetWindowBase : Window
         };
         // Kart + kenar/köşe tutamaçları (boyutlandırma). Tutamaçlar kartın etrafındaki saydam gölge payında ve kartın dış kenarındadır.
         var shell = new Grid();
+        _shell = shell;
         shell.Children.Add(Card);
         Content = shell;
         if (Resizable)
@@ -116,10 +118,19 @@ public abstract class WidgetWindowBase : Window
     public void ApplyOptions()
     {
         Topmost = WantsTopmost;
+        WidgetGrid.SetScale(App.Current.Settings.Current.WidgetScale);
         ApplyTheme();
         var alpha = (byte)Math.Clamp(Math.Round(_cardColor.A * Options.Opacity), 0, 255);
         Card.Background = new SolidColorBrush(Color.FromArgb(alpha, _cardColor.R, _cardColor.G, _cardColor.B));
         ApplySize();
+        ApplyShellScale();
+    }
+
+    /// <summary>Otomatik boyutlu kart içeriğiyle birlikte küçülür; kullanıcı boyutunda kart ızgaranın (ölçekli) hücreleriyle zaten küçülür.</summary>
+    private void ApplyShellScale()
+    {
+        var s = WidgetGrid.Scale;
+        _shell.LayoutTransform = !_custom && s < 1 ? new ScaleTransform(s, s) : Transform.Identity;
     }
 
     // ---- Renk teması ----
@@ -274,8 +285,9 @@ public abstract class WidgetWindowBase : Window
     /// </summary>
     private (int W, int H) MinSpan(WidgetGrid.Spec g)
     {
-        var width = Math.Max(MinCardWidth, _natural.Width);
-        var height = ZoomByWidth ? MinListHeight : Math.Max(MinListHeight / 2, NaturalContentHeight() + 2 * Card.BorderThickness.Top);
+        var s = WidgetGrid.Scale;
+        var width = Math.Max(MinCardWidth, _natural.Width) * s;
+        var height = ZoomByWidth ? MinListHeight * s : Math.Max(MinListHeight / 2, NaturalContentHeight() + 2 * Card.BorderThickness.Top) * s;
         return WidgetGrid.SpanOf(new Size(width, height), g);
     }
 
@@ -472,6 +484,7 @@ public abstract class WidgetWindowBase : Window
             _holder.SizeChanged += (_, _) => Dispatcher.BeginInvoke(EnsureFits, System.Windows.Threading.DispatcherPriority.Background);
         }
 
+        ApplyShellScale();
         UpdateZoom();
         OnCustomSizeChanged(true);
     }
@@ -498,6 +511,7 @@ public abstract class WidgetWindowBase : Window
         ClearValue(WidthProperty);
         ClearValue(HeightProperty);
         SizeToContent = SizeToContent.WidthAndHeight;
+        ApplyShellScale();
         OnCustomSizeChanged(false);
     }
 
@@ -508,7 +522,7 @@ public abstract class WidgetWindowBase : Window
             return;
         }
 
-        var s = Math.Clamp((Card.ActualWidth - 2 * Card.BorderThickness.Left) / _natural.Width, MinZoom, MaxZoom);
+        var s = Math.Clamp((Card.ActualWidth - 2 * Card.BorderThickness.Left) / _natural.Width, Math.Min(MinZoom, WidgetGrid.Scale), MaxZoom);
         _zoom.ScaleX = _zoom.ScaleY = s;
         if (ContentScrolls && _holder is not null)
         {
@@ -568,13 +582,16 @@ public abstract class WidgetWindowBase : Window
     }
 
     /// <summary>Kartın ekrandaki dikdörtgeni (gölge payı hariç); widget'ların birbirine binmemesi için kullanılır.</summary>
-    public Rect CardRect => new(Left + CardPad, Top + CardPad, Math.Max(0, ActualWidth - 2 * CardPad), Math.Max(0, ActualHeight - 2 * CardPad));
+    public Rect CardRect => new(Left + Pad, Top + Pad, Math.Max(0, ActualWidth - 2 * Pad), Math.Max(0, ActualHeight - 2 * Pad));
+
+    /// <summary>Gölge payı: otomatik boyutta pencere içeriği ölçekle birlikte küçülür, kullanıcı boyutunda ölçeksizdir.</summary>
+    private double Pad => _custom ? CardPad : CardPad * WidgetGrid.Scale;
 
     /// <summary>Kartın sol üst köşesini verilen noktaya getirir.</summary>
     public void SetCardTopLeft(Point p)
     {
-        Left = p.X - CardPad;
-        Top = p.Y - CardPad;
+        Left = p.X - Pad;
+        Top = p.Y - Pad;
     }
 
     /// <summary>Pencerenin bulunduğu monitörün çalışma alanı (görev çubuğu hariç), DIP cinsinden.</summary>
