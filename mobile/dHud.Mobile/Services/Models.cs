@@ -188,6 +188,9 @@ public sealed class ProcState
 	/// <summary>Uygulama başına internet ölçülebiliyor mu (PC'de yönetici yetkisi gerekir).</summary>
 	public bool Net { get; set; }
 
+	/// <summary>Uygulama başına GPU kullanımı ölçülebiliyor mu.</summary>
+	public bool GpuOn { get; set; }
+
 	public float? CpuLoad { get; set; }
 	public float? RamUsedGb { get; set; }
 	public float? RamTotalGb { get; set; }
@@ -205,6 +208,7 @@ public sealed class ProcInfo
 	public long Ram { get; set; }
 	public double Disk { get; set; }
 	public double Net { get; set; }
+	public double Gpu { get; set; }
 }
 
 public sealed class MarketInfo

@@ -181,7 +181,7 @@ public sealed class MobileWidgetsFeed : IDisposable
     private object BuildProcesses(List<ProcRow> rows)
     {
         var picked = new Dictionary<string, ProcRow>(StringComparer.OrdinalIgnoreCase);
-        foreach (var sort in Enum.GetValues<ProcSort>())
+        foreach (var sort in Enum.GetValues<ProcSort>().Where(s => s != ProcSort.Name))
         {
             foreach (var row in ProcessTable.Top(rows, sort, ProcessRowsPerMetric))
             {
@@ -199,9 +199,11 @@ public sealed class MobileWidgetsFeed : IDisposable
                 cpu = Math.Round(r.CpuPercent, 1),
                 ram = r.MemoryBytes,
                 disk = Math.Round(r.DiskBytesPerSecond),
-                net = Math.Round(r.NetBytesPerSecond)
+                net = Math.Round(r.NetBytesPerSecond),
+                gpu = Math.Round(r.GpuPercent, 1)
             }).ToList(),
             net = _process.NetworkAvailable,
+            gpuOn = _process.GpuAvailable,
             cpuLoad = latest?.Cpu?.Load,
             ramUsedGb = latest?.Memory?.MemoryUsedGb,
             ramTotalGb = latest?.Memory?.MemoryTotalGb,

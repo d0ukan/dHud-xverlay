@@ -15,21 +15,29 @@ namespace DHud.Widgets;
 public sealed class TaskManWidgetWindow : WidgetWindowBase
 {
     private const int RowCount = 8;
-    private const double CpuWidth = 50, RamWidth = 62, DiskWidth = 68, NetWidth = 68;
+    private const double CpuWidth = 50, GpuWidth = 50, RamWidth = 62, DiskWidth = 68, NetWidth = 68;
+    private const double CardWidth = 440;
 
     private readonly ProcessMonitor _monitor = new();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly Grid _header = new();
     private readonly Dictionary<ProcSort, (TextBlock Label, TextBlock Total)> _columns = [];
+    private static readonly Dictionary<ProcSort, string> ColumnNames = new() { [ProcSort.Cpu] = "CPU", [ProcSort.Gpu] = "GPU", [ProcSort.Memory] = "RAM", [ProcSort.Disk] = "DISK", [ProcSort.Network] = "NET" };
     private readonly StackPanel _rows = new();
     private readonly TextBlock _gpu;
     private readonly TextBlock _hint;
     private ProcSort _sort = ProcSort.Cpu;
+    private bool _descending = true;   // sayı sütunlarında önce en çok kaynak yiyen; aynı başlığa tekrar tıklayınca ters çevrilir
+    private TextBlock? _nameHeader;
     private List<ProcRow> _all = [];
     private bool _busy;
     private bool _demo;
 
+    private static readonly double[] ColumnWidths = [CpuWidth, GpuWidth, RamWidth, DiskWidth, NetWidth];
+
     private bool NetworkShown => _demo || _monitor.NetworkAvailable;
+
+    private bool GpuShown => _demo || _monitor.GpuAvailable;
 
     protected override WidgetOptions Options => App.Current.Settings.Current.Extra(WidgetIds.TaskMan);
 
@@ -37,7 +45,7 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
 
     public TaskManWidgetWindow()
     {
-        Card.Width = 372;
+        Card.Width = CardWidth;
         var root = new StackPanel { Margin = new Thickness(16, 10, 16, 12) };
         root.Children.Add(TitleBar(Loc.T("W.TaskMan"), WidgetIds.TaskMan));
 
@@ -55,7 +63,7 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
         root.Children.Add(_hint);
         Card.Child = root;
 
-        RestorePosition(WidgetIds.TaskMan, 13, 372);
+        RestorePosition(WidgetIds.TaskMan, 13, CardWidth);
         Render();
 
         _timer.Tick += async (_, _) => await RefreshAsync();
@@ -93,16 +101,24 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
     private void BuildHeader()
     {
         _header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 80 });
-        foreach (var width in new[] { CpuWidth, RamWidth, DiskWidth, NetWidth })
+        foreach (var width in ColumnWidths)
         {
             _header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(width) });
         }
 
-        var name = Subtle(Loc.T("W.TaskName"));
-        name.VerticalAlignment = VerticalAlignment.Top;
-        _header.Children.Add(name);
+        _nameHeader = Subtle(Loc.T("W.TaskName"));
+        _nameHeader.VerticalAlignment = VerticalAlignment.Top;
+        _nameHeader.Cursor = Cursors.Hand;
+        _nameHeader.ToolTip = Loc.T("W.TaskSort");
+        _nameHeader.Background = System.Windows.Media.Brushes.Transparent;
+        _nameHeader.MouseLeftButtonUp += (_, e) =>
+        {
+            SortBy(ProcSort.Name);
+            e.Handled = true;
+        };
+        _header.Children.Add(_nameHeader);
 
-        var sorts = new[] { (ProcSort.Cpu, "CPU"), (ProcSort.Memory, "RAM"), (ProcSort.Disk, "DISK"), (ProcSort.Network, "NET") };
+        var sorts = new[] { (ProcSort.Cpu, "CPU"), (ProcSort.Gpu, "GPU"), (ProcSort.Memory, "RAM"), (ProcSort.Disk, "DISK"), (ProcSort.Network, "NET") };
         for (var i = 0; i < sorts.Length; i++)
         {
             var (sort, text) = sorts[i];
@@ -114,8 +130,7 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
             cell.Children.Add(total);
             cell.MouseLeftButtonUp += (_, e) =>
             {
-                _sort = sort;
-                Render();
+                SortBy(sort);
                 e.Handled = true;
             };
             Grid.SetColumn(cell, i + 1);
@@ -123,6 +138,25 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
             _columns[sort] = (label, total);
         }
     }
+
+    /// <summary>Başlığa tıklandı: yeni sütunda varsayılan yön (sayılar: çoktan aza, ad: A→Z); aynı sütunda yön tersine döner.</summary>
+    private void SortBy(ProcSort sort)
+    {
+        if (sort == _sort)
+        {
+            _descending = !_descending;
+        }
+        else
+        {
+            _sort = sort;
+            _descending = sort != ProcSort.Name;
+        }
+
+        Render();
+    }
+
+    /// <summary>Başlık metni: etkin sütunda yön oku (▼ çoktan aza, ▲ azdan çoğa; adda ▲ A→Z).</summary>
+    private string Arrow(ProcSort sort) => sort != _sort ? string.Empty : _descending ? " ▼" : " ▲";
 
     private async Task RefreshAsync()
     {
@@ -158,13 +192,22 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
         var ramTotal = snapshot?.Memory is { MemoryUsedGb: float used } ? $"{used:0.0}G" : FormatBytes(_all.Sum(r => r.MemoryBytes));
         var diskTotal = Format.Speed(_all.Sum(r => r.DiskBytesPerSecond), bits, true);
         var netTotal = NetworkShown ? Format.Speed(_all.Sum(r => r.NetBytesPerSecond), bits, true) : "--";
+        var gpuTotal = snapshot?.Gpu?.Load is float gpuLoad ? Format.Load(gpuLoad) : GpuShown ? $"{_all.Sum(r => r.GpuPercent):0}%" : "--";
         _columns[ProcSort.Cpu].Total.Text = cpuTotal;
+        _columns[ProcSort.Gpu].Total.Text = gpuTotal;
         _columns[ProcSort.Memory].Total.Text = ramTotal;
         _columns[ProcSort.Disk].Total.Text = diskTotal;
         _columns[ProcSort.Network].Total.Text = netTotal;
         foreach (var (sort, (label, _)) in _columns)
         {
             label.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, sort == _sort ? "AccentBrush" : "TextBrush");
+            label.Text = ColumnNames[sort] + Arrow(sort);
+        }
+
+        if (_nameHeader is not null)
+        {
+            _nameHeader.Text = Loc.T("W.TaskName") + Arrow(ProcSort.Name);
+            _nameHeader.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, _sort == ProcSort.Name ? "AccentBrush" : "SubtleTextBrush");
         }
 
         if (snapshot?.Gpu is { } gpu)
@@ -178,7 +221,7 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
         }
 
         _rows.Children.Clear();
-        var top = ProcessTable.Top(_all, _sort, RowCount);
+        var top = ProcessTable.Top(_all, _sort, RowCount, _descending);
         if (top.Count == 0)
         {
             _rows.Children.Add(Subtle(Loc.T("W.TaskLoading")));
@@ -197,7 +240,7 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
     {
         var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 80 });
-        foreach (var width in new[] { CpuWidth, RamWidth, DiskWidth, NetWidth })
+        foreach (var width in ColumnWidths)
         {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(width) });
         }
@@ -206,9 +249,10 @@ public sealed class TaskManWidgetWindow : WidgetWindowBase
         grid.Children.Add(new TextBlock { Text = label, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, ToolTip = label });
 
         Cell(grid, 1, row.CpuPercent >= 0.05 ? $"{row.CpuPercent:0.0}%" : "0%", _sort == ProcSort.Cpu, row.CpuPercent >= 50);
-        Cell(grid, 2, FormatBytes(row.MemoryBytes), _sort == ProcSort.Memory, false);
-        Cell(grid, 3, row.DiskBytesPerSecond >= 1 ? Format.Speed(row.DiskBytesPerSecond, bits, true) : "0", _sort == ProcSort.Disk, false);
-        Cell(grid, 4, !NetworkShown ? "--" : row.NetBytesPerSecond >= 1 ? Format.Speed(row.NetBytesPerSecond, bits, true) : "0", _sort == ProcSort.Network, false);
+        Cell(grid, 2, !GpuShown ? "--" : row.GpuPercent >= 0.05 ? $"{row.GpuPercent:0.0}%" : "0%", _sort == ProcSort.Gpu, row.GpuPercent >= 50);
+        Cell(grid, 3, FormatBytes(row.MemoryBytes), _sort == ProcSort.Memory, false);
+        Cell(grid, 4, row.DiskBytesPerSecond >= 1 ? Format.Speed(row.DiskBytesPerSecond, bits, true) : "0", _sort == ProcSort.Disk, false);
+        Cell(grid, 5, !NetworkShown ? "--" : row.NetBytesPerSecond >= 1 ? Format.Speed(row.NetBytesPerSecond, bits, true) : "0", _sort == ProcSort.Network, false);
         return grid;
     }
 

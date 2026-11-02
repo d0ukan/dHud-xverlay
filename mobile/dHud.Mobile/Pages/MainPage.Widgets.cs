@@ -17,6 +17,7 @@ public partial class MainPage
 	private VerticalStackLayout? _mediaBody, _todoBody, _launchBody, _clipBody, _procBody, _marketBody, _batteryBody;
 	private LayoutMode? _widgetsMode;
 	private string _procSort = "cpu";
+	private bool _procDescending = true;
 	private string _widgetsKey = string.Empty;
 	private CancellationTokenSource? _statusCts;
 
@@ -431,12 +432,14 @@ public partial class MainPage
 
 		// Sıralama düğmeleri
 		var sorts = new HorizontalStackLayout { Spacing = 6 };
-		foreach (var (code, label) in new[] { ("cpu", "CPU"), ("ram", "RAM"), ("disk", "DISK"), ("net", "NET") })
+		foreach (var (code, label) in new[] { ("cpu", "CPU"), ("gpu", "GPU"), ("ram", "RAM"), ("disk", "DISK"), ("net", "NET") })
 		{
-			var button = new Button { Text = label, Style = TabStyle(_procSort == code), HeightRequest = 36, Padding = new Thickness(12, 0), FontSize = 12 };
+			var arrow = _procSort == code ? (_procDescending ? " ▼" : " ▲") : string.Empty;
+			var button = new Button { Text = label + arrow, Style = TabStyle(_procSort == code), HeightRequest = 36, Padding = new Thickness(12, 0), FontSize = 12 };
 			var chosen = code;
 			button.Clicked += (_, _) =>
 			{
+				_procDescending = _procSort == chosen ? !_procDescending : true;   // aynı sütuna tekrar dokununca yön tersine döner
 				_procSort = chosen;
 				BuildProcesses(App.Link.Widgets?.Proc);
 			};
@@ -445,21 +448,23 @@ public partial class MainPage
 
 		_procBody.Children.Add(sorts);
 
-		IEnumerable<ProcInfo> ordered = _procSort switch
+		Func<ProcInfo, double> key = _procSort switch
 		{
-			"ram" => proc.Rows.OrderByDescending(r => r.Ram),
-			"disk" => proc.Rows.OrderByDescending(r => r.Disk),
-			"net" => proc.Rows.OrderByDescending(r => r.Net),
-			_ => proc.Rows.OrderByDescending(r => r.Cpu)
+			"ram" => r => r.Ram,
+			"gpu" => r => r.Gpu,
+			"disk" => r => r.Disk,
+			"net" => r => r.Net,
+			_ => r => r.Cpu
 		};
+		var ordered = _procDescending ? proc.Rows.OrderByDescending(key) : proc.Rows.OrderBy(key);
 
 		var grid = new Grid { RowSpacing = 4, ColumnSpacing = 6 };
 		grid.ColumnDefinitions =
 		[
-			new ColumnDefinition(GridLength.Star), new ColumnDefinition(new GridLength(56)), new ColumnDefinition(new GridLength(68)),
-			new ColumnDefinition(new GridLength(78)), new ColumnDefinition(new GridLength(78))
+			new ColumnDefinition(GridLength.Star), new ColumnDefinition(new GridLength(54)), new ColumnDefinition(new GridLength(54)),
+			new ColumnDefinition(new GridLength(64)), new ColumnDefinition(new GridLength(72)), new ColumnDefinition(new GridLength(72))
 		];
-		string[] headers = [Loc.T("WTasksApp"), "CPU", "RAM", "DISK", "NET"];
+		string[] headers = [Loc.T("WTasksApp"), "CPU", "GPU", "RAM", "DISK", "NET"];
 		for (var c = 0; c < headers.Length; c++)
 		{
 			var header = Muted(headers[c], 11);
@@ -474,9 +479,10 @@ public partial class MainPage
 			var name = Strong(row.C > 1 ? $"{row.N} ×{row.C}" : row.N, 14);
 			grid.Add(name, 0, rowIndex);
 			AddCell(grid, 1, rowIndex, row.Cpu >= 0.05 ? $"{row.Cpu:0.0}%" : "0%", _procSort == "cpu", row.Cpu >= 50);
-			AddCell(grid, 2, rowIndex, FmtBytes(row.Ram), _procSort == "ram", false);
-			AddCell(grid, 3, rowIndex, FmtRate(row.Disk), _procSort == "disk", false);
-			AddCell(grid, 4, rowIndex, proc.Net ? FmtRate(row.Net) : "--", _procSort == "net", false);
+			AddCell(grid, 2, rowIndex, !proc.GpuOn ? "--" : row.Gpu >= 0.05 ? $"{row.Gpu:0.0}%" : "0%", _procSort == "gpu", row.Gpu >= 50);
+			AddCell(grid, 3, rowIndex, FmtBytes(row.Ram), _procSort == "ram", false);
+			AddCell(grid, 4, rowIndex, FmtRate(row.Disk), _procSort == "disk", false);
+			AddCell(grid, 5, rowIndex, proc.Net ? FmtRate(row.Net) : "--", _procSort == "net", false);
 			rowIndex++;
 		}
 

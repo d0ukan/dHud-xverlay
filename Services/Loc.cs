@@ -196,7 +196,7 @@ public static class Loc
         ["W.MediaIdleHint"] = ("Start music or a video and it shows up here.", "Bir müzik veya video başlat, burada görünür."),
         ["W.TaskMan"] = ("Task manager", "Görev yöneticisi"),
         ["W.TaskName"] = ("App", "Uygulama"),
-        ["W.TaskSort"] = ("Sort by this column", "Bu sütuna göre sırala"),
+        ["W.TaskSort"] = ("Sort by this column (click again to reverse)", "Bu sütuna göre sırala (tekrar tıklayınca ters çevrilir)"),
         ["W.TaskLoading"] = ("Measuring…", "Ölçülüyor…"),
         ["W.TaskNetAdmin"] = ("Internet per app needs dHud to run as administrator.", "Uygulama başına internet için dHud'un yönetici olarak çalışması gerekir."),
         ["W.Market"] = ("Markets", "Borsa"),

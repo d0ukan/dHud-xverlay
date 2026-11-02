@@ -224,10 +224,10 @@ internal static class ScreenshotGenerator
         var taskman = new TaskManWidgetWindow();
         taskman.ShowDemo(
         [
-            new ProcRow("chrome", 14, 12.4, 1400 * Mb, 2_300_000, 1_800_000),
-            new ProcRow("Cyberpunk2077", 1, 31.8, 5400 * Mb, 11_000_000, 120_000),
-            new ProcRow("Discord", 6, 2.1, 640 * Mb, 4_000, 95_000),
-            new ProcRow("Code", 9, 3.7, 1100 * Mb, 380_000, 4_000),
+            new ProcRow("chrome", 14, 12.4, 1400 * Mb, 2_300_000, 1_800_000, 6.5),
+            new ProcRow("Cyberpunk2077", 1, 31.8, 5400 * Mb, 11_000_000, 120_000, 78.2),
+            new ProcRow("Discord", 6, 2.1, 640 * Mb, 4_000, 95_000, 1.4),
+            new ProcRow("Code", 9, 3.7, 1100 * Mb, 380_000, 4_000, 0.6),
             new ProcRow("Spotify", 5, 0.8, 380 * Mb, 12_000, 210_000),
             new ProcRow("explorer", 1, 0.4, 210 * Mb, 56_000, 0),
             new ProcRow("OneDrive", 1, 0.2, 120 * Mb, 810_000, 640_000),
@@ -258,12 +258,12 @@ internal static class ScreenshotGenerator
         var items = new List<(BitmapSource Image, Point At)>
         {
             (Snap(Root(taskman)), new Point(20, 20)),
-            (Snap(Root(market)), new Point(430, 20)),
-            (Snap(Root(notepad)), new Point(760, 20)),
+            (Snap(Root(market)), new Point(510, 20)),
+            (Snap(Root(notepad)), new Point(850, 20)),
             (Snap(Root(media)), new Point(20, 350)),
             (Snap(Root(battery)), new Point(350, 350))
         };
-        var result = Compose(new Size(1130, 580), items);
+        var result = Compose(new Size(1200, 580), items);
         CloseAll(taskman, market, media, battery, notepad);
         return Task.FromResult(result);
     }
